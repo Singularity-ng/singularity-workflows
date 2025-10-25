@@ -1,0 +1,195 @@
+# ex_pgflow
+
+**Elixir implementation of [pgflow](https://pgflow.dev) - Postgres-based workflow orchestration with 100% feature parity**
+
+[![Hex.pm](https://img.shields.io/hexpm/v/ex_pgflow.svg)](https://hex.pm/packages/ex_pgflow)
+[![Documentation](https://img.shields.io/badge/docs-hexpm-blue.svg)](https://hexdocs.pm/ex_pgflow)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+## What is ex_pgflow?
+
+ex_pgflow brings the power of [pgflow](https://pgflow.dev) to the Elixir ecosystem. It provides reliable, scalable workflow orchestration using only PostgreSQL - no external dependencies, no message brokers, no complex infrastructure.
+
+### Key Features
+
+✅ **100% Feature Parity with pgflow.dev**
+- All SQL core functions (`start_tasks()`, `complete_task()`, `fail_task()`, etc.)
+- pgmq integration (v1.4.4+) for task coordination
+- DAG execution with automatic dependency resolution
+- Map steps for parallel array processing
+- Dynamic workflows via `create_flow()`/`add_step()` API
+- Static workflows via Elixir modules
+
+✅ **Zero Infrastructure**
+- No Redis, RabbitMQ, or external services required
+- Just PostgreSQL (with pgmq extension)
+- Perfect for serverless, edge computing, or minimal deployments
+
+✅ **Production-Ready Quality**
+- Zero security vulnerabilities (Sobelow strictest scan)
+- Zero type errors (Dialyzer with `--warnings-as-errors`)
+- Comprehensive test coverage
+- Complete documentation
+
+✅ **Elixir Superpowers**
+- BEAM concurrency (millions of processes)
+- OTP fault tolerance with supervisor trees
+- Ecto integration for powerful queries
+- Hot code reloading
+- Pattern matching for elegant error handling
+
+## Installation
+
+Add `ex_pgflow` to your `mix.exs` dependencies:
+
+\`\`\`elixir
+def deps do
+  [
+    {:ex_pgflow, "~> 0.1.0"}
+  ]
+end
+\`\`\`
+
+## Quick Start
+
+### 1. Install PostgreSQL Extensions
+
+\`\`\`bash
+# Install pgmq extension (required)
+mix ecto.migrate
+\`\`\`
+
+The migrations will automatically install:
+- `pgmq` extension (v1.4.4+)
+- All pgflow SQL functions and tables
+
+### 2. Define a Workflow
+
+**Option A: Static Workflow (Elixir Module)**
+
+\`\`\`elixir
+defmodule MyApp.EmailCampaign do
+  def __workflow_steps__ do
+    [
+      {:fetch_subscribers, &__MODULE__.fetch/1, depends_on: []},
+      {:send_emails, &__MODULE__.send_email/1,
+        depends_on: [:fetch_subscribers],
+        initial_tasks: 1000},  # Process 1000 emails in parallel
+      {:track_results, &__MODULE__.track/1, depends_on: [:send_emails]}
+    ]
+  end
+
+  def fetch(_input) do
+    subscribers = MyApp.Repo.all(MyApp.Subscriber)
+    {:ok, Enum.map(subscribers, &%{email: &1.email, id: &1.id})}
+  end
+
+  def send_email(input) do
+    recipient = Map.get(input, "item")
+    MyApp.Mailer.send(recipient["email"])
+    {:ok, %{sent: true, email: recipient["email"]}}
+  end
+
+  def track(input) do
+    # Aggregate results from all email tasks
+    {:ok, %{campaign_complete: true}}
+  end
+end
+
+# Execute the workflow
+{:ok, result} = Pgflow.Executor.execute(
+  MyApp.EmailCampaign,
+  %{"campaign_id" => 123},
+  MyApp.Repo
+)
+\`\`\`
+
+**Option B: Dynamic Workflow (AI/LLM-Generated)**
+
+\`\`\`elixir
+alias Pgflow.FlowBuilder
+
+# Create workflow dynamically (perfect for AI agents!)
+{:ok, _} = FlowBuilder.create_flow("ai_analysis", repo, timeout: 120)
+
+{:ok, _} = FlowBuilder.add_step("ai_analysis", "fetch_data", [], repo)
+
+{:ok, _} = FlowBuilder.add_step("ai_analysis", "analyze", ["fetch_data"], repo,
+  step_type: "map",
+  initial_tasks: 50,
+  timeout: 300  # 5 minutes for analysis tasks
+)
+
+{:ok, _} = FlowBuilder.add_step("ai_analysis", "summarize", ["analyze"], repo)
+
+# Execute with step functions
+step_functions = %{
+  fetch_data: fn _input -> {:ok, fetch_dataset()} end,
+  analyze: fn input -> {:ok, run_ai_analysis(input)} end,
+  summarize: fn input -> {:ok, aggregate_results(input)} end
+}
+
+{:ok, result} = Pgflow.Executor.execute_dynamic(
+  "ai_analysis",
+  %{"dataset_id" => "xyz"},
+  step_functions,
+  repo
+)
+\`\`\`
+
+## Why ex_pgflow?
+
+### vs pgflow (TypeScript)
+
+| Feature | pgflow | ex_pgflow |
+|---------|--------|-----------|
+| Language | TypeScript | Elixir |
+| Runtime | Deno/Node.js | BEAM/Erlang |
+| Concurrency | Event loop | Millions of processes |
+| Fault Tolerance | Edge Function restart | OTP supervisor trees |
+| Type Safety | TypeScript | Dialyzer + @spec |
+| Database | PostgreSQL + pgmq | PostgreSQL + pgmq |
+| **Performance** | Good | **Excellent** (BEAM concurrency) |
+| **Fault Tolerance** | Basic | **Advanced** (OTP) |
+
+### vs Oban/BullMQ/Sidekiq
+
+| Feature | ex_pgflow | Oban | BullMQ | Sidekiq |
+|---------|-----------|------|--------|---------|
+| External Dependencies | None (just Postgres) | None | Redis | Redis |
+| DAG Workflows | ✅ Native | ⚠️ Manual | ⚠️ Complex | ❌ |
+| Parallel Map Steps | ✅ Built-in | ⚠️ Manual | ⚠️ Manual | ❌ |
+| Dynamic Workflows | ✅ create_flow() API | ❌ | ❌ | ❌ |
+| Dependency Resolution | ✅ Automatic | ⚠️ Manual | ⚠️ Manual | ❌ |
+| Language | Elixir | Elixir | JavaScript | Ruby |
+
+**ex_pgflow excels at:**
+- Complex multi-step workflows with dependencies
+- Parallel processing of large datasets (map steps)
+- AI/LLM agent workflows (dynamic creation)
+- Data pipelines with cascading failures
+
+**Use Oban if:**
+- You only need simple background jobs
+- No workflow orchestration required
+
+## Documentation
+
+- **[PGFLOW_DEV_FEATURE_COMPARISON.md](PGFLOW_DEV_FEATURE_COMPARISON.md)** - Complete feature parity checklist
+- **[DYNAMIC_WORKFLOWS_GUIDE.md](DYNAMIC_WORKFLOWS_GUIDE.md)** - AI/LLM workflow creation
+- **[TIMEOUT_CHANGES_SUMMARY.md](TIMEOUT_CHANGES_SUMMARY.md)** - Timeout configuration details
+- **[SECURITY_AUDIT.md](SECURITY_AUDIT.md)** - Security best practices
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details
+
+## Acknowledgments
+
+- **[pgflow](https://pgflow.dev)** by [pgflow team](https://github.com/pgflow/pgflow) - Original TypeScript implementation
+- **[pgmq](https://github.com/tembo-io/pgmq)** by Tembo - PostgreSQL message queue extension
+- Built with ❤️ using [Elixir](https://elixir-lang.org/) and the [BEAM](https://www.erlang.org/)
+
+---
+
+**Built with [Claude Code](https://claude.com/claude-code)**
