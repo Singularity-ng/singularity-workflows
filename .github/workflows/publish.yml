@@ -13,9 +13,9 @@ jobs:
 
     services:
       postgres:
-        # Use pgmq image with PostgreSQL 17 and pgmq pre-installed
-        # Official pgmq image from GitHub Container Registry
-        image: ghcr.io/pgmq/pg17-pgmq:latest
+        # Custom PostgreSQL 18 image with pgmq pre-installed
+        # Built from .github/docker/Dockerfile.postgres
+        image: ghcr.io/mikkihugo/ex_pgflow-postgres:pg18-pgmq
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -34,8 +34,8 @@ jobs:
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
       with:
-        elixir-version: '1.14'
-        otp-version: '26'
+        elixir-version: '1.19'
+        otp-version: '28'
 
     - name: Setup database with pgmq
       run: |
@@ -96,8 +96,8 @@ jobs:
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
       with:
-        elixir-version: '1.14'
-        otp-version: '26'
+        elixir-version: '1.19'
+        otp-version: '28'
 
     - name: Restore dependencies cache
       uses: actions/cache@v4
