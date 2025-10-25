@@ -613,12 +613,14 @@ defmodule Pgflow.StepStateTest do
       # First parent completes
       after_dep1 = step_state |> StepState.decrement_remaining_deps() |> apply_changes()
       assert after_dep1.remaining_deps == 2
-      assert after_dep1.status == "created"  # Still waiting
+      # Still waiting
+      assert after_dep1.status == "created"
 
       # Second parent completes
       after_dep2 = after_dep1 |> StepState.decrement_remaining_deps() |> apply_changes()
       assert after_dep2.remaining_deps == 1
-      assert after_dep2.status == "created"  # Still waiting
+      # Still waiting
+      assert after_dep2.status == "created"
 
       # Third parent completes - now ready to start
       after_dep3 = after_dep2 |> StepState.decrement_remaining_deps() |> apply_changes()

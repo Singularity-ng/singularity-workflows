@@ -199,12 +199,15 @@ defmodule Pgflow.DAG.WorkflowDefinition do
         deps = Map.get(dependencies, step, [])
 
         # Visit each dependency; if any returns a cycle, propagate it
+        # All dependencies checked, no cycle found
         Enum.find_value(deps, :no_cycle, fn dep ->
           case dfs_cycle(dep, dependencies, new_visited, new_path) do
-            {:cycle, _} = result -> result  # Cycle found, propagate
-            :no_cycle -> nil  # No cycle in this branch
+            # Cycle found, propagate
+            {:cycle, _} = result -> result
+            # No cycle in this branch
+            :no_cycle -> nil
           end
-        end) || :no_cycle  # All dependencies checked, no cycle found
+        end) || :no_cycle
     end
   end
 

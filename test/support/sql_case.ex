@@ -19,11 +19,18 @@ defmodule Pgflow.SqlCase do
       System.get_env("DATABASE_URL") || System.get_env("POSTGRES_URL") ||
         "postgresql://postgres:postgres@localhost:5432/ex_pgflow"
 
-    case Postgrex.start_link(hostname: "localhost", port: 5432, username: "postgres", password: "postgres", database: "ex_pgflow") do
+    case Postgrex.start_link(
+           hostname: "localhost",
+           port: 5432,
+           username: "postgres",
+           password: "postgres",
+           database: "ex_pgflow"
+         ) do
       {:ok, conn} ->
         case Postgrex.query(conn, "SELECT to_regclass('public.workflow_runs')", []) do
           {:ok, res} ->
             IO.puts("DEBUG: query result rows = #{inspect(res.rows)}")
+
             case res.rows do
               [[nil]] ->
                 Process.exit(conn, :normal)

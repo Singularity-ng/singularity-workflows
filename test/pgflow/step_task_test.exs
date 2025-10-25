@@ -617,7 +617,8 @@ defmodule Pgflow.StepTaskTest do
       requeued = failed1 |> StepTask.requeue() |> apply_changes()
       assert requeued.status == "queued"
       assert requeued.claimed_by == nil
-      assert requeued.attempts_count == 1  # Preserved for next claim
+      # Preserved for next claim
+      assert requeued.attempts_count == 1
 
       # Second attempt succeeds
       claimed2 = requeued |> StepTask.claim("worker-2") |> apply_changes()
@@ -655,16 +656,17 @@ defmodule Pgflow.StepTaskTest do
       workflow_slug = "MapWorkflow"
 
       # Create 3 tasks for map step
-      tasks = for i <- 0..2 do
-        %StepTask{
-          run_id: run_id,
-          step_slug: step_slug,
-          task_index: i,
-          workflow_slug: workflow_slug,
-          status: "queued",
-          input: %{"item_index" => i}
-        }
-      end
+      tasks =
+        for i <- 0..2 do
+          %StepTask{
+            run_id: run_id,
+            step_slug: step_slug,
+            task_index: i,
+            workflow_slug: workflow_slug,
+            status: "queued",
+            input: %{"item_index" => i}
+          }
+        end
 
       # All tasks get claimed and completed independently
       completed_tasks =

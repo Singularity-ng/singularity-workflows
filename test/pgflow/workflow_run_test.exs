@@ -286,7 +286,8 @@ defmodule Pgflow.WorkflowRunTest do
     test "id is binary_id (UUID)" do
       run = %WorkflowRun{id: Ecto.UUID.generate()}
       assert is_binary(run.id)
-      assert String.length(run.id) == 36  # UUID format
+      # UUID format
+      assert String.length(run.id) == 36
     end
 
     test "workflow_slug is string" do

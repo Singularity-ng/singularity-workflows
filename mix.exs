@@ -47,7 +47,8 @@ defmodule ExPgflow.MixProject do
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.18", only: :test},
       {:mix_test_watch, "~> 1.1", only: :dev},
-      {:mox, "~> 1.1", only: :test}  # For London-style TDD mocks
+      # For London-style TDD mocks
+      {:mox, "~> 1.1", only: :test}
     ]
   end
 
@@ -79,13 +80,12 @@ defmodule ExPgflow.MixProject do
         "GETTING_STARTED.md",
         "ARCHITECTURE.md",
         "CHANGELOG.md",
-        "docs/DYNAMIC_WORKFLOWS_GUIDE.md",
-        "docs/PGFLOW_REFERENCE.md",
-        "docs/SECURITY_AUDIT.md"
+        "CONTRIBUTING.md"
       ],
       main: "readme",
       source_ref: "main",
-      formatters: ["html"]
+      formatters: ["html"],
+      nest_modules_by_prefix: [Pgflow]
     ]
   end
 
