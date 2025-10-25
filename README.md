@@ -328,6 +328,198 @@ Different tools serve different coordination patterns:
 - Independent jobs with no inter-job dependencies
 - Standard Elixir job queue requirements
 
+## Real-World Use Cases
+
+### 1. Agentic AI & Multi-Agent Systems
+
+ex_pgflow is purpose-built for AI agent orchestration:
+
+**Single Agent Workflow**
+```
+User Query → LLM Analysis → Tool Calls → Aggregation → Response
+   ↓            ↓              ↓              ↓           ↓
+(input)    (analysis)    (parallel)    (collect)      (output)
+```
+
+**Multi-Agent Collaboration**
+```
+Task Definition
+    ↓
+Agent 1 (Research)  ← Agent 2 (Analysis) ← Agent 3 (Validation)
+    ↓                       ↓                    ↓
+  [Subtasks]            [Analysis]          [Checks]
+    ↓                       ↓                    ↓
+Consolidate Results → Final Decision → Return to User
+```
+
+**Dynamic Workflow Generation** (perfect for AI agents that plan their own workflows):
+```elixir
+# Claude creates a workflow to solve a problem
+{:ok, _} = FlowBuilder.create_flow("claude_analysis", repo)
+{:ok, _} = FlowBuilder.add_step("claude_analysis", "research", [])
+{:ok, _} = FlowBuilder.add_step("claude_analysis", "analyze", ["research"])
+{:ok, _} = FlowBuilder.add_step("claude_analysis", "validate", ["analyze"])
+# Agent can now orchestrate its own execution!
+```
+
+**Benefits for AI:**
+- ✅ Automatic fault recovery (tasks fail and retry independently)
+- ✅ Distributed execution across multiple workers/GPU nodes
+- ✅ Dependency-aware execution (Agent 2 waits for Agent 1)
+- ✅ Tool call parallelization (parallel API calls, vector searches)
+- ✅ Stateful workflows (state persists in PostgreSQL)
+- ✅ Observable (every step, task, and retry is logged)
+
+### 2. Data Processing Pipelines
+
+**ETL/ELT Workflows with Error Isolation**
+
+```
+Extract Data → [Validation, Cleaning, Transformation] → Load
+     ↓              ↓              ↓            ↓        ↓
+  (1 task)      (10k tasks)  (10k tasks)  (10k tasks)  (1 task)
+```
+
+Each validation failure doesn't block the whole pipeline—failed records are retried independently. Failed items can be tracked and reprocessed.
+
+**Features Perfect for Data Pipelines:**
+- ✅ Map steps for parallel processing of millions of records
+- ✅ Counter-based coordination prevents data loss
+- ✅ Failed items automatically retry (configurable backoff)
+- ✅ Aggregation steps combine partial results
+- ✅ Progress tracking (SQL queries show what's done)
+
+### 3. Computer Vision & ML Model Inference
+
+**Batch Image Processing**
+
+```
+Upload Image Batch → [Preprocess] → [Model Inference] → [Postprocess] → Store Results
+                     (parallel)        (parallel)        (parallel)
+                   100 images        100 inferences    100 transforms
+```
+
+**Multi-Model Ensemble**
+
+```
+Single Image
+    ↓
+[Model A]  [Model B]  [Model C]  (parallel)
+    ↓          ↓          ↓
+  Aggregate → Voting → Confidence Score → Return
+```
+
+### 4. Microservice Orchestration
+
+**Service-to-Service Workflow Coordination**
+
+```
+API Request
+    ↓
+User Service → (gets user data)
+    ↓
+Order Service → (gets order data, waits for user)
+    ↓
+Payment Service → (waits for order)
+    ↓
+Notification Service → (parallel: email, SMS, webhook, waits for payment)
+    ↓
+Response to Client
+```
+
+**Benefits:**
+- ✅ Resilient: If Payment Service crashes, other steps are unaffected
+- ✅ Observable: See which microservice is slow
+- ✅ Stateful: Database tracks service call results
+- ✅ Recoverable: Restart failed steps without redoing successful ones
+
+### 5. Report Generation & Data Synthesis
+
+**Multi-Section Report Generation**
+
+```
+Report Request
+    ↓
+[Section A]  [Section B]  [Section C]  (parallel)
+    ↓          ↓          ↓
+  Sales     Marketing   Operations
+  Analysis   Analysis    Analysis
+    ↓          ↓          ↓
+         Aggregate & Format
+              ↓
+         PDF Generation
+              ↓
+        Send to User
+```
+
+### 6. Document Processing Pipeline
+
+**Scanning to Searchable Documents**
+
+```
+Raw PDF Upload
+    ↓
+[Validate PDF] → [Extract Text] → [OCR Images] → [Parse Entities]
+                     ↓               ↓             ↓
+                (parallel)      (parallel)    (parallel, map step)
+                20 pages        20 pages      extract: names, dates, etc.
+    ↓
+[Generate Embeddings] → [Store in Vector DB] → [Index Search]
+        ↓                      ↓                    ↓
+    (parallel)           (atomic insert)      (Elasticsearch)
+  Text chunks          Transactional safety
+    ↓
+Document Available for Search
+```
+
+### 7. Real-Time Analytics & Stream Processing
+
+**Streaming Data Aggregation**
+
+```
+Event Stream (Kafka/NATS/etc)
+    ↓
+[Buffer & Batch] → [Aggregate] → [Transform] → [Store Metrics]
+                      ↓
+              (every 100 events)
+                      ↓
+              Parallel processing of
+              compute-intensive aggregations
+```
+
+### 8. Recommendation System Pipelines
+
+**Cold-Start Recommendation Generation**
+
+```
+New User Signup
+    ↓
+[Fetch User Profile] → [Get Historical Items] → [Find Similar Users]
+                              ↓                        ↓
+                          (parallel)              (parallel, GPU)
+                    10k user history items       vector similarity search
+    ↓
+[Aggregate Candidates] → [Score & Rank] → [Diversify] → Return Top 10
+```
+
+## When to Use ex_pgflow vs Alternatives
+
+### Use ex_pgflow when:
+
+1. **Workflows have dependencies** - Step B must wait for Step A
+2. **Fault recovery matters** - Failed steps retry independently
+3. **Parallelization is needed** - Process 1M items across workers
+4. **You're building agents** - AI agents need dynamic workflow coordination
+5. **State persists in DB** - Results must survive worker crashes
+6. **Observability is critical** - Need to see every step, task, attempt
+7. **You use PostgreSQL anyway** - No new infrastructure required
+
+### Use Oban when:
+
+1. **Jobs are independent** - No inter-job dependencies
+2. **Simple fire-and-forget** - Job runs, reports result, done
+3. **Standard job queue** - Typical background job scenarios
+
 ## Documentation
 
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** - Installation and first workflow
