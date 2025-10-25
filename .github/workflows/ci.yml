@@ -33,25 +33,11 @@ jobs:
     - name: Install dependencies
       run: mix deps.get
 
-    - name: Install pgmq extension
+    - name: Install pgxn-tools and pgmq extension
       run: |
         sudo apt-get update
-        sudo apt-get install -y postgresql-server-dev-17 build-essential git
-        git clone https://github.com/tembo-io/pgmq.git /tmp/pgmq
-        cd /tmp/pgmq/pgmq-extension
-        make
-        sudo make install
-        sudo -u postgres psql -c "CREATE EXTENSION pgmq;"
-
-    - name: Create test database
-      run: |
-        sudo -u postgres psql -c "CREATE DATABASE ex_pgflow;"
-
-    - name: Install dependencies
-      run: mix deps.get
-
-    - name: Install pgmq extension
-      run: pgxn install pgmq
+        sudo apt-get install -y pgxnclient
+        pgxn install pgmq
 
     - name: Create test database
       run: |
