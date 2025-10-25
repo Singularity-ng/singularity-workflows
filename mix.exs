@@ -64,12 +64,17 @@ defmodule ExPgflow.MixProject do
 
   defp package do
     [
-      files: ~w(lib priv mix.exs README.md LICENSE.md CHANGELOG.md),
+      # Only include necessary files for Hex package
+      # Excludes: .github/, .claude/, test/, docs/, scripts/, .formatter.exs, etc.
+      files: ~w(lib priv/repo/migrations mix.exs README.md LICENSE.md CHANGELOG.md
+                GETTING_STARTED.md ARCHITECTURE.md CONTRIBUTING.md),
       licenses: ["MIT"],
       links: %{
         "GitHub" => "https://github.com/mikkihugo/ex_pgflow",
-        "Compared to pgflow" => "https://github.com/pgflow-dev/pgflow"
-      }
+        "Original pgflow (TypeScript)" => "https://pgflow.dev",
+        "pgmq Extension" => "https://github.com/tembo-io/pgmq"
+      },
+      maintainers: ["Mikael Hugo"]
     ]
   end
 

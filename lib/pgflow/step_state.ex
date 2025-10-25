@@ -5,6 +5,32 @@ defmodule Pgflow.StepState do
   Tracks step progress within a workflow run - the coordination layer for DAG execution.
   Matches pgflow's step_states table design.
 
+  ## Counter-Based Coordination Flow
+
+  ```mermaid
+  stateDiagram-v2
+      [*] --> created: Initialize step
+      created --> created: remaining_deps > 0<br/>(wait for dependencies)
+      created --> started: remaining_deps = 0<br/>mark_started()
+      started --> started: remaining_tasks > 0<br/>(tasks executing)
+      started --> completed: remaining_tasks = 0<br/>mark_completed()
+      started --> failed: Task error<br/>mark_failed()
+      completed --> [*]
+      failed --> [*]
+
+      note left of created
+          Counter: remaining_deps
+          Decrements when parent
+          steps complete
+      end note
+
+      note right of started
+          Counter: remaining_tasks
+          Decrements as tasks
+          complete
+      end note
+  ```
+
   ## Counter-Based Coordination
 
   The key innovation from pgflow:
@@ -13,12 +39,61 @@ defmodule Pgflow.StepState do
   - `remaining_tasks` - How many tasks in this step are still executing
   - `initial_tasks` - Total task count (set when step starts)
 
-  ## Status Transitions
+  ## DAG Execution Example
 
+  ```mermaid
+  graph TB
+      subgraph "Step A (completed)"
+          A[Step A<br/>status: completed<br/>remaining_deps: 0<br/>remaining_tasks: 0]
+      end
+
+      subgraph "Step B (started, executing)"
+          B[Step B<br/>status: started<br/>remaining_deps: 0<br/>initial_tasks: 3<br/>remaining_tasks: 1]
+      end
+
+      subgraph "Step C (waiting on B)"
+          C[Step C<br/>status: created<br/>remaining_deps: 1<br/>waiting for B]
+      end
+
+      A -->|decrements<br/>remaining_deps| B
+      B -->|will decrement<br/>remaining_deps| C
+
+      style A fill:#90EE90
+      style B fill:#FFD700
+      style C fill:#FFB6C1
   ```
-  created (remaining_deps > 0) → ... → created (remaining_deps = 0) → started
-  started (remaining_tasks > 0) → ... → started (remaining_tasks = 0) → completed
-  started → failed (on error)
+
+  ## Parallel Step Coordination
+
+  ```mermaid
+  sequenceDiagram
+      participant A as Step A (parent)
+      participant B as Step B (child 1)
+      participant C as Step C (child 2)
+      participant D as Step D (merge)
+
+      Note over A: status=started<br/>remaining_tasks=1
+      A->>A: Task completes
+      Note over A: status=completed
+
+      par Step A completes
+          A->>B: decrement_remaining_deps()
+          A->>C: decrement_remaining_deps()
+      end
+
+      Note over B: remaining_deps: 1→0<br/>status: created→started
+      Note over C: remaining_deps: 1→0<br/>status: created→started
+
+      par B and C execute in parallel
+          B->>B: Execute tasks
+          C->>C: Execute tasks
+      end
+
+      B->>D: decrement_remaining_deps()
+      Note over D: remaining_deps: 2→1
+
+      C->>D: decrement_remaining_deps()
+      Note over D: remaining_deps: 1→0<br/>status: created→started
   ```
 
   ## Usage
@@ -92,6 +167,29 @@ defmodule Pgflow.StepState do
 
   @doc """
   Changeset for creating a step state.
+
+  ## Examples
+
+      iex> changeset = Pgflow.StepState.changeset(%Pgflow.StepState{}, %{
+      ...>   run_id: Ecto.UUID.generate(),
+      ...>   workflow_slug: "MyApp.Workflows.DataPipeline",
+      ...>   step_slug: "process_batch",
+      ...>   status: "created",
+      ...>   remaining_deps: 2,
+      ...>   initial_tasks: 10
+      ...> })
+      iex> changeset.valid?
+      true
+
+      # Invalid status
+      iex> changeset = Pgflow.StepState.changeset(%Pgflow.StepState{}, %{
+      ...>   run_id: Ecto.UUID.generate(),
+      ...>   workflow_slug: "MyWorkflow",
+      ...>   step_slug: "step1",
+      ...>   status: "running"  # Invalid - must be created/started/completed/failed
+      ...> })
+      iex> changeset.valid?
+      false
   """
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(step_state, attrs) do
@@ -118,6 +216,20 @@ defmodule Pgflow.StepState do
 
   @doc """
   Marks a step as started.
+
+  ## Examples
+
+      iex> step_state = Repo.get_by!(Pgflow.StepState, run_id: run_id, step_slug: "fetch")
+      iex> changeset = Pgflow.StepState.mark_started(step_state, 1)
+      iex> changeset.changes
+      %{status: "started", initial_tasks: 1, remaining_tasks: 1, started_at: ~U[...]}
+
+      # Map step with multiple tasks
+      iex> changeset = Pgflow.StepState.mark_started(step_state, 50)
+      iex> changeset.changes.initial_tasks
+      50
+      iex> changeset.changes.remaining_tasks
+      50
   """
   @spec mark_started(t(), integer()) :: Ecto.Changeset.t()
   def mark_started(step_state, initial_tasks) do

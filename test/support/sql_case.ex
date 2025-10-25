@@ -15,7 +15,7 @@ defmodule Pgflow.SqlCase do
   ExUnit.Callbacks.skip/1 to skip the test at runtime.
   """
   def connect_or_skip do
-    db_url =
+    _db_url =
       System.get_env("DATABASE_URL") || System.get_env("POSTGRES_URL") ||
         "postgresql://postgres:postgres@localhost:5432/ex_pgflow"
 

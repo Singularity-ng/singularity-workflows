@@ -57,6 +57,32 @@ defmodule Pgflow.DAG.TaskExecutor do
   - `{:ok, output}` - Run completed successfully
   - `{:ok, :in_progress}` - Run still in progress (when timeout occurs)
   - `{:error, reason}` - Run failed
+
+  ## Examples
+
+      # Execute with default settings (runs until completion)
+      iex> {:ok, output} = TaskExecutor.execute_run(
+      ...>   run_id,
+      ...>   workflow_definition,
+      ...>   MyApp.Repo
+      ...> )
+      iex> Map.keys(output)
+      [:result, :processed_count, :duration_ms]
+
+      # Execute with timeout (useful for long-running workflows)
+      iex> {:ok, status} = TaskExecutor.execute_run(
+      ...>   run_id,
+      ...>   workflow_definition,
+      ...>   MyApp.Repo,
+      ...>   timeout: 30_000,  # 30 seconds
+      ...>   poll_interval: 100  # Poll every 100ms
+      ...> )
+      iex> status
+      :in_progress  # Workflow still running after timeout
+
+  Multiple workers can execute the same run concurrently by passing different
+  worker_id options. PostgreSQL handles coordination via row-level locking
+  on task claims to prevent double-execution.
   """
   @spec execute_run(Ecto.UUID.t(), WorkflowDefinition.t(), module(), keyword()) ::
           {:ok, map()} | {:ok, :in_progress} | {:error, term()}

@@ -120,6 +120,53 @@ defmodule Pgflow.Executor do
 
     - `{:ok, result}` - Workflow completed successfully
     - `{:error, reason}` - Workflow failed (validation, execution, or timeout)
+
+  ## Examples
+
+      # Simple sequential workflow
+      defmodule MyWorkflow do
+        def __workflow_steps__ do
+          [
+            {:validate, &__MODULE__.validate/1},
+            {:process, &__MODULE__.process/1},
+            {:save, &__MODULE__.save/1}
+          ]
+        end
+
+        def validate(input), do: {:ok, Map.put(input, :valid, true)}
+        def process(input), do: {:ok, Map.update(input, :count, 0, &(&1 + 1))}
+        def save(input), do: {:ok, input}
+      end
+
+      iex> {:ok, result} = Pgflow.Executor.execute(MyWorkflow, %{count: 5}, MyApp.Repo)
+      iex> result.count
+      6
+
+      # DAG workflow with parallel steps
+      defmodule DataPipeline do
+        def __workflow_steps__ do
+          [
+            {:fetch, &__MODULE__.fetch/1, depends_on: []},
+            {:analyze, &__MODULE__.analyze/1, depends_on: [:fetch]},
+            {:summarize, &__MODULE__.summarize/1, depends_on: [:fetch]},
+            {:report, &__MODULE__.report/1, depends_on: [:analyze, :summarize]}
+          ]
+        end
+
+        def fetch(_), do: {:ok, %{data: [1,2,3]}}
+        def analyze(state), do: {:ok, Map.put(state, :avg, 2.0)}
+        def summarize(state), do: {:ok, Map.put(state, :count, 3)}
+        def report(state), do: {:ok, state}
+      end
+
+      iex> {:ok, result} = Pgflow.Executor.execute(
+      ...>   DataPipeline,
+      ...>   %{},
+      ...>   MyApp.Repo,
+      ...>   timeout: 60_000
+      ...> )
+      iex> Map.keys(result)
+      [:data, :avg, :count]
   """
   @spec execute(module(), map(), module(), keyword()) :: {:ok, map()} | {:error, term()}
   def execute(workflow_module, input, repo, opts \\ []) do
@@ -251,6 +298,30 @@ defmodule Pgflow.Executor do
     - `{:ok, :failed, error}` - Run failed
     - `{:ok, :in_progress, progress}` - Run still executing
     - `{:error, :not_found}` - Run ID not found
+
+  ## Examples
+
+      # Check a running workflow
+      iex> {:ok, run_id} = start_workflow(MyWorkflow, input, repo)
+      iex> {:ok, status, info} = Pgflow.Executor.get_run_status(run_id, MyApp.Repo)
+      iex> status
+      :in_progress
+      iex> info
+      %{total_steps: 5, completed_steps: 2, percentage: 40.0}
+
+      # Check completed workflow
+      iex> {:ok, :completed, output} = Pgflow.Executor.get_run_status(completed_run_id, repo)
+      iex> Map.get(output, "result")
+      "success"
+
+      # Check failed workflow
+      iex> {:ok, :failed, error} = Pgflow.Executor.get_run_status(failed_run_id, repo)
+      iex> error
+      "Step :validate failed: Invalid input"
+
+      # Non-existent run
+      iex> Pgflow.Executor.get_run_status("00000000-0000-0000-0000-000000000000", repo)
+      {:error, :not_found}
   """
   @spec get_run_status(Ecto.UUID.t(), module()) ::
           {:ok, :completed | :failed | :in_progress, term()} | {:error, :not_found}

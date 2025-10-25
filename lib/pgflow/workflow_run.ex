@@ -5,6 +5,32 @@ defmodule Pgflow.WorkflowRun do
   Tracks workflow execution instances - one record per workflow invocation.
   Matches pgflow's runs table design.
 
+  ## State Transition Diagram
+
+  ```mermaid
+  stateDiagram-v2
+      [*] --> started: Create run
+      started --> completed: remaining_steps = 0
+      started --> failed: Step fails fatally
+      completed --> [*]
+      failed --> [*]
+
+      note right of started
+          remaining_steps counter
+          decrements as steps complete
+      end note
+
+      note right of completed
+          Sets output map
+          Sets completed_at timestamp
+      end note
+
+      note right of failed
+          Sets error_message
+          Sets failed_at timestamp
+      end note
+  ```
+
   ## Fields
 
   - `workflow_slug` - Workflow module name (e.g., "MyApp.Workflows.ProcessOrder")
@@ -14,11 +40,29 @@ defmodule Pgflow.WorkflowRun do
   - `remaining_steps` - Counter: decremented as steps complete
   - `error_message` - Error description if status is "failed"
 
-  ## Status Transitions
+  ## Lifecycle Example
 
-  ```
-  started → completed (all steps done)
-  started → failed (any step fails fatally)
+  ```mermaid
+  sequenceDiagram
+      participant Client
+      participant Run as WorkflowRun
+      participant Steps as StepStates
+
+      Client->>Run: insert(workflow_slug, input, remaining_steps=3)
+      activate Run
+      Note over Run: status="started"<br/>remaining_steps=3
+
+      Steps->>Run: Step 1 completes
+      Note over Run: remaining_steps=2
+
+      Steps->>Run: Step 2 completes
+      Note over Run: remaining_steps=1
+
+      Steps->>Run: Step 3 completes
+      Note over Run: remaining_steps=0<br/>status="completed"
+
+      Run->>Client: output map
+      deactivate Run
   ```
 
   ## Usage
@@ -77,6 +121,26 @@ defmodule Pgflow.WorkflowRun do
 
   @doc """
   Changeset for creating a workflow run.
+
+  ## Examples
+
+      iex> changeset = Pgflow.WorkflowRun.changeset(%Pgflow.WorkflowRun{}, %{
+      ...>   workflow_slug: "MyApp.ProcessOrder",
+      ...>   input: %{"order_id" => 123, "user_id" => 456},
+      ...>   remaining_steps: 5
+      ...> })
+      iex> changeset.valid?
+      true
+
+      # Invalid status
+      iex> changeset = Pgflow.WorkflowRun.changeset(%Pgflow.WorkflowRun{}, %{
+      ...>   workflow_slug: "MyWorkflow",
+      ...>   status: "pending"  # Invalid - must be started/completed/failed
+      ...> })
+      iex> changeset.valid?
+      false
+      iex> changeset.errors[:status]
+      {"is invalid", [validation: :inclusion, enum: ["started", "completed", "failed"]]}
   """
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
   def changeset(run, attrs) do
@@ -99,6 +163,19 @@ defmodule Pgflow.WorkflowRun do
 
   @doc """
   Marks a run as completed.
+
+  ## Examples
+
+      iex> run = Repo.get!(Pgflow.WorkflowRun, run_id)
+      iex> changeset = Pgflow.WorkflowRun.mark_completed(run, %{
+      ...>   "result" => "success",
+      ...>   "processed_items" => 42,
+      ...>   "duration_ms" => 1234
+      ...> })
+      iex> changeset.changes.status
+      "completed"
+      iex> changeset.changes.output
+      %{"result" => "success", "processed_items" => 42, "duration_ms" => 1234}
   """
   @spec mark_completed(t(), map()) :: Ecto.Changeset.t()
   def mark_completed(run, output) do
@@ -112,6 +189,17 @@ defmodule Pgflow.WorkflowRun do
 
   @doc """
   Marks a run as failed.
+
+  ## Examples
+
+      iex> run = Repo.get!(Pgflow.WorkflowRun, run_id)
+      iex> changeset = Pgflow.WorkflowRun.mark_failed(run, "Step :payment failed: Invalid card number")
+      iex> changeset.changes.status
+      "failed"
+      iex> changeset.changes.error_message
+      "Step :payment failed: Invalid card number"
+      iex> is_nil(changeset.changes.failed_at)
+      false
   """
   @spec mark_failed(t(), String.t()) :: Ecto.Changeset.t()
   def mark_failed(run, error_message) do

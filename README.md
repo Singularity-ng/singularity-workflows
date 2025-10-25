@@ -14,6 +14,94 @@
 
 ex_pgflow brings the power of [pgflow](https://pgflow.dev) to the Elixir ecosystem. It provides reliable, scalable workflow orchestration using only PostgreSQL - no external dependencies, no message brokers, no complex infrastructure.
 
+## Architecture Overview
+
+```mermaid
+graph TB
+    subgraph "Application Layer"
+        App[Your Elixir App]
+        Executor[Pgflow.Executor]
+        FlowBuilder[Pgflow.FlowBuilder]
+    end
+
+    subgraph "Coordination Layer"
+        WorkflowRun[WorkflowRun<br/>Tracks execution]
+        StepState[StepState<br/>Counter-based DAG]
+        StepTask[StepTask<br/>Task execution + retries]
+        StepDep[StepDependency<br/>DAG graph]
+    end
+
+    subgraph "PostgreSQL"
+        Tables[(Tables:<br/>workflow_runs<br/>workflow_step_states<br/>workflow_step_tasks<br/>workflow_step_dependencies)]
+        PGMQ[pgmq Extension<br/>Message Queue]
+        Functions[SQL Functions:<br/>start_tasks()<br/>complete_task()<br/>fail_task()]
+    end
+
+    App -->|Define workflow| Executor
+    App -->|Dynamic workflow| FlowBuilder
+    Executor -->|Orchestrates| WorkflowRun
+    FlowBuilder -->|Creates| Tables
+
+    WorkflowRun -->|Manages| StepState
+    StepState -->|Creates| StepTask
+    StepState -->|Reads| StepDep
+
+    StepState -.->|Writes| Tables
+    StepTask -.->|Writes| Tables
+    PGMQ -.->|Task queue| StepTask
+    Functions -.->|Updates| Tables
+
+    style App fill:#E1F5FE
+    style PostgreSQL fill:#F1F8E9
+    style WorkflowRun fill:#FFE082
+    style StepState fill:#A5D6A7
+    style StepTask fill:#90CAF9
+```
+
+## Workflow Execution Flow
+
+```mermaid
+sequenceDiagram
+    participant App as Your App
+    participant Executor
+    participant DB as PostgreSQL
+    participant Worker as Task Worker
+
+    App->>Executor: execute(workflow, input)
+    activate Executor
+
+    Executor->>DB: INSERT workflow_run (status=started)
+    Executor->>DB: INSERT step_states (remaining_deps, remaining_tasks)
+    Executor->>DB: INSERT step_dependencies
+
+    Note over DB: Steps with remaining_deps=0<br/>are ready to start
+
+    Executor->>DB: start_tasks() - create tasks
+    DB->>PGMQ: Enqueue tasks via pgmq
+
+    loop Task Execution
+        Worker->>PGMQ: Poll for task (read_with_poll)
+        PGMQ-->>Worker: Task data
+        Worker->>Worker: Execute step function
+        Worker->>DB: complete_task(run_id, step_slug, task_index, output)
+
+        DB->>DB: Decrement step remaining_tasks
+        DB->>DB: If remaining_tasks=0, mark step completed
+        DB->>DB: Decrement dependent steps' remaining_deps
+        DB->>DB: If remaining_deps=0, start dependent steps
+
+        alt All steps completed
+            DB->>DB: Mark run as completed
+            Executor-->>App: {:ok, output}
+        else Step failed
+            DB->>DB: Mark run as failed
+            Executor-->>App: {:error, reason}
+        end
+    end
+
+    deactivate Executor
+```
+
 ### Key Features
 
 ✅ **100% Feature Parity with pgflow.dev**
@@ -140,6 +228,56 @@ step_functions = %{
   repo
 )
 \`\`\`
+
+## DAG Execution Example
+
+See how ex_pgflow executes workflows with automatic dependency resolution and parallel execution:
+
+```mermaid
+graph LR
+    subgraph "Step 1: fetch_subscribers"
+        F[Fetch Subscribers<br/>status: completed<br/>output: 1000 subscribers]
+    end
+
+    subgraph "Step 2: send_emails (Map Step)"
+        E1[Email 1-250<br/>Worker 1]
+        E2[Email 251-500<br/>Worker 2]
+        E3[Email 501-750<br/>Worker 3]
+        E4[Email 751-1000<br/>Worker 4]
+    end
+
+    subgraph "Step 3: track_results"
+        T[Track Results<br/>Aggregate 1000 results<br/>status: completed]
+    end
+
+    F -->|decrement_remaining_deps| E1
+    F --> E2
+    F --> E3
+    F --> E4
+
+    E1 -->|decrement_remaining_deps| T
+    E2 --> T
+    E3 --> T
+    E4 --> T
+
+    style F fill:#90EE90
+    style E1 fill:#90EE90
+    style E2 fill:#90EE90
+    style E3 fill:#FFD700
+    style E4 fill:#FFD700
+    style T fill:#FFB6C1
+```
+
+**What's happening:**
+1. **Step 1 (fetch_subscribers)**: Single task completes, returns 1000 subscribers
+2. **Step 2 (send_emails)**:
+   - `initial_tasks: 1000` creates 1000 parallel tasks
+   - 4 workers process 250 emails each concurrently
+   - Each completion decrements `remaining_tasks` counter
+3. **Step 3 (track_results)**:
+   - Waits for Step 2 (`remaining_deps: 1`)
+   - When Step 2 completes, `remaining_deps` → 0, Step 3 starts
+   - Aggregates results from all 1000 email tasks
 
 ## Why ex_pgflow?
 

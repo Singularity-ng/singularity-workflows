@@ -1,16 +1,26 @@
 name: Publish to Hex.pm
 
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches:
+      - main
 
 jobs:
   publish:
+    # Only run if CI was successful and this is a version tag
+    if: |
+      github.event.workflow_run.conclusion == 'success' &&
+      startsWith(github.event.workflow_run.head_branch, 'v')
+
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.event.workflow_run.head_branch }}
 
     - name: Set up Elixir
       uses: erlef/setup-beam@v1
@@ -28,6 +38,9 @@ jobs:
     - name: Install dependencies
       run: mix deps.get
 
+    - name: Verify tests pass locally
+      run: mix test
+
     - name: Publish to Hex.pm
       run: mix hex.publish --yes
       env:
@@ -36,6 +49,7 @@ jobs:
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v1
       with:
+        tag_name: ${{ github.event.workflow_run.head_branch }}
         body_path: CHANGELOG.md
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

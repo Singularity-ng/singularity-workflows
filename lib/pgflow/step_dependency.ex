@@ -10,6 +10,65 @@ defmodule Pgflow.StepDependency do
   This table enables the complete_task() PostgreSQL function to know exactly
   which steps depend on which other steps, allowing accurate dependency resolution.
 
+  ## Common Dependency Patterns
+
+  ```mermaid
+  graph TB
+      subgraph "Linear Chain"
+          A1[Step A] --> B1[Step B]
+          B1 --> C1[Step C]
+      end
+
+      subgraph "Diamond (Fan-out + Fan-in)"
+          A2[Step A] --> B2[Step B]
+          A2 --> C2[Step C]
+          B2 --> D2[Step D]
+          C2 --> D2
+      end
+
+      subgraph "Fan-out (Parallel Execution)"
+          A3[Step A] --> B3[Step B]
+          A3 --> C3[Step C]
+          A3 --> D3[Step D]
+      end
+
+      subgraph "Fan-in (Merge Point)"
+          A4[Step A] --> D4[Step D]
+          B4[Step B] --> D4
+          C4[Step C] --> D4
+      end
+
+      style A1 fill:#90EE90
+      style A2 fill:#90EE90
+      style A3 fill:#90EE90
+      style D4 fill:#FFB6C1
+  ```
+
+  ## Dependency Resolution Flow
+
+  ```mermaid
+  sequenceDiagram
+      participant Parent as Parent Step
+      participant Deps as StepDependency
+      participant Child as Child Step
+
+      Note over Parent: Task completes
+      Parent->>Parent: mark_completed()
+
+      Parent->>Deps: find_dependents(run_id, "parent_step")
+      activate Deps
+      Note over Deps: Query: WHERE depends_on_step = "parent_step"
+      Deps-->>Parent: ["child_step_1", "child_step_2"]
+      deactivate Deps
+
+      par Notify all dependent steps
+          Parent->>Child: decrement_remaining_deps()
+          Note over Child: remaining_deps: 2 → 1
+      end
+
+      Note over Child: When remaining_deps = 0<br/>status: created → started
+  ```
+
   ## Usage
 
       # Record that "process_payment" depends on "validate_order"

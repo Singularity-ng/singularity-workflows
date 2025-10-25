@@ -215,8 +215,20 @@ defmodule Pgflow.FlowBuilder do
 
   ## Examples
 
-      {:ok, workflows} = FlowBuilder.list_flows(MyApp.Repo)
-      Enum.each(workflows, fn w -> IO.inspect(w["workflow_slug"]) end)
+      iex> {:ok, workflows} = FlowBuilder.list_flows(MyApp.Repo)
+      iex> length(workflows)
+      3
+      iex> Enum.map(workflows, &(&1["workflow_slug"]))
+      ["payment_flow", "user_onboarding", "data_pipeline"]
+
+      # Filter workflows created today
+      iex> {:ok, workflows} = FlowBuilder.list_flows(MyApp.Repo)
+      iex> today = Date.utc_today()
+      iex> recent = Enum.filter(workflows, fn w ->
+      ...>   Date.compare(w["created_at"], today) == :eq
+      ...> end)
+      iex> length(recent)
+      1
   """
   @spec list_flows(module()) :: {:ok, [map()]} | {:error, term()}
   def list_flows(repo) do

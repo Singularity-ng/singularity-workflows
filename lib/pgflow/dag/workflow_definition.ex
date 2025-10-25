@@ -52,6 +52,43 @@ defmodule Pgflow.DAG.WorkflowDefinition do
 
   @doc """
   Parses workflow step definitions into a validated DAG structure.
+
+  ## Examples
+
+      # Sequential workflow
+      defmodule SequentialWorkflow do
+        def __workflow_steps__ do
+          [
+            {:step1, &__MODULE__.step1/1},
+            {:step2, &__MODULE__.step2/1},
+            {:step3, &__MODULE__.step3/1}
+          ]
+        end
+      end
+
+      iex> {:ok, definition} = Pgflow.DAG.WorkflowDefinition.parse(SequentialWorkflow)
+      iex> definition.root_steps
+      [:step1]
+      iex> definition.dependencies[:step2]
+      [:step1]
+
+      # DAG workflow with parallel execution
+      defmodule ParallelWorkflow do
+        def __workflow_steps__ do
+          [
+            {:fetch, &__MODULE__.fetch/1, depends_on: []},
+            {:process_a, &__MODULE__.process_a/1, depends_on: [:fetch]},
+            {:process_b, &__MODULE__.process_b/1, depends_on: [:fetch]},
+            {:merge, &__MODULE__.merge/1, depends_on: [:process_a, :process_b]}
+          ]
+        end
+      end
+
+      iex> {:ok, definition} = Pgflow.DAG.WorkflowDefinition.parse(ParallelWorkflow)
+      iex> definition.root_steps
+      [:fetch]
+      iex> definition.dependencies[:merge]
+      [:process_a, :process_b]
   """
   @spec parse(module()) :: {:ok, t()} | {:error, term()}
   def parse(workflow_module) do
@@ -228,6 +265,15 @@ defmodule Pgflow.DAG.WorkflowDefinition do
 
   @doc """
   Get all steps that depend on the given step (forward dependencies).
+
+  ## Examples
+
+      iex> {:ok, definition} = Pgflow.DAG.WorkflowDefinition.parse(MyWorkflow)
+      iex> Pgflow.DAG.WorkflowDefinition.get_dependents(definition, :fetch)
+      [:process, :validate]
+
+      iex> Pgflow.DAG.WorkflowDefinition.get_dependents(definition, :save)
+      []  # No steps depend on save (it's a terminal step)
   """
   @spec get_dependents(t(), atom()) :: [atom()]
   def get_dependents(%__MODULE__{dependencies: dependencies}, step_name) do

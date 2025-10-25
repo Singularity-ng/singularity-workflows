@@ -5,6 +5,36 @@ defmodule Pgflow.StepTask do
   Tracks individual task executions within a step - the execution layer for DAG workflows.
   Matches pgflow's step_tasks table design.
 
+  ## Task Lifecycle with Retry Logic
+
+  ```mermaid
+  stateDiagram-v2
+      [*] --> queued: Create task
+      queued --> started: claim(worker_id)<br/>attempts_count++
+      started --> completed: mark_completed(output)
+      started --> failed: mark_failed(error)
+      failed --> queued: requeue()<br/>if can_retry?
+      failed --> [*]: attempts >= max_attempts
+      completed --> [*]
+
+      note right of queued
+          status: "queued"
+          claimed_by: nil
+      end note
+
+      note right of started
+          status: "started"
+          claimed_by: worker_id
+          claimed_at: timestamp
+      end note
+
+      note right of failed
+          Retry logic:
+          can_retry? checks
+          attempts < max_attempts
+      end note
+  ```
+
   ## Task vs Step
 
   - A **step** is a logical unit in the workflow (e.g., "process_payment")
@@ -12,13 +42,59 @@ defmodule Pgflow.StepTask do
   - Most steps have 1 task (task_index = 0)
   - Map steps can have multiple tasks (one per array element)
 
-  ## Status Transitions
+  ## Retry Flow Example
 
+  ```mermaid
+  sequenceDiagram
+      participant Q as Task Queue
+      participant W1 as Worker 1
+      participant W2 as Worker 2
+      participant Task
+
+      Note over Task: status=queued<br/>attempts_count=0
+
+      Q->>W1: claim()
+      W1->>Task: claim("worker-1")
+      Note over Task: status=started<br/>attempts_count=1<br/>claimed_by=worker-1
+
+      W1->>Task: Execute...
+      W1--xTask: Network timeout!
+      W1->>Task: mark_failed("timeout")
+      Note over Task: status=failed<br/>can_retry? true
+
+      Task->>Q: requeue()
+      Note over Task: status=queued<br/>claimed_by=nil
+
+      Q->>W2: claim() (retry attempt)
+      W2->>Task: claim("worker-2")
+      Note over Task: status=started<br/>attempts_count=2
+
+      W2->>Task: Execute...
+      W2->>Task: mark_completed(output)
+      Note over Task: status=completed
   ```
-  queued → started (worker claims task)
-  started → completed (execution succeeds)
-  started → failed (execution fails, may retry)
-  failed → queued (retry if attempts_count < max_attempts)
+
+  ## Map Step Parallel Execution
+
+  ```mermaid
+  graph LR
+      subgraph "Map Step: process_items"
+          T0[Task 0<br/>index=0<br/>input: item[0]]
+          T1[Task 1<br/>index=1<br/>input: item[1]]
+          T2[Task 2<br/>index=2<br/>input: item[2]]
+      end
+
+      W1[Worker 1] -.claims.-> T0
+      W2[Worker 2] -.claims.-> T1
+      W3[Worker 3] -.claims.-> T2
+
+      T0 --> R0[Output 0]
+      T1 --> R1[Output 1]
+      T2 --> R2[Output 2]
+
+      style T0 fill:#90EE90
+      style T1 fill:#90EE90
+      style T2 fill:#FFD700
   ```
 
   ## Usage
