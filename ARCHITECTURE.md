@@ -2,29 +2,38 @@
 
 ExPgflow is an Elixir implementation of pgflow's database-driven DAG execution engine. This document explains the internal architecture, design decisions, and how components interact.
 
-## Overview
+## Architecture Overview
 
+```mermaid
+%%{init: {'theme':'dark'}}%%
+graph TB
+    App["📱 Application Layer<br/>(Executor, FlowBuilder, Workflows)"]
+
+    subgraph "Orchestration"
+        DAG["🔄 DAG Layer<br/>(Parsing, Validation, Cycles)"]
+        Exec["⚙️ Execution Layer<br/>(Tasks, State, Tracking)"]
+    end
+
+    subgraph "Persistence"
+        DB["🗄️ PostgreSQL<br/>(Tables, Functions)"]
+        Queue["📬 pgmq<br/>(Task Queue)"]
+    end
+
+    App --> DAG
+    App --> Exec
+    DAG --> DB
+    Exec --> DB
+    Exec --> Queue
+    DB --> Queue
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                         Application Layer                            │
-│  (Pgflow.Executor, Pgflow.FlowBuilder, Workflow implementations)     │
-└────────────────────────────────┬────────────────────────────────────┘
-                                 │
-                    ┌────────────┴────────────┐
-                    │                         │
-            ┌───────▼───────┐      ┌──────────▼──────────┐
-            │   DAG Layer    │      │   Execution Layer   │
-            │  (Parsing &    │      │  (Task execution &  │
-            │  Validation)   │      │  Status tracking)   │
-            └───────┬───────┘      └──────────┬──────────┘
-                    │                         │
-                    └────────────┬────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │   Storage Layer         │
-                    │  (PostgreSQL + pgmq)    │
-                    └─────────────────────────┘
-```
+
+### Layer Stack
+
+ExPgflow is organized into three layers:
+
+1. **Application Layer** - Workflow definitions, user code entry points
+2. **Orchestration Layer** - DAG parsing/validation and task execution coordination
+3. **Persistence Layer** - PostgreSQL database and pgmq message queue
 
 ## Layer 1: DAG (Directed Acyclic Graph)
 
@@ -60,17 +69,34 @@ definition = %{
 
 ### Cycle Detection Algorithm
 
-WorkflowDefinition uses depth-first search (DFS) to detect cycles:
+WorkflowDefinition uses depth-first search (DFS) to detect cycles. The algorithm prevents workflows from creating infinite loops:
 
+```mermaid
+%%{init: {'theme':'dark'}}%%
+graph TB
+    A["Start: For each unvisited node"]
+    B["Mark as VISITING"]
+    C["Recursively visit all dependencies"]
+    D{"Is dependency<br/>VISITING?"}
+    E["🚨 CYCLE DETECTED<br/>(Error)"]
+    F["Mark as VISITED"]
+    G["All nodes visited?"]
+    H["✅ No cycles found<br/>(Valid DAG)"]
+
+    A --> B
+    B --> C
+    C --> D
+    D -->|Yes| E
+    D -->|No| F
+    F --> G
+    G -->|No| A
+    G -->|Yes| H
+
+    style E fill:#d32f2f,color:#fff
+    style H fill:#388e3c,color:#fff
 ```
-1. Build adjacency list from dependencies
-2. For each unvisited node:
-   - Mark as visiting (in progress)
-   - Recursively visit all dependencies
-   - If visiting → cycle dependency found
-   - Mark as visited (complete)
-3. Return cycle path for debugging
-```
+
+This ensures **acyclic** dependency graphs required for safe parallel execution.
 
 ## Layer 2: Execution
 
@@ -106,42 +132,140 @@ The execution layer orchestrates task processing, state management, and completi
 
 ### Execution Flow Diagram
 
+```mermaid
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant User as User Code
+    participant Executor as Executor
+    participant DAG as DAG Layer
+    participant Init as RunInitializer
+    participant DB as PostgreSQL
+    participant Queue as pgmq
+    participant TaskExec as TaskExecutor
+
+    User->>Executor: start_workflow(workflow, input)
+    activate Executor
+
+    Executor->>DAG: parse_definition()
+    DAG->>DAG: detect_cycles()
+    DAG-->>Executor: {:ok, definition}
+
+    Executor->>Init: initialize()
+    activate Init
+
+    Init->>DB: INSERT workflow_runs (status="started")
+    Init->>DB: INSERT step_states (for each step)
+    Init->>DB: INSERT step_dependencies (edges)
+    Init->>DB: INSERT step_tasks (for map steps)
+    Init->>Queue: Enqueue ready steps
+
+    Init-->>Executor: {:ok, run_id}
+    deactivate Init
+
+    Executor-->>User: {:ok, run_id}
+    deactivate Executor
+
+    loop Until workflow complete
+        TaskExec->>Queue: read() - Poll tasks
+        Queue-->>TaskExec: [task_message]
+
+        TaskExec->>DB: Retrieve step definition
+        TaskExec->>TaskExec: Execute step function
+        TaskExec->>DB: UPDATE step_states (status, output)
+
+        TaskExec->>DB: Find dependent steps
+        alt All dependencies satisfied?
+            TaskExec->>Queue: Enqueue dependent steps
+        end
+
+        TaskExec->>Queue: delete() - Acknowledge task
+    end
+
+    TaskExec->>DB: Check if all steps complete
+    alt All complete?
+        TaskExec->>User: on_complete() callback
+    else Any failed?
+        TaskExec->>User: on_failure() callback
+    end
 ```
-Executor.start_workflow()
-    │
-    ├─> Parse workflow definition
-    ├─> Detect cycles in DAG
-    │
-    ├─> RunInitializer.initialize()
-    │   ├─> Create workflow_runs record (status: "started")
-    │   ├─> Create step_states (status: "pending")
-    │   ├─> Create step_dependencies (edges)
-    │   └─> If map steps: create_step_tasks (one per item)
-    │
-    └─> Enqueue initial steps (no dependencies)
 
-Executor.execute_pending_tasks()
-    │
-    ├─> Poll pgmq queue (10 message batch)
-    │
-    ├─> For each task:
-    │   ├─> Dequeue from pgmq
-    │   ├─> Retrieve step info from step_states
-    │   ├─> Call Workflow.execute_command/4
-    │   ├─> Update step_states (status: "done", output)
-    │   ├─> Check dependencies satisfied
-    │   └─> If ready: enqueue dependent steps
-    │
-    └─> Check if all steps done
-        └─> If yes: call Workflow.on_complete()
-            or Workflow.on_failure() if any failed
+**Key Points:**
+
+1. **Initialization Phase** - All steps and dependencies created in a transaction
+2. **Polling Loop** - TaskExecutor continuously polls pgmq for tasks
+3. **Parallel Execution** - Multiple workers can poll the same queue simultaneously
+4. **Dependency Resolution** - Each step completion checks and enqueues dependent steps
+
+### Counter-Based Coordination
+
+ExPgflow uses two counters to track completion:
+
+```mermaid
+%%{init: {'theme':'dark'}}%%
+graph TB
+    subgraph "WorkflowRun"
+        RC["remaining_steps = 3"]
+    end
+
+    subgraph "Step States"
+        S1["Step A<br/>remaining_deps=0<br/>remaining_tasks=1"]
+        S2["Step B<br/>remaining_deps=1<br/>remaining_tasks=1"]
+        S3["Step C<br/>remaining_deps=1<br/>remaining_tasks=1"]
+    end
+
+    subgraph "Execution"
+        T1["Task A completes"]
+        D1["Decrement WorkflowRun.remaining_steps<br/>(3 → 2)"]
+        D2["Decrement Step B.remaining_deps<br/>(1 → 0)"]
+        D3["Step B becomes ready"]
+    end
+
+    RC --> S1
+    S1 --> T1
+    T1 --> D1
+    T1 --> D2
+    D1 -.-> RC
+    D2 -.-> S2
+    D2 --> D3
+    D3 -.-> S2
+
+    style RC fill:#f57f17,color:#fff
+    style S1 fill:#1b5e20,color:#fff
+    style S2 fill:#0d47a1,color:#fff
+    style D3 fill:#2e7d32,color:#fff
 ```
 
-## Layer 3: Storage
+**Why counters?**
+- O(1) completion check (no row counting)
+- Atomic decrements via SQL
+- No race conditions with ACID guarantees
 
-ExPgflow uses PostgreSQL + pgmq for persistent, reliable task coordination.
+### Database Schema Relationships
 
-### Database Schema
+```mermaid
+%%{init: {'theme':'dark'}}%%
+graph TB
+    RUN["📊 workflow_runs<br/>(1 per execution)"]
+    STATES["📝 step_states<br/>(1 per step)"]
+    TASKS["✅ step_tasks<br/>(N per map step)"]
+    DEPS["🔗 step_dependencies<br/>(edges)"]
+    QUEUE["📬 pgmq queue<br/>(task messages)"]
+
+    RUN -->|1:N| STATES
+    RUN -->|1:N| DEPS
+    STATES -->|1:N| TASKS
+    DEPS -->|encodes DAG| STATES
+    STATES -->|create| QUEUE
+    TASKS -->|for| QUEUE
+
+    style RUN fill:#f57f17,color:#fff
+    style STATES fill:#1b5e20,color:#fff
+    style TASKS fill:#0d47a1,color:#fff
+    style DEPS fill:#2e7d32,color:#fff
+    style QUEUE fill:#d32f2f,color:#fff
+```
+
+### Database Tables
 
 **workflow_runs**
 - Tracks workflow execution instances
@@ -207,22 +331,86 @@ ExPgflow uses PostgreSQL + pgmq for persistent, reliable task coordination.
 
 Tasks are coordinated via pgmq's visibility timeout to prevent duplicate execution:
 
-```
-1. Enqueue task message with vt=300 (5 minutes)
-   - Message invisible for 300 seconds
-2. Worker polls pgmq.read()
-   - Returns only visible messages
-3. Worker executes task
-   - If 300s elapses without ack: message reappears (timeout → retry)
-   - Task executor calls pgmq.delete() after success (acknowledge receipt)
-4. Worker deletes message on success
-   - Message no longer reappears
+```mermaid
+%%{init: {'theme':'dark'}}%%
+sequenceDiagram
+    participant Queue as pgmq Queue
+    participant Worker1 as Worker 1
+    participant Worker2 as Worker 2
+    participant DB as PostgreSQL
+
+    Note over Queue: Task message<br/>status=invisible<br/>vt=300s
+
+    Worker1->>Queue: read()
+    Queue->>Worker1: task_message<br/>(status=invisible)
+
+    Note over Worker1: Executing task...<br/>150s elapsed
+
+    alt Worker 1 crashes before 300s
+        Note over Queue: 300s timeout expires
+        Queue->>Queue: Message becomes visible
+
+        Worker2->>Queue: read()
+        Queue->>Worker2: task_message (retry)
+        Worker2->>DB: Execute task
+        Worker2->>Queue: delete()
+    else Worker 1 completes in time
+        Worker1->>DB: Execute task
+        Worker1->>Queue: delete()
+        Note over Queue: Message removed
+        Note over Worker2: Never receives message
+    end
 ```
 
-This ensures:
-- **Exactly-once execution** (in normal conditions)
-- **Automatic retry** if worker crashes
-- **No message loss** if database transaction rolls back
+**Guarantees:**
+
+| Scenario | Behavior |
+|----------|----------|
+| **Normal execution** | Message deleted after success → no retry |
+| **Worker crash** | VT timeout → message reappears → auto-retry |
+| **Slow network** | Task still executes if worker finishes before VT |
+| **Double execution** | Rare but possible if delete() fails → idempotent step functions required |
+
+**Key benefit:** No central coordinator needed! PostgreSQL manages retries.
+
+## Data Flow Diagram
+
+```mermaid
+%%{init: {'theme':'dark'}}%%
+graph LR
+    Input["📥 Workflow Input<br/>(map)"]
+    Parse["🔍 Parse DAG<br/>(JSON → Graph)"]
+    Validate["✓ Validate<br/>(Cycle check)"]
+    Init["⚙️ Initialize<br/>(Create records)"]
+    Queue["📬 Enqueue<br/>(pgmq)"]
+    Poll["🔄 Poll Loop<br/>(read messages)"]
+    Exec["▶️ Execute<br/>(Step function)"]
+    Update["📝 Update State<br/>(counters)"]
+    Check["🔎 Check Ready<br/>(Dependencies)"]
+    Complete["✅ Complete<br/>(Callbacks)"]
+
+    Input --> Parse
+    Parse --> Validate
+    Validate --> Init
+    Init --> Queue
+    Queue --> Poll
+    Poll --> Exec
+    Exec --> Update
+    Update --> Check
+    Check --> Queue
+    Check --> Complete
+
+    style Input fill:#1a237e,color:#fff
+    style Parse fill:#0d47a1,color:#fff
+    style Validate fill:#f57f17,color:#fff
+    style Init fill:#1b5e20,color:#fff
+    style Queue fill:#d32f2f,color:#fff
+    style Poll fill:#0d47a1,color:#fff
+    style Exec fill:#f57f17,color:#fff
+    style Update fill:#1b5e20,color:#fff
+    style Check fill:#2e7d32,color:#fff
+    style Complete fill:#388e3c,color:#fff
+```
 
 ## Key Design Decisions
 
@@ -263,6 +451,56 @@ This ensures:
 - Step A can run as soon as all dependencies complete
 - Multiple independent steps run in parallel automatically
 
+## Module Relationships
+
+```mermaid
+%%{init: {'theme':'dark'}}%%
+graph TB
+    App["📱 Application<br/>(Workflow implementations)"]
+    Executor["⚙️ Executor<br/>(Main entry point)"]
+    FlowBuilder["🔨 FlowBuilder<br/>(Dynamic workflow creation)"]
+
+    subgraph "DAG Layer"
+        WD["WorkflowDefinition<br/>(Parse, validate)"]
+        DWL["DynamicWorkflowLoader<br/>(Load from DB)"]
+    end
+
+    subgraph "Execution Layer"
+        RI["RunInitializer<br/>(Create run records)"]
+        TE["TaskExecutor<br/>(Poll & execute)"]
+        RT["Repo<br/>(Ecto operations)"]
+    end
+
+    subgraph "Schemas"
+        WR["WorkflowRun"]
+        SS["StepState"]
+        ST["StepTask"]
+        SD["StepDependency"]
+    end
+
+    App -->|calls| Executor
+    Executor -->|parses| WD
+    Executor -->|initializes via| RI
+    Executor -->|executes via| TE
+    FlowBuilder -->|creates| WD
+    FlowBuilder -->|uses| RT
+
+    RI -->|creates| WR
+    RI -->|creates| SS
+    RI -->|creates| SD
+    TE -->|reads/updates| SS
+    TE -->|reads/updates| ST
+    TE -->|creates| ST
+
+    style App fill:#1a237e,color:#fff
+    style Executor fill:#0d47a1,color:#fff
+    style FlowBuilder fill:#0d47a1,color:#fff
+    style WD fill:#f57f17,color:#fff
+    style DWL fill:#f57f17,color:#fff
+    style RI fill:#1b5e20,color:#fff
+    style TE fill:#1b5e20,color:#fff
+```
+
 ## Workflow Behavior Callbacks
 
 Workflows implement `Pgflow.Executor.Workflow` behavior with callbacks:
@@ -296,26 +534,79 @@ Workflows implement `Pgflow.Executor.Workflow` behavior with callbacks:
 
 ## Comparison with pgflow (Python)
 
-ExPgflow matches pgflow's core architecture with Elixir idioms:
+ExPgflow is a faithful Elixir port of pgflow with identical execution semantics:
+
+```mermaid
+%%{init: {'theme':'dark'}}%%
+graph TB
+    subgraph "pgflow (Python)"
+        PL["Python<br/>asyncio runtime"]
+        PDAG["JSON parsing<br/>DFS validation"]
+        PQ["pgmq-python<br/>driver"]
+        PDB["PostgreSQL<br/>same schema"]
+    end
+
+    subgraph "ExPgflow (Elixir)"
+        EL["Elixir<br/>BEAM VM"]
+        EDAG["Module parsing<br/>DFS validation"]
+        EQ["Postgrex<br/>driver"]
+        EDB["PostgreSQL<br/>same schema"]
+    end
+
+    subgraph "Identical Guarantees"
+        G1["✓ Atomicity"]
+        G2["✓ DAG validation"]
+        G3["✓ Visibility timeout"]
+        G4["✓ Parallel execution"]
+    end
+
+    PL -.->|different runtime| EL
+    PDAG -->|same algorithm| EDAG
+    PQ -->|same pgmq protocol| EQ
+    PDB -->|identical schema| EDB
+
+    EDAG --> G1
+    EQ --> G2
+    EQ --> G3
+    EL --> G4
+
+    style PL fill:#1a237e,color:#fff
+    style PDAG fill:#f57f17,color:#fff
+    style PQ fill:#d32f2f,color:#fff
+    style EL fill:#0d47a1,color:#fff
+    style EDAG fill:#f57f17,color:#fff
+    style EQ fill:#d32f2f,color:#fff
+```
+
+### Feature Comparison
 
 | Feature | pgflow | ExPgflow |
 |---------|--------|----------|
-| DAG Parsing | JSON parsing | JSON + Elixir pattern matching |
-| Cycle Detection | DFS | DFS (same algorithm) |
-| Task Queue | pgmq (Python driver) | pgmq (Postgrex driver) |
-| Parallel Execution | DAG dependencies | DAG dependencies |
-| Map Steps | Per-item tasks | per-item step_tasks |
-| Status Tracking | Database tables | PostgreSQL schema |
-| Completion Check | Row counting | Remaining counter |
-| Visibility Timeout | pgmq VT | pgmq VT |
-| Error Handling | try/except blocks | {:ok, result} | {:error, reason} |
+| **DAG Parsing** | JSON parsing | Module parsing + JSON |
+| **Cycle Detection** | DFS | DFS (identical algorithm) |
+| **Task Queue** | pgmq (Python) | pgmq (Postgrex) |
+| **Parallel Execution** | DAG edges | DAG edges |
+| **Map Steps** | Per-item tasks | Per-item step_tasks |
+| **Completion Check** | Row counting | Counter decrements (faster) |
+| **Visibility Timeout** | pgmq VT | pgmq VT (same) |
+| **Error Handling** | try/except | {:ok, result} \| {:error, reason} |
+| **Type Safety** | Type hints | Dialyzer/specs |
 
-**Key differences**:
-1. **Language**: Python (pgflow) vs Elixir (ExPgflow)
-2. **Concurrency**: asyncio (pgflow) vs BEAM (ExPgflow)
-3. **Type Safety**: Type hints (pgflow) vs Dialyzer (ExPgflow)
+### Why ExPgflow Over pgflow?
 
-Both achieve the same execution guarantees through identical database patterns.
+✅ **BEAM advantages:**
+- Lightweight processes (millions possible)
+- Fault tolerance & supervision trees
+- Hot code reloading
+- Better for high-concurrency workloads
+- Native Erlang distribution
+
+✅ **Elixir advantages:**
+- Pattern matching for workflow logic
+- Pipe operator for composition
+- Better error handling primitives
+- Module-based workflows (static type checking)
+- Seamless OTP integration
 
 ## Performance Characteristics
 
@@ -367,6 +658,64 @@ See `test/` directory for examples.
 
 See [GETTING_STARTED.md](GETTING_STARTED.md) for deployment steps.
 
+## Implementation Details
+
+### Critical Paths (Hot Code)
+
+These functions execute on every task and should be optimized:
+
+1. **TaskExecutor.execute_task/1** - Main polling loop
+   - Reads from pgmq
+   - Executes step function
+   - Updates counters
+   - Called every 100ms by default
+
+2. **complete_task SQL function** - Database coordination
+   - Decrements counters atomically
+   - Checks dependencies
+   - Must be ACID compliant
+   - No N+1 queries allowed
+
+3. **StepDependency.find_dependents/3** - Dependency resolution
+   - Called after each task
+   - Returns list of ready steps
+   - Should use database index on (run_id, depends_on_step)
+
+### Idempotency Requirements
+
+Your step functions MUST be idempotent because:
+- Visibility timeout can cause double execution
+- Network failures may retry without your knowledge
+- Worker crashes may reprocess same task
+
+**Idempotent pattern:**
+```elixir
+def process_payment(run_id, task_index, input) do
+  payment_id = "#{run_id}-#{task_index}"  # Deterministic ID
+
+  case MyApp.Payments.get_or_create(payment_id, input) do
+    {:exists, result} -> {:ok, result}        # Already done, return result
+    {:created, result} -> {:ok, result}       # First time, return result
+    {:error, reason} -> {:error, reason}      # Failure, will retry
+  end
+end
+```
+
+### Error Recovery Strategy
+
+| Scenario | Recovery |
+|----------|----------|
+| **Network timeout** | VT expires → retry via pgmq |
+| **Step function error** | Return {:error, reason} → escalate to workflow |
+| **Database down** | VT expires → retry when database back |
+| **Worker crash** | VT expires → any other worker picks up task |
+| **All workers down** | Tasks accumulate in pgmq queue |
+
+**Workflow failure modes:**
+1. Task fails too many times (max_attempts exceeded) → Mark run as failed
+2. Step function exception → Catch and return {:error, reason}
+3. Missing dependency → Prevent with cycle detection
+
 ## Debugging
 
 ### Check Workflow Status
@@ -378,19 +727,88 @@ IO.inspect(run, pretty: true)
 ### View Pending Tasks
 ```elixir
 alias Pgflow.StepState
-Pgflow.Repo.all(from s in StepState, where: s.workflow_run_id == ^run_id)
+Pgflow.Repo.all(from s in StepState, where: s.run_id == ^run_id)
+```
+
+### Check Step Dependencies
+```elixir
+alias Pgflow.StepDependency
+deps = Pgflow.Repo.all(
+  from d in StepDependency,
+  where: d.run_id == ^run_id
+)
+Enum.each(deps, &IO.inspect/1)
 ```
 
 ### View pgmq Queue Depth
 ```sql
-SELECT COUNT(*) FROM pgmq.q_pgflow_queue;
+-- Check queue stats
+SELECT COUNT(*) as total,
+       SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) as unread
+FROM pgmq.q_pgflow_queue;
+
+-- View oldest unread message
+SELECT * FROM pgmq.q_pgflow_queue
+WHERE read_at IS NULL
+ORDER BY msg_id ASC LIMIT 1;
 ```
 
 ### Enable Debug Logging
 ```elixir
 # config/config.exs
 config :logger, level: :debug
+
+# Filter specific modules
+config :logger,
+  backends: [
+    {LoggerFileBackend, [:pgflow_log]},
+    {LoggerTerminalBackend, [:console]}
+  ]
+
+config :logger, :pgflow_log,
+  path: "log/pgflow.log",
+  format: "$date $time [$level] $metadata$message\n"
 ```
+
+### Database Query Examples
+```sql
+-- Find slow tasks
+SELECT
+  step_slug,
+  COUNT(*) as task_count,
+  AVG(EXTRACT(EPOCH FROM (completed_at - started_at))) as avg_duration_s
+FROM step_tasks
+WHERE status = 'completed'
+GROUP BY step_slug
+ORDER BY avg_duration_s DESC;
+
+-- Find stuck workflows (still "started" after 1 hour)
+SELECT
+  id, workflow_slug, started_at,
+  (NOW() - started_at) as duration
+FROM workflow_runs
+WHERE status = 'started'
+  AND started_at < NOW() - INTERVAL '1 hour'
+ORDER BY started_at ASC;
+
+-- Check dependency graph (should be acyclic)
+WITH RECURSIVE deps AS (
+  SELECT run_id, step_slug, depends_on_step, ARRAY[step_slug] as path
+  FROM step_dependencies
+  WHERE run_id = $1
+
+  UNION ALL
+
+  SELECT d.run_id, d.step_slug, d.depends_on_step,
+         deps.path || d.step_slug
+  FROM step_dependencies d
+  JOIN deps ON d.depends_on_step = deps.step_slug
+  WHERE d.run_id = $1 AND NOT d.step_slug = ANY(deps.path)
+)
+SELECT DISTINCT step_slug, depends_on_step, path
+FROM deps
+WHERE run_id = $1
+ORDER BY step_slug, depends_on_step;
 
 ## License
 
