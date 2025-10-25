@@ -31,11 +31,12 @@
 
           shellHook = ''
             # Clear PATH and rebuild with nix packages FIRST (before system paths)
-            export PATH="${beamPackages.erlang}/bin:${beamPackages.elixir}/bin:${postgresqlWithExtensions}/bin:${pkgs.nodejs}/bin:${pkgs.yarn}/bin:$PATH"
+            export PATH="${beamPackages.erlang}/bin:${beamPackages.elixir}/bin:${postgresqlWithExtensions}/bin:${pkgs.nodejs}/bin:${pkgs.yarn}/bin:${pkgs.gh}/bin:$PATH"
             export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ex_pgflow"
             echo "ShellHook PATH: $PATH"
             echo "Elixir location: $(which elixir 2>/dev/null || echo 'not found')"
             echo "Mix location: $(which mix 2>/dev/null || echo 'not found')"
+            echo "GitHub CLI location: $(which gh 2>/dev/null || echo 'not found')"
 
             # Install moon if not present
             if ! command -v moon >/dev/null 2>&1; then
