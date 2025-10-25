@@ -1,16 +1,19 @@
 defmodule Pgflow.Repo.Migrations.EnableUuidV7Support do
+  @moduledoc """
+  Placeholder migration for UUID v7 support.
+
+  Originally tried to enable uuid-ossp extension, but:
+  - PostgreSQL 18+ has uuidv7() built-in (no extension needed)
+  - PostgreSQL 13+ has gen_random_uuid() built-in (no extension needed)
+
+  See migration 20251025210000_add_smart_uuid_generation.exs for the
+  actual UUID v7 implementation with automatic fallback.
+  """
   use Ecto.Migration
 
   def change do
-    # Enable UUID extension for enhanced UUID support
-    execute "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
-
-    # Note: uuid_generate_v7() requires PostgreSQL 18+
-    # For now, we'll use gen_random_uuid() which is available in PostgreSQL 17
-    # These tables already have primary keys defined, so we only update defaults
-    # No need to specify primary_key: true again (it's already set)
-
-    # No changes needed - tables already have UUID primary keys with gen_random_uuid()
-    # This migration just ensures the uuid-ossp extension exists
+    # No-op migration
+    # UUID functions are now built-in to PostgreSQL 13+ and 18+
+    # Smart UUID generation added in later migration
   end
 end

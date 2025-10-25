@@ -7,8 +7,8 @@ config :ex_pgflow,
 config :ex_pgflow, Pgflow.Repo,
   adapter: Ecto.Adapters.Postgres,
   database: "ex_pgflow",
-  username: "postgres",
-  password: "postgres",
+  username: System.get_env("USER") || "mhugo",
+  password: "",
   hostname: "localhost",
   port: 5432
 

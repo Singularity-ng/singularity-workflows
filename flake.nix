@@ -11,6 +11,8 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         beamPackages = pkgs.beam.packages.erlang;
+        # Use Elixir 1.19.x (latest)
+        elixir = beamPackages.elixir_1_19;
 
         # PostgreSQL with pgmq extension
         # Note: Using PostgreSQL 18 (uuid_generate_v7() is built-in, no extension needed)
@@ -22,7 +24,7 @@
         devShells.default = pkgs.mkShell {
           buildInputs = [
             beamPackages.erlang
-            beamPackages.elixir
+            elixir  # Elixir 1.19.x
             postgresqlWithExtensions
             pkgs.nodejs  # For moon installation
             pkgs.yarn    # Alternative package manager
@@ -31,7 +33,7 @@
 
           shellHook = ''
             # Clear PATH and rebuild with nix packages FIRST (before system paths)
-            export PATH="${beamPackages.erlang}/bin:${beamPackages.elixir}/bin:${postgresqlWithExtensions}/bin:${pkgs.nodejs}/bin:${pkgs.yarn}/bin:${pkgs.gh}/bin:$PATH"
+            export PATH="${beamPackages.erlang}/bin:${elixir}/bin:${postgresqlWithExtensions}/bin:${pkgs.nodejs}/bin:${pkgs.yarn}/bin:${pkgs.gh}/bin:$PATH"
             export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ex_pgflow"
             echo "ShellHook PATH: $PATH"
             echo "Elixir location: $(which elixir 2>/dev/null || echo 'not found')"
@@ -71,6 +73,12 @@
 
               # Wait for PostgreSQL to be ready
               sleep 3
+
+              # Create postgres role if it doesn't exist
+              if ! psql -p 5432 -d postgres -tAc "SELECT 1 FROM pg_roles WHERE rolname='postgres'" | grep -q 1; then
+                echo "Creating postgres role..."
+                psql -p 5432 -d postgres -c "CREATE ROLE postgres WITH SUPERUSER LOGIN PASSWORD 'postgres';"
+              fi
 
               # Create database and install extensions if they don't exist
               if ! psql -lqt | cut -d \| -f 1 | grep -qw ex_pgflow; then
