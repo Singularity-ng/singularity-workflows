@@ -42,6 +42,8 @@ jobs:
     - name: Create test database
       run: |
         psql -c "CREATE DATABASE ex_pgflow;"
+      env:
+        PGSERVICE: postgres
 
     - name: Run migrations
       run: |
@@ -49,6 +51,7 @@ jobs:
         mix ecto.migrate
       env:
         MIX_ENV: test
+        PGSERVICE: postgres
 
     - name: Run tests
       run: |
@@ -56,3 +59,4 @@ jobs:
         mix test
       env:
         MIX_ENV: test
+        PGSERVICE: postgres
