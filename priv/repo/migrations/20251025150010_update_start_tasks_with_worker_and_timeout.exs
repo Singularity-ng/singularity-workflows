@@ -115,12 +115,12 @@ defmodule Pgflow.Repo.Migrations.UpdateStartTasksWithWorkerAndTimeout do
       -- Aggregate dependency outputs per task
       aggregated_deps AS (
         SELECT
-          do.run_id,
-          do.step_slug,
-          jsonb_object_agg(do.dep_step_slug, do.dep_output) AS deps_output
-        FROM dependency_outputs do
-        WHERE do.dep_output IS NOT NULL
-        GROUP BY do.run_id, do.step_slug
+          dep_out.run_id,
+          dep_out.step_slug,
+          jsonb_object_agg(dep_out.dep_step_slug, dep_out.dep_output) AS deps_output
+        FROM dependency_outputs dep_out
+        WHERE dep_out.dep_output IS NOT NULL
+        GROUP BY dep_out.run_id, dep_out.step_slug
       )
       SELECT
         t.run_id,

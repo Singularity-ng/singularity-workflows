@@ -2,6 +2,9 @@ defmodule Pgflow.Repo.Migrations.CreatePgmqQueueFunctions do
   use Ecto.Migration
 
   def up do
+    # Create pgflow schema for custom functions
+    execute("CREATE SCHEMA IF NOT EXISTS pgflow;")
+
     # Create read_with_poll function (backport from pgmq 1.5.0)
     # This matches pgflow's implementation for task polling
     execute("""
