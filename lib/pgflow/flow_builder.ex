@@ -87,27 +87,34 @@ defmodule Pgflow.FlowBuilder do
   """
   @spec create_flow(String.t(), module(), keyword()) :: {:ok, map()} | {:error, term()}
   def create_flow(workflow_slug, repo, opts \\ []) do
-    max_attempts = Keyword.get(opts, :max_attempts, 3)
-    timeout = Keyword.get(opts, :timeout, 30)
+    # Validate inputs
+    with :ok <- validate_workflow_slug(workflow_slug),
+         :ok <- validate_max_attempts(opts),
+         :ok <- validate_timeout(opts) do
+      max_attempts = Keyword.get(opts, :max_attempts, 3)
+      timeout = Keyword.get(opts, :timeout, 60)
 
-    case repo.query(
-           """
-           SELECT * FROM pgflow.create_flow($1::text, $2::integer, $3::integer)
-           """,
-           [workflow_slug, max_attempts, timeout]
-         ) do
+      case repo.query(
+             """
+             SELECT * FROM pgflow.create_flow($1::text, $2::integer, $3::integer)
+             """,
+             [workflow_slug, max_attempts, timeout]
+           ) do
       {:ok, %{columns: columns, rows: [row]}} ->
         workflow = Enum.zip(columns, row) |> Map.new()
         {:ok, workflow}
 
-      {:ok, %{rows: []}} ->
-        {:error, :workflow_creation_failed}
+        {:ok, %{rows: []}} ->
+          {:error, :workflow_creation_failed}
 
-      {:error, %Postgrex.Error{} = error} ->
-        {:error, parse_postgres_error(error)}
+        {:error, %Postgrex.Error{} = error} ->
+          {:error, parse_postgres_error(error)}
 
-      {:error, reason} ->
-        {:error, reason}
+        {:error, reason} ->
+          {:error, reason}
+      end
+    else
+      {:error, _reason} = error -> error
     end
   end
 
@@ -152,12 +159,19 @@ defmodule Pgflow.FlowBuilder do
   @spec add_step(String.t(), String.t(), [String.t()], module(), keyword()) ::
           {:ok, map()} | {:error, term()}
   def add_step(workflow_slug, step_slug, depends_on, repo, opts \\ []) do
-    step_type = Keyword.get(opts, :step_type, "single")
-    initial_tasks = Keyword.get(opts, :initial_tasks)
-    max_attempts = Keyword.get(opts, :max_attempts)
-    timeout = Keyword.get(opts, :timeout)
+    # Validate inputs
+    with :ok <- validate_workflow_slug(workflow_slug),
+         :ok <- validate_step_slug(step_slug),
+         :ok <- validate_step_type(opts),
+         :ok <- validate_initial_tasks(opts),
+         :ok <- validate_max_attempts(opts),
+         :ok <- validate_timeout(opts) do
+      step_type = Keyword.get(opts, :step_type, "single")
+      initial_tasks = Keyword.get(opts, :initial_tasks)
+      max_attempts = Keyword.get(opts, :max_attempts)
+      timeout = Keyword.get(opts, :timeout)
 
-    case repo.query(
+      case repo.query(
            """
            SELECT * FROM pgflow.add_step(
              $1::text, $2::text, $3::text[], $4::text,
@@ -170,14 +184,17 @@ defmodule Pgflow.FlowBuilder do
         step = Enum.zip(columns, row) |> Map.new()
         {:ok, step}
 
-      {:ok, %{rows: []}} ->
-        {:error, :step_creation_failed}
+        {:ok, %{rows: []}} ->
+          {:error, :step_creation_failed}
 
-      {:error, %Postgrex.Error{} = error} ->
-        {:error, parse_postgres_error(error)}
+        {:error, %Postgrex.Error{} = error} ->
+          {:error, parse_postgres_error(error)}
 
-      {:error, reason} ->
-        {:error, reason}
+        {:error, reason} ->
+          {:error, reason}
+      end
+    else
+      {:error, _reason} = error -> error
     end
   end
 
@@ -283,6 +300,80 @@ defmodule Pgflow.FlowBuilder do
   end
 
   # Private helpers
+
+  # Input validation functions
+
+  defp validate_workflow_slug(slug) when is_binary(slug) do
+    cond do
+      String.length(slug) == 0 ->
+        {:error, :workflow_slug_cannot_be_empty}
+
+      String.length(slug) > 255 ->
+        {:error, :workflow_slug_too_long}
+
+      not Regex.match?(~r/^[a-zA-Z_][a-zA-Z0-9_]*$/, slug) ->
+        {:error, :workflow_slug_invalid_format}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp validate_workflow_slug(_), do: {:error, :workflow_slug_must_be_string}
+
+  defp validate_step_slug(slug) when is_binary(slug) do
+    cond do
+      String.length(slug) == 0 ->
+        {:error, :step_slug_cannot_be_empty}
+
+      String.length(slug) > 255 ->
+        {:error, :step_slug_too_long}
+
+      not Regex.match?(~r/^[a-zA-Z_][a-zA-Z0-9_]*$/, slug) ->
+        {:error, :step_slug_invalid_format}
+
+      true ->
+        :ok
+    end
+  end
+
+  defp validate_step_slug(_), do: {:error, :step_slug_must_be_string}
+
+  defp validate_step_type(opts) do
+    case Keyword.get(opts, :step_type) do
+      nil -> :ok
+      "single" -> :ok
+      "map" -> :ok
+      _other -> {:error, :step_type_must_be_single_or_map}
+    end
+  end
+
+  defp validate_initial_tasks(opts) do
+    case Keyword.get(opts, :initial_tasks) do
+      nil -> :ok
+      n when is_integer(n) and n > 0 -> :ok
+      n when is_integer(n) -> {:error, :initial_tasks_must_be_positive}
+      _other -> {:error, :initial_tasks_must_be_integer}
+    end
+  end
+
+  defp validate_max_attempts(opts) do
+    case Keyword.get(opts, :max_attempts) do
+      nil -> :ok
+      n when is_integer(n) and n >= 0 -> :ok
+      n when is_integer(n) -> {:error, :max_attempts_must_be_non_negative}
+      _other -> {:error, :max_attempts_must_be_integer}
+    end
+  end
+
+  defp validate_timeout(opts) do
+    case Keyword.get(opts, :timeout) do
+      nil -> :ok
+      n when is_integer(n) and n > 0 -> :ok
+      n when is_integer(n) -> {:error, :timeout_must_be_positive}
+      _other -> {:error, :timeout_must_be_integer}
+    end
+  end
 
   defp parse_postgres_error(%Postgrex.Error{postgres: %{message: message}}) do
     cond do
