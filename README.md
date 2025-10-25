@@ -227,50 +227,85 @@ graph TB
 
 **Scanning to Searchable Documents**
 
-```
-Raw PDF Upload
-    ↓
-[Validate PDF] → [Extract Text] → [OCR Images] → [Parse Entities]
-                     ↓               ↓             ↓
-                (parallel)      (parallel)    (parallel, map step)
-                20 pages        20 pages      extract: names, dates, etc.
-    ↓
-[Generate Embeddings] → [Store in Vector DB] → [Index Search]
-        ↓                      ↓                    ↓
-    (parallel)           (atomic insert)      (Elasticsearch)
-  Text chunks          Transactional safety
-    ↓
-Document Available for Search
+```mermaid
+graph TB
+    A["📄 Raw PDF<br/>Upload"]
+
+    A --> B["✓ Validate PDF"]
+    B --> C["📝 Extract Text<br/>(parallel)<br/>20 pages"]
+    B --> D["🖼️ OCR Images<br/>(parallel)<br/>20 pages"]
+
+    C --> E["🏷️ Parse Entities<br/>(parallel)<br/>names, dates, etc."]
+    D --> E
+
+    E --> F["🔗 Generate<br/>Embeddings<br/>(parallel)"]
+    F --> G["💾 Store in<br/>Vector DB<br/>(atomic)"]
+    G --> H["🔍 Index Search<br/>(Elasticsearch)"]
+
+    H --> I["✅ Document<br/>Available for<br/>Search"]
+
+    style A fill:#E3F2FD
+    style B fill:#BBDEFB
+    style C fill:#FFE082
+    style D fill:#FFE082
+    style E fill:#FFE082
+    style F fill:#FFE082
+    style G fill:#C8E6C9
+    style H fill:#C8E6C9
+    style I fill:#A5D6A7
 ```
 
 ### 7. Real-Time Analytics & Stream Processing
 
 **Streaming Data Aggregation**
 
-```
-Event Stream (Kafka/NATS/etc)
-    ↓
-[Buffer & Batch] → [Aggregate] → [Transform] → [Store Metrics]
-                      ↓
-              (every 100 events)
-                      ↓
-              Parallel processing of
-              compute-intensive aggregations
+```mermaid
+graph LR
+    A["📡 Event Stream<br/>(Kafka/NATS/etc)"]
+    B["📦 Buffer & Batch<br/>(every 100 events)"]
+    C["📊 Aggregate<br/>(parallel)"]
+    D["🔄 Transform<br/>(parallel)"]
+    E["💾 Store Metrics"]
+
+    A --> B
+    B --> C
+    C --> D
+    D --> E
+
+    style A fill:#E3F2FD
+    style B fill:#BBDEFB
+    style C fill:#FFE082
+    style D fill:#FFE082
+    style E fill:#A5D6A7
 ```
 
 ### 8. Recommendation System Pipelines
 
 **Cold-Start Recommendation Generation**
 
-```
-New User Signup
-    ↓
-[Fetch User Profile] → [Get Historical Items] → [Find Similar Users]
-                              ↓                        ↓
-                          (parallel)              (parallel, GPU)
-                    10k user history items       vector similarity search
-    ↓
-[Aggregate Candidates] → [Score & Rank] → [Diversify] → Return Top 10
+```mermaid
+graph TB
+    A["👤 New User<br/>Signup"]
+
+    A --> B["👥 Fetch User<br/>Profile"]
+    B --> C1["📚 Get Historical<br/>Items<br/>(parallel)<br/>10k items"]
+    B --> C2["🔎 Find Similar<br/>Users<br/>(parallel, GPU)<br/>vector search"]
+
+    C1 --> D["🔄 Aggregate<br/>Candidates"]
+    C2 --> D
+
+    D --> E["⭐ Score<br/>& Rank"]
+    E --> F["🎯 Diversify"]
+    F --> G["✅ Return Top 10"]
+
+    style A fill:#E3F2FD
+    style B fill:#BBDEFB
+    style C1 fill:#FFE082
+    style C2 fill:#FFE082
+    style D fill:#BBDEFB
+    style E fill:#BBDEFB
+    style F fill:#BBDEFB
+    style G fill:#A5D6A7
 ```
 
 ## When to Use ex_pgflow
