@@ -6,10 +6,25 @@ Thank you for your interest in ExPgflow! This document provides guidelines for c
 
 ### Prerequisites
 - Elixir 1.14+
-- PostgreSQL 14+
+- PostgreSQL 14+ with pgmq extension
 - Mix (comes with Elixir)
 
 ### Development Setup
+
+**Quick Setup (Recommended):**
+
+```bash
+# Run the interactive setup script
+./scripts/setup-dev-environment.sh
+
+# Or use a specific method
+./scripts/setup-dev-environment.sh --method nix    # Recommended
+./scripts/setup-dev-environment.sh --method docker
+```
+
+**For detailed setup instructions, see [SETUP.md](SETUP.md)**
+
+**Manual Setup:**
 
 1. Clone the repository:
 ```bash
@@ -24,11 +39,8 @@ mix deps.get
 
 3. Set up the database:
 ```bash
-# Create test database
-createdb ex_pgflow_test
-
-# Configure connection
-export DATABASE_URL="postgres://localhost/ex_pgflow_test"
+# Create database
+mix ecto.create
 
 # Run migrations
 mix ecto.migrate
@@ -37,6 +49,20 @@ mix ecto.migrate
 4. Run tests to verify setup:
 ```bash
 mix test
+```
+
+**Using Make:**
+
+```bash
+# One command setup
+make quickstart
+
+# Or step by step
+make setup      # Interactive setup
+make deps       # Install dependencies
+make db-create  # Create database
+make db-migrate # Run migrations
+make test       # Run tests
 ```
 
 ## Development Workflow

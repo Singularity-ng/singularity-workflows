@@ -261,36 +261,54 @@ graph TB
 
 ## Quick Start
 
-### 1. Install PostgreSQL Extensions
+### One-Command Setup
 
-**Option A: Use Docker with pgmq pre-installed (recommended for development)**
+The fastest way to get started:
+
 ```bash
-# PostgreSQL 18 (latest) with pgmq - RECOMMENDED
+./scripts/setup-dev-environment.sh
+```
+
+This interactive script will guide you through setting up your development environment.
+
+For detailed setup instructions, see **[SETUP.md](SETUP.md)**.
+
+### Manual Setup
+
+If you prefer to set up manually:
+
+**1. Install PostgreSQL with pgmq**
+
+```bash
+# Option A: Docker (recommended)
 docker run -d --name pgmq-postgres \
   -e POSTGRES_PASSWORD=postgres \
   -p 5432:5432 \
   ghcr.io/pgmq/pg18-pgmq:latest
 
-# Or use our custom image (PostgreSQL 18 + pgmq, optimized for ex_pgflow)
-docker run -d --name pgmq-postgres \
-  -e POSTGRES_PASSWORD=postgres \
-  -p 5432:5432 \
-  ghcr.io/mikkihugo/ex_pgflow-postgres:pg18-pgmq
+# Option B: Use Nix dev shell (includes everything)
+nix develop
 ```
 
-**Option B: Manual installation**
+**2. Install dependencies and setup database**
+
 ```bash
-# Install pgmq extension (required)
+mix deps.get
+mix ecto.create
 mix ecto.migrate
 ```
 
-The migrations will automatically install:
-- `pgmq` extension (v1.4.4+)
-- All pgflow SQL functions and tables
+**3. Verify setup**
 
-### 2. Define a Workflow
+```bash
+mix test
+```
 
-**Option A: Static Workflow (Elixir Module)**
+For more setup options (Nix, Docker, native), see **[SETUP.md](SETUP.md)**
+
+## Define Your First Workflow
+
+### Option A: Static Workflow (Elixir Module)
 
 ```elixir
 defmodule MyApp.EmailCampaign do
@@ -329,7 +347,7 @@ end
 )
 ```
 
-**Option B: Dynamic Workflow (AI/LLM-Generated)**
+### Option B: Dynamic Workflow (AI/LLM-Generated)
 
 ```elixir
 alias Pgflow.FlowBuilder
@@ -563,6 +581,7 @@ Different tools serve different coordination patterns:
 
 ## Documentation
 
+- **[SETUP.md](SETUP.md)** - Complete development environment setup guide
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** - Installation and first workflow
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical deep dive and design decisions
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guidelines
