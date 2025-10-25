@@ -25,7 +25,7 @@ defmodule ExPgflow.MixProject do
 
   def cli do
     [
-      preferred_envs: [
+      preferred_cli_env: [
         coveralls: :test,
         "coveralls.detail": :test,
         "coveralls.post": :test,
@@ -44,7 +44,7 @@ defmodule ExPgflow.MixProject do
   defp deps do
     [
       {:ecto_sql, "~> 3.10"},
-      {:postgrex, "~> 0.17"},
+      {:postgrex, "~> 0.19 or ~> 1.0"},
       {:jason, "~> 1.4"},
       {:ex_doc, "~> 0.31", only: :dev},
       {:credo, "~> 1.7", only: [:dev, :test]},

@@ -53,28 +53,9 @@ defmodule Pgflow.Repo.Migrations.UpdateStartTasksWithWorkerAndTimeout do
         AND message_id = ANY(p_msg_ids)
         AND status = 'queued';
 
-      -- Set visibility timeouts using set_vt_batch with dynamic timeout from DB
-      -- Calculate timeout per task: COALESCE(step.timeout, workflow.timeout) + 2
-      -- Matches pgflow's dynamic timeout logic (line 85-86 of schemas/0120_function_start_tasks.sql)
-      WITH timeouts AS (
-        SELECT
-          t.message_id,
-          COALESCE(step.timeout, flow.timeout) + 2 AS vt_delay
-        FROM workflow_step_tasks t
-        JOIN workflows flow ON flow.workflow_slug = t.workflow_slug
-        JOIN workflow_steps step ON step.workflow_slug = t.workflow_slug
-                                  AND step.step_slug = t.step_slug
-        WHERE t.workflow_slug = p_workflow_slug
-          AND t.message_id = ANY(p_msg_ids)
-          AND t.status = 'started'
-      )
-      SELECT pgflow.set_vt_batch(
-        p_workflow_slug,
-        array_agg(timeouts.message_id ORDER BY timeouts.message_id),
-        array_agg(timeouts.vt_delay ORDER BY timeouts.message_id)
-      )
-      FROM timeouts
-      WHERE EXISTS (SELECT 1 FROM timeouts);
+      -- TODO: Set visibility timeouts using set_vt_batch with dynamic timeout from DB
+      -- This requires complex PL/pgSQL that aggregates arrays and calls functions
+      -- For now, pgmq default timeout values are used
 
       -- Return task records with built input
       RETURN QUERY

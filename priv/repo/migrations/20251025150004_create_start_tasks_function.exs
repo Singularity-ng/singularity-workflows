@@ -38,7 +38,7 @@ defmodule Pgflow.Repo.Migrations.CreateStartTasksFunction do
         claimed_by = p_worker_id
       WHERE
         workflow_slug = p_workflow_slug
-        AND message_id = ANY(p_msg_ids)
+        AND workflow_step_tasks.message_id = ANY(p_msg_ids)
         AND status = 'queued';
 
       -- Return task records with built input
