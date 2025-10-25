@@ -15,16 +15,21 @@ defmodule Pgflow.SqlCase do
   ExUnit.Callbacks.skip/1 to skip the test at runtime.
   """
   def connect_or_skip do
-    db_url = System.get_env("DATABASE_URL") || System.get_env("POSTGRES_URL") || "postgresql://postgres:postgres@localhost:5432/ex_pgflow"
+    db_url =
+      System.get_env("DATABASE_URL") || System.get_env("POSTGRES_URL") ||
+        "postgresql://postgres:postgres@localhost:5432/ex_pgflow"
 
-    case Postgrex.start_link(url: db_url) do
+    case Postgrex.start_link(hostname: "localhost", port: 5432, username: "postgres", password: "postgres", database: "ex_pgflow") do
       {:ok, conn} ->
         case Postgrex.query(conn, "SELECT to_regclass('public.workflow_runs')", []) do
           {:ok, res} ->
+            IO.puts("DEBUG: query result rows = #{inspect(res.rows)}")
             case res.rows do
               [[nil]] ->
                 Process.exit(conn, :normal)
-                {:skip, "Database does not have pgflow tables; run migrations before enabling SQL tests"}
+
+                {:skip,
+                 "Database does not have pgflow tables; run migrations before enabling SQL tests"}
 
               _ ->
                 # register a stop on exit and return connection
@@ -39,7 +44,7 @@ defmodule Pgflow.SqlCase do
         end
 
       {:error, reason} ->
-        {:skip, "Cannot connect to database (#{inspect(reason)}); set DATABASE_URL to run SQL tests"}
+        {:skip, "Database connection failed: #{inspect(reason)}"}
     end
   end
 end

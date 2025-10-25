@@ -44,14 +44,14 @@ defmodule Pgflow.StepDependency do
   @foreign_key_type :binary_id
 
   schema "workflow_step_dependencies" do
-    field :run_id, :binary_id
-    field :step_slug, :string
-    field :depends_on_step, :string
+    field(:run_id, :binary_id)
+    field(:step_slug, :string)
+    field(:depends_on_step, :string)
 
     # Only inserted_at, no updated_at (immutable records)
     timestamps(type: :utc_datetime_usec, updated_at: false)
 
-    belongs_to :run, Pgflow.WorkflowRun, define_field: false, foreign_key: :run_id
+    belongs_to(:run, Pgflow.WorkflowRun, define_field: false, foreign_key: :run_id)
   end
 
   @doc """
@@ -69,31 +69,61 @@ defmodule Pgflow.StepDependency do
 
   @doc """
   Finds all steps that depend on the given step.
+
+  Can be called with either a repo module or a function.
+
+  Examples:
+
+      # With repo module
+      find_dependents(run_id, "fetch", MyApp.Repo)
+
+      # With function
+      find_dependents(run_id, "fetch", fn query -> MyApp.Repo.all(query) end)
   """
-  @spec find_dependents(Ecto.UUID.t(), String.t(), module()) :: [String.t()]
-  def find_dependents(run_id, step_slug, repo) do
+  @spec find_dependents(Ecto.UUID.t(), String.t(), module() | function()) :: [String.t()]
+  def find_dependents(run_id, step_slug, repo_or_func) do
     import Ecto.Query
 
-    from(d in __MODULE__,
-      where: d.run_id == ^run_id,
-      where: d.depends_on_step == ^step_slug,
-      select: d.step_slug
-    )
-    |> repo.all()
+    query =
+      from(d in __MODULE__,
+        where: d.run_id == ^run_id,
+        where: d.depends_on_step == ^step_slug,
+        select: d.step_slug
+      )
+
+    case repo_or_func do
+      repo when is_atom(repo) -> repo.all(query)
+      func when is_function(func) -> func.(query)
+    end
   end
 
   @doc """
   Finds all dependencies of the given step.
+
+  Can be called with either a repo module or a function.
+
+  Examples:
+
+      # With repo module
+      find_dependencies(run_id, "save", MyApp.Repo)
+
+      # With function
+      find_dependencies(run_id, "save", fn query -> MyApp.Repo.all(query) end)
   """
-  @spec find_dependencies(Ecto.UUID.t(), String.t(), module()) :: [String.t()]
-  def find_dependencies(run_id, step_slug, repo) do
+  @spec find_dependencies(Ecto.UUID.t(), String.t(), module() | function()) :: [String.t()]
+  def find_dependencies(run_id, step_slug, repo_or_func) do
     import Ecto.Query
 
-    from(d in __MODULE__,
-      where: d.run_id == ^run_id,
-      where: d.step_slug == ^step_slug,
-      select: d.depends_on_step
-    )
-    |> repo.all()
+    query =
+      from(d in __MODULE__,
+        where: d.run_id == ^run_id,
+        where: d.step_slug == ^step_slug,
+        select: d.depends_on_step
+      )
+
+    case repo_or_func do
+      repo when is_atom(repo) -> repo.all(query)
+      func when is_function(func) -> func.(query)
+    end
   end
 end

@@ -33,9 +33,9 @@ ex_pgflow-*.tar
 *.swo
 *~
 
-# Environment files
-.env
-.env.local
+# Database files
+.postgres_data/
+.postgres.log
 
 # Dialyzer
 /priv/plts/*.plt
@@ -46,3 +46,7 @@ ex_pgflow-*.tar
 
 # Test coverage
 *.coverdata
+
+# Database files
+.postgres_data/
+.postgres.log

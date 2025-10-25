@@ -69,25 +69,25 @@ defmodule Pgflow.StepState do
   @foreign_key_type :binary_id
 
   schema "workflow_step_states" do
-    field :run_id, :binary_id
-    field :step_slug, :string
-    field :workflow_slug, :string
+    field(:run_id, :binary_id)
+    field(:step_slug, :string)
+    field(:workflow_slug, :string)
 
-    field :status, :string, default: "created"
-    field :remaining_deps, :integer, default: 0
-    field :remaining_tasks, :integer
-    field :initial_tasks, :integer
+    field(:status, :string, default: "created")
+    field(:remaining_deps, :integer, default: 0)
+    field(:remaining_tasks, :integer)
+    field(:initial_tasks, :integer)
 
-    field :error_message, :string
-    field :attempts_count, :integer, default: 0
+    field(:error_message, :string)
+    field(:attempts_count, :integer, default: 0)
 
     timestamps(type: :utc_datetime_usec)
-    field :started_at, :utc_datetime_usec
-    field :completed_at, :utc_datetime_usec
-    field :failed_at, :utc_datetime_usec
+    field(:started_at, :utc_datetime_usec)
+    field(:completed_at, :utc_datetime_usec)
+    field(:failed_at, :utc_datetime_usec)
 
-    belongs_to :run, Pgflow.WorkflowRun, define_field: false, foreign_key: :run_id
-    has_many :tasks, Pgflow.StepTask, foreign_key: :step_slug, references: :step_slug
+    belongs_to(:run, Pgflow.WorkflowRun, define_field: false, foreign_key: :run_id)
+    has_many(:tasks, Pgflow.StepTask, foreign_key: :step_slug, references: :step_slug)
   end
 
   @doc """

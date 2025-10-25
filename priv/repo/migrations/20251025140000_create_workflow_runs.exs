@@ -8,13 +8,14 @@ defmodule Pgflow.Repo.Migrations.CreateWorkflowRuns do
 
   def up do
     create table(:workflow_runs, primary_key: false) do
-      add :id, :binary_id, primary_key: true
+      add :id, :uuid, primary_key: true, default: fragment("uuid_generate_v7()")
       add :workflow_slug, :string, null: false
       add :status, :string, null: false, default: "started"
       add :input, :map, null: false, default: %{}
       add :output, :map
       add :remaining_steps, :integer, null: false, default: 0
       add :error_message, :text
+      add :created_at, :utc_datetime_usec, null: false, default: fragment("now()")
 
       timestamps(type: :utc_datetime_usec)
       add :started_at, :utc_datetime_usec

@@ -100,9 +100,9 @@ defmodule Pgflow.FlowBuilder do
              """,
              [workflow_slug, max_attempts, timeout]
            ) do
-      {:ok, %{columns: columns, rows: [row]}} ->
-        workflow = Enum.zip(columns, row) |> Map.new()
-        {:ok, workflow}
+        {:ok, %{columns: columns, rows: [row]}} ->
+          workflow = Enum.zip(columns, row) |> Map.new()
+          {:ok, workflow}
 
         {:ok, %{rows: []}} ->
           {:error, :workflow_creation_failed}
@@ -172,17 +172,25 @@ defmodule Pgflow.FlowBuilder do
       timeout = Keyword.get(opts, :timeout)
 
       case repo.query(
-           """
-           SELECT * FROM pgflow.add_step(
-             $1::text, $2::text, $3::text[], $4::text,
-             $5::integer, $6::integer, $7::integer
-           )
-           """,
-           [workflow_slug, step_slug, depends_on, step_type, initial_tasks, max_attempts, timeout]
-         ) do
-      {:ok, %{columns: columns, rows: [row]}} ->
-        step = Enum.zip(columns, row) |> Map.new()
-        {:ok, step}
+             """
+             SELECT * FROM pgflow.add_step(
+               $1::text, $2::text, $3::text[], $4::text,
+               $5::integer, $6::integer, $7::integer
+             )
+             """,
+             [
+               workflow_slug,
+               step_slug,
+               depends_on,
+               step_type,
+               initial_tasks,
+               max_attempts,
+               timeout
+             ]
+           ) do
+        {:ok, %{columns: columns, rows: [row]}} ->
+          step = Enum.zip(columns, row) |> Map.new()
+          {:ok, step}
 
         {:ok, %{rows: []}} ->
           {:error, :step_creation_failed}
@@ -263,7 +271,8 @@ defmodule Pgflow.FlowBuilder do
 
     with {:ok, %{rows: [workflow_row], columns: workflow_columns}} <-
            repo.query(workflow_query, [workflow_slug]),
-         {:ok, %{rows: step_rows, columns: step_columns}} <- repo.query(steps_query, [workflow_slug]) do
+         {:ok, %{rows: step_rows, columns: step_columns}} <-
+           repo.query(steps_query, [workflow_slug]) do
       workflow = Enum.zip(workflow_columns, workflow_row) |> Map.new()
       steps = Enum.map(step_rows, fn row -> Enum.zip(step_columns, row) |> Map.new() end)
 

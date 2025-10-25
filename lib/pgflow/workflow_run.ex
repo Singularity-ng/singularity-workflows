@@ -59,20 +59,20 @@ defmodule Pgflow.WorkflowRun do
   @foreign_key_type :binary_id
 
   schema "workflow_runs" do
-    field :workflow_slug, :string
-    field :status, :string, default: "started"
-    field :input, :map, default: %{}
-    field :output, :map
-    field :remaining_steps, :integer, default: 0
-    field :error_message, :string
+    field(:workflow_slug, :string)
+    field(:status, :string, default: "started")
+    field(:input, :map, default: %{})
+    field(:output, :map)
+    field(:remaining_steps, :integer, default: 0)
+    field(:error_message, :string)
 
     timestamps(type: :utc_datetime_usec)
-    field :started_at, :utc_datetime_usec
-    field :completed_at, :utc_datetime_usec
-    field :failed_at, :utc_datetime_usec
+    field(:started_at, :utc_datetime_usec)
+    field(:completed_at, :utc_datetime_usec)
+    field(:failed_at, :utc_datetime_usec)
 
-    has_many :step_states, Pgflow.StepState, foreign_key: :run_id
-    has_many :step_tasks, Pgflow.StepTask, foreign_key: :run_id
+    has_many(:step_states, Pgflow.StepState, foreign_key: :run_id)
+    has_many(:step_tasks, Pgflow.StepTask, foreign_key: :run_id)
   end
 
   @doc """
@@ -92,7 +92,7 @@ defmodule Pgflow.WorkflowRun do
       :completed_at,
       :failed_at
     ])
-    |> validate_required([:workflow_slug, :status, :input])
+    |> validate_required([:workflow_slug])
     |> validate_inclusion(:status, ["started", "completed", "failed"])
     |> validate_number(:remaining_steps, greater_than_or_equal_to: 0)
   end

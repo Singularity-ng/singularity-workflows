@@ -102,7 +102,9 @@ defmodule Pgflow.DAG.DynamicWorkflowLoader do
         # Build map: step_slug => [dep_slugs]
         deps =
           rows
-          |> Enum.group_by(fn [step_slug, _dep] -> step_slug end, fn [_step, dep_slug] -> dep_slug end)
+          |> Enum.group_by(fn [step_slug, _dep] -> step_slug end, fn [_step, dep_slug] ->
+            dep_slug
+          end)
 
         {:ok, deps}
 
@@ -132,7 +134,11 @@ defmodule Pgflow.DAG.DynamicWorkflowLoader do
         max_attempts = step["max_attempts"] || 3
         timeout = step["timeout"]
 
-        {step_slug_atom, step_fn, depends_on: depends_on, initial_tasks: initial_tasks, max_attempts: max_attempts, timeout: timeout}
+        {step_slug_atom, step_fn,
+         depends_on: depends_on,
+         initial_tasks: initial_tasks,
+         max_attempts: max_attempts,
+         timeout: timeout}
       end)
 
     # Parse using WorkflowDefinition.parse_steps

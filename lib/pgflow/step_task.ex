@@ -72,29 +72,34 @@ defmodule Pgflow.StepTask do
   @foreign_key_type :binary_id
 
   schema "workflow_step_tasks" do
-    field :run_id, :binary_id
-    field :step_slug, :string
-    field :task_index, :integer, default: 0
-    field :workflow_slug, :string
+    field(:run_id, :binary_id)
+    field(:step_slug, :string)
+    field(:task_index, :integer, default: 0)
+    field(:workflow_slug, :string)
 
-    field :status, :string, default: "queued"
-    field :input, :map
-    field :output, :map
+    field(:status, :string, default: "queued")
+    field(:input, :map)
+    field(:output, :map)
 
-    field :error_message, :string
-    field :attempts_count, :integer, default: 0
-    field :max_attempts, :integer, default: 3
+    field(:error_message, :string)
+    field(:attempts_count, :integer, default: 0)
+    field(:max_attempts, :integer, default: 3)
 
-    field :claimed_by, :string
-    field :claimed_at, :utc_datetime_usec
+    field(:claimed_by, :string)
+    field(:claimed_at, :utc_datetime_usec)
 
     timestamps(type: :utc_datetime_usec)
-    field :started_at, :utc_datetime_usec
-    field :completed_at, :utc_datetime_usec
-    field :failed_at, :utc_datetime_usec
+    field(:started_at, :utc_datetime_usec)
+    field(:completed_at, :utc_datetime_usec)
+    field(:failed_at, :utc_datetime_usec)
 
-    belongs_to :run, Pgflow.WorkflowRun, define_field: false, foreign_key: :run_id
-    belongs_to :step_state, Pgflow.StepState, define_field: false, foreign_key: :step_slug, references: :step_slug
+    belongs_to(:run, Pgflow.WorkflowRun, define_field: false, foreign_key: :run_id)
+
+    belongs_to(:step_state, Pgflow.StepState,
+      define_field: false,
+      foreign_key: :step_slug,
+      references: :step_slug
+    )
   end
 
   @doc """

@@ -82,7 +82,8 @@ defmodule Pgflow.DAG.WorkflowDefinition do
   @spec parse_steps(list()) :: {:ok, map()} | {:error, term()}
   def parse_steps(steps_list) do
     {steps, dependencies, metadata, _prev_step} =
-      Enum.reduce(steps_list, {%{}, %{}, %{}, nil}, fn step_def, {steps_acc, deps_acc, meta_acc, prev_step} ->
+      Enum.reduce(steps_list, {%{}, %{}, %{}, nil}, fn step_def,
+                                                       {steps_acc, deps_acc, meta_acc, prev_step} ->
         case step_def do
           # New syntax: {step_name, step_fn, depends_on: [deps], ...}
           {step_name, step_fn, opts} when is_atom(step_name) and is_function(step_fn) ->

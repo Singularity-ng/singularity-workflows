@@ -16,7 +16,17 @@ defmodule ExPgflow.MixProject do
       dialyzer: [
         plt_add_apps: [:mix, :ex_unit],
         plt_local_path: "priv/plts"
-      ]
+      ],
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test,
+        "coveralls.json": :test
+      ],
+      # Aliases for TDD workflow
+      aliases: aliases()
     ]
   end
 
@@ -35,7 +45,9 @@ defmodule ExPgflow.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test]},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.13", only: [:dev, :test], runtime: false},
-      {:mix_test_watch, "~> 1.1", only: :dev}
+      {:excoveralls, "~> 0.18", only: :test},
+      {:mix_test_watch, "~> 1.1", only: :dev},
+      {:mox, "~> 1.1", only: :test}  # For London-style TDD mocks
     ]
   end
 
@@ -64,12 +76,29 @@ defmodule ExPgflow.MixProject do
     [
       extras: [
         "README.md",
-        "ARCHITECTURE.md",
-        "GETTING_STARTED.md"
+        "DYNAMIC_WORKFLOWS_GUIDE.md",
+        "PGFLOW_REFERENCE.md",
+        "SECURITY_AUDIT.md"
       ],
       main: "readme",
       source_ref: "main",
       formatters: ["html"]
+    ]
+  end
+
+  defp aliases do
+    [
+      test: ["test"],
+      "test.watch": ["test.watch"],
+      "test.coverage": ["coveralls"],
+      "test.coverage.html": ["coveralls.html"],
+      quality: [
+        "format --check-formatted",
+        "credo --strict",
+        "dialyzer",
+        "sobelow --exit-on-warning",
+        "deps.audit"
+      ]
     ]
   end
 end
