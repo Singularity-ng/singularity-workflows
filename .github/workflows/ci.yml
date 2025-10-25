@@ -47,7 +47,7 @@ jobs:
     - name: Install pgmq extension
       run: |
         sudo apt-get update
-        sudo apt-get install -y postgresql-server-dev-15 build-essential git
+        sudo apt-get install -y postgresql-server-dev-16 build-essential git
         git clone https://github.com/tembo-io/pgmq.git /tmp/pgmq
         cd /tmp/pgmq
         make
