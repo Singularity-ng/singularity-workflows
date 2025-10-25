@@ -50,3 +50,4 @@ ex_pgflow-*.tar
 # Database files
 .postgres_data/
 .postgres.log
+.direnv/
