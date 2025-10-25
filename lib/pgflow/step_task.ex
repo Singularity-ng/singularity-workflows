@@ -8,6 +8,7 @@ defmodule Pgflow.StepTask do
   ## Task Lifecycle with Retry Logic
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   stateDiagram-v2
       [*] --> queued: Create task
       queued --> started: claim(worker_id)<br/>attempts_count++
@@ -45,6 +46,7 @@ defmodule Pgflow.StepTask do
   ## Retry Flow Example
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   sequenceDiagram
       participant Q as Task Queue
       participant W1 as Worker 1
@@ -77,6 +79,7 @@ defmodule Pgflow.StepTask do
   ## Map Step Parallel Execution
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   graph LR
       subgraph "Map Step: process_items"
           T0[Task 0<br/>index=0<br/>input: item[0]]
@@ -91,10 +94,6 @@ defmodule Pgflow.StepTask do
       T0 --> R0[Output 0]
       T1 --> R1[Output 1]
       T2 --> R2[Output 2]
-
-      style T0 fill:#90EE90
-      style T1 fill:#90EE90
-      style T2 fill:#FFD700
   ```
 
   ## Usage

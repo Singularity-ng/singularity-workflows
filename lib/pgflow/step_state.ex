@@ -8,6 +8,7 @@ defmodule Pgflow.StepState do
   ## Counter-Based Coordination Flow
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   stateDiagram-v2
       [*] --> created: Initialize step
       created --> created: remaining_deps > 0<br/>(wait for dependencies)
@@ -42,6 +43,7 @@ defmodule Pgflow.StepState do
   ## DAG Execution Example
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   graph TB
       subgraph "Step A (completed)"
           A[Step A<br/>status: completed<br/>remaining_deps: 0<br/>remaining_tasks: 0]
@@ -57,15 +59,12 @@ defmodule Pgflow.StepState do
 
       A -->|decrements<br/>remaining_deps| B
       B -->|will decrement<br/>remaining_deps| C
-
-      style A fill:#90EE90
-      style B fill:#FFD700
-      style C fill:#FFB6C1
   ```
 
   ## Parallel Step Coordination
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   sequenceDiagram
       participant A as Step A (parent)
       participant B as Step B (child 1)

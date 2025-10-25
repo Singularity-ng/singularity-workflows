@@ -13,6 +13,7 @@ defmodule Pgflow.StepDependency do
   ## Common Dependency Patterns
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   graph TB
       subgraph "Linear Chain"
           A1[Step A] --> B1[Step B]
@@ -37,16 +38,12 @@ defmodule Pgflow.StepDependency do
           B4[Step B] --> D4
           C4[Step C] --> D4
       end
-
-      style A1 fill:#90EE90
-      style A2 fill:#90EE90
-      style A3 fill:#90EE90
-      style D4 fill:#FFB6C1
   ```
 
   ## Dependency Resolution Flow
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   sequenceDiagram
       participant Parent as Parent Step
       participant Deps as StepDependency

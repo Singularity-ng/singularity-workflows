@@ -8,6 +8,7 @@ defmodule Pgflow.WorkflowRun do
   ## State Transition Diagram
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   stateDiagram-v2
       [*] --> started: Create run
       started --> completed: remaining_steps = 0
@@ -43,6 +44,7 @@ defmodule Pgflow.WorkflowRun do
   ## Lifecycle Example
 
   ```mermaid
+  %%{init: {'theme':'dark'}}%%
   sequenceDiagram
       participant Client
       participant Run as WorkflowRun
