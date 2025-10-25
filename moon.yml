@@ -1,0 +1,90 @@
+# https://moonrepo.dev/schemas/project.json
+$schema: '../../.moon/cache/schemas/project.json'
+
+type: 'library'
+language: 'elixir'
+project:
+  name: '@singularity/ex_pgflow'
+  description: 'Elixir implementation of pgflow - PostgreSQL-native workflow orchestration'
+  channel: '#external'
+  owner: 'singularity'
+  maintainers: ['mikkihugo']
+
+tasks:
+  # Core Elixir tasks
+  deps:
+    command: 'mix deps.get'
+    inputs:
+      - 'mix.exs'
+      - 'mix.lock'
+    outputs:
+      - 'deps/'
+
+  compile:
+    command: 'mix compile'
+    deps:
+      - 'deps'
+    inputs:
+      - 'lib/**/*.{ex,exs}'
+      - 'config/**/*.{ex,exs}'
+    outputs:
+      - '_build/'
+
+  test:
+    command: 'mix test'
+    deps:
+      - 'compile'
+    inputs:
+      - 'test/**/*.{ex,exs}'
+      - 'lib/**/*.{ex,exs}'
+    options:
+      runInCI: true
+
+  # Quality tasks
+  format:
+    command: 'mix format'
+    inputs:
+      - 'lib/**/*.{ex,exs}'
+      - 'test/**/*.{ex,exs}'
+      - 'config/**/*.{ex,exs}'
+
+  credo:
+    command: 'mix credo --strict'
+    deps:
+      - 'compile'
+    options:
+      runInCI: true
+
+  dialyzer:
+    command: 'mix dialyzer'
+    deps:
+      - 'compile'
+    options:
+      runInCI: true
+
+  # Documentation
+  docs:
+    command: 'mix docs'
+    deps:
+      - 'compile'
+    outputs:
+      - 'doc/'
+
+  # Database tasks (for testing)
+  db_setup:
+    command: 'mix ecto.setup'
+    local: true
+
+  db_test:
+    command: 'MIX_ENV=test mix ecto.setup'
+    local: true
+
+  # Release tasks
+  hex_publish:
+    command: 'mix hex.publish'
+    local: true
+    options:
+      interactive: true
+
+# This project can be published independently to Hex.pm
+# and used by external Elixir applications
