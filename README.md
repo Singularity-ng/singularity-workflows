@@ -1,6 +1,6 @@
 # ex_pgflow
 
-**Elixir implementation of [pgflow](https://pgflow.dev) - Postgres-based workflow orchestration with 100% feature parity**
+**Database-driven workflow orchestration for the BEAM, following the [pgflow](https://pgflow.dev) SQL coordination pattern**
 
 [![Hex.pm](https://img.shields.io/hexpm/v/ex_pgflow.svg)](https://hex.pm/packages/ex_pgflow)
 [![Hex Downloads](https://img.shields.io/hexpm/dt/ex_pgflow.svg)](https://hex.pm/packages/ex_pgflow)
@@ -13,7 +13,9 @@
 
 ## What is ex_pgflow?
 
-ex_pgflow brings the power of [pgflow](https://pgflow.dev) to the Elixir ecosystem. It provides reliable, scalable workflow orchestration using only PostgreSQL - no external dependencies, no message brokers, no complex infrastructure.
+An Elixir implementation of [pgflow](https://pgflow.dev)'s database-driven workflow orchestration, designed for reliable distributed systems on the BEAM. Builds on PostgreSQL's ACID guarantees and pgmq extension for coordination, following OTP principles for fault tolerance.
+
+This work extends the pgflow pattern into the Elixir ecosystem, leveraging the BEAM's strengths in concurrency and supervision while maintaining compatibility with the pgflow SQL layer.
 
 ## Architecture Overview
 
@@ -103,33 +105,27 @@ sequenceDiagram
     deactivate Executor
 ```
 
-### Key Features
+### Technical Characteristics
 
-✅ **100% Feature Parity with pgflow.dev**
-- All SQL core functions (`start_tasks()`, `complete_task()`, `fail_task()`, etc.)
-- pgmq integration (v1.4.4+) for task coordination
-- DAG execution with automatic dependency resolution
-- Map steps for parallel array processing
-- Dynamic workflows via `create_flow()`/`add_step()` API
-- Static workflows via Elixir modules
+**SQL Layer Compatibility**
+- Implements pgflow's SQL functions (`start_tasks()`, `complete_task()`, `fail_task()`)
+- Compatible with pgmq 1.4.4+ for task coordination
+- Counter-based DAG execution with dependency resolution
+- Map steps for parallel processing across array elements
+- Dynamic workflow creation via SQL schema
+- Static workflow definition via Elixir modules
 
-✅ **Zero Infrastructure**
-- No Redis, RabbitMQ, or external services required
-- Just PostgreSQL (with pgmq extension)
-- Perfect for serverless, edge computing, or minimal deployments
+**BEAM Integration**
+- Process-based concurrency model (lightweight processes per task)
+- OTP supervision for fault isolation and recovery
+- Ecto for PostgreSQL interactions and schema management
+- Pattern matching for error handling and state transitions
 
-✅ **Production-Ready Quality**
-- Zero security vulnerabilities (Sobelow strictest scan)
-- Zero type errors (Dialyzer with `--warnings-as-errors`)
-- Comprehensive test coverage
-- Complete documentation
-
-✅ **Elixir Superpowers**
-- BEAM concurrency (millions of processes)
-- OTP fault tolerance with supervisor trees
-- Ecto integration for powerful queries
-- Hot code reloading
-- Pattern matching for elegant error handling
+**Quality Assurance**
+- Static analysis via Dialyzer with strict warnings
+- Security scanning via Sobelow
+- Test coverage on core coordination logic
+- Documentation generated from source
 
 ## Installation
 
@@ -296,41 +292,41 @@ graph LR
    - When Step 2 completes, `remaining_deps` → 0, Step 3 starts
    - Aggregates results from all 1000 email tasks
 
-## Why ex_pgflow?
+## Technical Context
 
-### vs pgflow (TypeScript)
+### Relationship to pgflow (TypeScript)
 
-| Feature | pgflow | ex_pgflow |
-|---------|--------|-----------|
-| Language | TypeScript | Elixir |
-| Runtime | Deno/Node.js | BEAM/Erlang |
-| Concurrency | Event loop | Millions of processes |
-| Fault Tolerance | Edge Function restart | OTP supervisor trees |
-| Type Safety | TypeScript | Dialyzer + @spec |
-| Database | PostgreSQL + pgmq | PostgreSQL + pgmq |
-| **Performance** | Good | **Excellent** (BEAM concurrency) |
-| **Fault Tolerance** | Basic | **Advanced** (OTP) |
+This implementation follows pgflow's SQL-based coordination model while adapting to the BEAM's process model:
 
-### vs Oban/BullMQ/Sidekiq
+| Aspect | pgflow | ex_pgflow |
+|--------|--------|-----------|
+| Runtime | Deno/Node.js | BEAM (Erlang VM) |
+| Concurrency | Event loop + async/await | Process-based (preemptive scheduling) |
+| Fault Model | Function restart | OTP supervision trees |
+| Type System | TypeScript static typing | Dialyzer gradual typing + @spec |
+| SQL Layer | Direct implementation | Same SQL functions, Ecto integration |
 
-| Feature | ex_pgflow | Oban | BullMQ | Sidekiq |
-|---------|-----------|------|--------|---------|
-| External Dependencies | None (just Postgres) | None | Redis | Redis |
-| DAG Workflows | ✅ Native | ⚠️ Manual | ⚠️ Complex | ❌ |
-| Parallel Map Steps | ✅ Built-in | ⚠️ Manual | ⚠️ Manual | ❌ |
-| Dynamic Workflows | ✅ create_flow() API | ❌ | ❌ | ❌ |
-| Dependency Resolution | ✅ Automatic | ⚠️ Manual | ⚠️ Manual | ❌ |
-| Language | Elixir | Elixir | JavaScript | Ruby |
+Both share the pgmq-based coordination layer. The primary difference is runtime characteristics: JavaScript's single-threaded event loop versus BEAM's preemptive process scheduler.
 
-**ex_pgflow excels at:**
-- Complex multi-step workflows with dependencies
-- Parallel processing of large datasets (map steps)
-- AI/LLM agent workflows (dynamic creation)
-- Data pipelines with cascading failures
+### Relationship to Other Job Systems
 
-**Use Oban if:**
-- You only need simple background jobs
-- No workflow orchestration required
+Different tools serve different coordination patterns:
+
+| System | Coordination Model | Dependencies | Primary Use Case |
+|--------|-------------------|--------------|------------------|
+| ex_pgflow | DAG-based (counter coordination) | PostgreSQL | Multi-step workflows with dependencies |
+| Oban | Queue-based | PostgreSQL | Independent background jobs |
+| BullMQ | Queue-based | Redis | Node.js job processing |
+| Sidekiq | Queue-based | Redis | Ruby background processing |
+
+**When to use ex_pgflow:**
+- Workflows require dependency coordination (step B waits for step A)
+- Parallel map/reduce operations over datasets
+- Dynamic workflow generation (AI agents, user-defined pipelines)
+
+**When to use Oban:**
+- Independent jobs with no inter-job dependencies
+- Standard Elixir job queue requirements
 
 ## Documentation
 
@@ -349,6 +345,21 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## Acknowledgments
 
-- **[pgflow](https://pgflow.dev)** by [pgflow team](https://github.com/pgflow/pgflow) - Original TypeScript implementation
-- **[pgmq](https://github.com/tembo-io/pgmq)** by Tembo - PostgreSQL message queue extension
-- Built with ❤️ using [Elixir](https://elixir-lang.org/) and the [BEAM](https://www.erlang.org/)
+This work stands on the shoulders of significant prior contributions:
+
+**Core Technologies:**
+- **[Erlang/OTP](https://www.erlang.org/)** - The foundation. Developed at Ericsson for telecommunications systems, now maintained by the OTP team. The BEAM VM's process model, supervision, and fault tolerance principles are central to this implementation.
+- **[Elixir](https://elixir-lang.org/)** - José Valim and the Elixir core team. Provides the ergonomic interface to OTP patterns and metaprogramming capabilities used here.
+- **[PostgreSQL](https://www.postgresql.org/)** - The PostgreSQL Global Development Group. The ACID guarantees and extensibility (pgmq) enable the coordination model.
+
+**Direct Dependencies:**
+- **[pgflow](https://pgflow.dev)** - The pgflow team's original implementation established the SQL-based coordination pattern and counter-based DAG execution. This is a faithful port of their design to the BEAM.
+- **[pgmq](https://github.com/tembo-io/pgmq)** - Tembo's PostgreSQL message queue extension. Provides the task queueing layer with atomic operations.
+- **[Ecto](https://github.com/elixir-ecto/ecto)** - Michał Muskała, José Valim, and contributors. The database integration layer.
+
+**Inspiration:**
+- Ericsson's telecom systems for the original OTP principles
+- The Erlang community's decades of distributed systems experience
+- The pgflow team's insight that PostgreSQL can serve as workflow coordinator
+
+Thank you to all maintainers and contributors of these projects.
