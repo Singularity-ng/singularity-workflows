@@ -24,26 +24,26 @@ The release process has multiple protection layers to ensure quality:
 - Only maintainers can create `v*` tags
 - Prevents accidental releases
 
-## Pre-Release Checklist
+## Pre-Release Checks
 
-Before creating a release tag, run the release checklist script:
+All checks are **automated in the CI workflow**:
 
+✅ **Automatic Checks** (run on every tag):
+- Tests pass
+- Code is formatted
+- Credo analysis passes
+- Dialyzer type checking passes
+- Sobelow security audit passes
+- Dependencies are audited
+- Documentation builds successfully
+- CHANGELOG.md is updated (for release tags)
+- mix.exs version matches the tag (for release tags)
+
+**Local Verification (Optional)**:
+If you want to verify before pushing a tag:
 ```bash
 ./scripts/release-checklist.sh
 ```
-
-This script verifies:
-- ✅ On main branch
-- ✅ Working directory is clean
-- ✅ Up to date with origin/main
-- ✅ All tests pass
-- ✅ Code is formatted
-- ✅ Credo analysis passes
-- ✅ Dialyzer type checking passes
-- ✅ Sobelow security audit passes
-- ✅ Documentation builds successfully
-- ✅ CHANGELOG.md is updated
-- ✅ mix.exs version matches release
 
 ## Release Steps
 
@@ -54,7 +54,7 @@ Update version in `mix.exs`:
 def project do
   [
     app: :ex_pgflow,
-    version: "0.1.0",  # Update this
+    version: "0.1.0",  # Must match tag below
     ...
   ]
 end
@@ -62,38 +62,51 @@ end
 
 ### 2. Update CHANGELOG
 
-Add release notes to `CHANGELOG.md` under the appropriate version header.
+Add release notes to `CHANGELOG.md` with this header:
+```markdown
+## [0.1.0] - 2025-10-25
+
+### Added
+- Initial release of ex_pgflow
+```
 
 ### 3. Commit Changes
 
 ```bash
-git add -A
+git add mix.exs CHANGELOG.md
 git commit -m "Prepare v0.1.0 release"
 git push origin main
 ```
 
-### 4. Run Release Checklist
+### 4. Create and Push Tag
 
-```bash
-./scripts/release-checklist.sh
-```
-
-Only proceed if all checks pass!
-
-### 5. Create and Push Tag
-
+This is the **only** command you need:
 ```bash
 git tag -a v0.1.0 -m "Release v0.1.0"
 git push origin v0.1.0
 ```
 
-### 6. Monitor CI/CD
+**Important:**
+- Tag MUST start with `v` (e.g., `v0.1.0`)
+- Version in tag MUST match `version:` in `mix.exs`
+- CHANGELOG MUST have `## [0.1.0]` header
 
-1. Go to [GitHub Actions](https://github.com/mikkihugo/ex_pgflow/actions)
-2. Watch the CI workflow run on your tag
-3. If CI passes, the Publish workflow will automatically:
-   - Publish to Hex.pm
-   - Create a GitHub Release
+### 5. Workflow Runs Automatically
+
+1. Push triggers CI workflow
+2. CI runs all checks:
+   - ✅ Tests pass (PostgreSQL 18 + Elixir 1.19)
+   - ✅ Dialyzer type checking
+   - ✅ Security audit
+   - ✅ CHANGELOG verification
+   - ✅ Version match verification
+3. If CI passes → waits for approval
+4. Approve in GitHub → auto-publishes to Hex.pm
+
+**View Progress:**
+- Go to [GitHub Actions](https://github.com/mikkihugo/ex_pgflow/actions)
+- Click on your version tag workflow
+- Click "Approve" when ready to publish
 
 ## What Gets Published to Hex.pm
 
