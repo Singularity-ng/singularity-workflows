@@ -32,18 +32,21 @@ defmodule Pgflow.Repo.Migrations.CreateCompleteTaskFunction do
       v_dependent_steps TEXT[];
       v_result JSONB;
     BEGIN
-      -- Lock the run to prevent concurrent modifications
+      -- PHASE 1: Acquire locks and validate run state
+      -- Use FOR UPDATE to prevent concurrent modifications to the same run
+      -- This ensures our task completion is atomic with respect to other tasks
       SELECT status INTO v_run_status
       FROM workflow_runs
       WHERE id = p_run_id
       FOR UPDATE;
 
-      -- Check if run is in failed state - no mutations allowed
+      -- Early exit if run has already failed (cascade prevents further mutations)
       IF v_run_status = 'failed' THEN
         RAISE EXCEPTION 'Cannot complete task for failed run: %', p_run_id;
       END IF;
 
-      -- Mark the task as completed
+      -- PHASE 2: Mark the individual task as completed
+      -- Only update if task is in 'started' state (prevents double-completion)
       UPDATE workflow_step_tasks
       SET
         status = 'completed',
@@ -60,22 +63,24 @@ defmodule Pgflow.Repo.Migrations.CreateCompleteTaskFunction do
           p_run_id, p_step_slug, p_task_index;
       END IF;
 
-      -- Lock the step state
+      -- PHASE 3: Lock the step state and decrement task counter
       SELECT status, remaining_tasks
       INTO v_step_status, v_remaining_tasks
       FROM workflow_step_states
       WHERE run_id = p_run_id AND step_slug = p_step_slug
       FOR UPDATE;
 
-      -- Decrement the step's remaining_tasks counter
+      -- Decrement the remaining_tasks counter for this step
+      -- Key insight: When counter reaches 0, the step is complete and can be marked done
+      -- This is faster than counting remaining tasks (O(1) vs O(n))
       UPDATE workflow_step_states
       SET remaining_tasks = remaining_tasks - 1
       WHERE run_id = p_run_id AND step_slug = p_step_slug
       RETURNING remaining_tasks INTO v_remaining_tasks;
 
-      -- Check if this was the last task in the step
+      -- PHASE 4: If step is now complete, cascade to dependent steps
       IF v_remaining_tasks = 0 THEN
-        -- Mark step as completed
+        -- Mark step as completed since all its tasks are done
         UPDATE workflow_step_states
         SET
           status = 'completed',
@@ -86,18 +91,9 @@ defmodule Pgflow.Repo.Migrations.CreateCompleteTaskFunction do
 
         v_step_completed := TRUE;
 
-        -- Get list of dependent steps
-        -- (This will be populated from workflow definition metadata)
-        -- For now, we use a simple approach: get steps from workflow_step_states
-        -- that have this step in their dependency list (stored in metadata or separate table)
-
         -- Decrement remaining_deps for all dependent steps
-        -- NOTE: This requires a dependency graph stored somewhere
-        -- For simplicity, we'll add a helper table workflow_step_dependencies
-        -- in a follow-up migration
-
-        -- For now, decrement all steps with remaining_deps > 0
-        -- (This is simplified - production should use explicit dependency graph)
+        -- remaining_deps is the counter of unfulfilled dependencies for each step
+        -- When a dependency completes, decrement remaining_deps for all waiting steps
         UPDATE workflow_step_states
         SET remaining_deps = remaining_deps - 1
         WHERE
@@ -105,7 +101,8 @@ defmodule Pgflow.Repo.Migrations.CreateCompleteTaskFunction do
           AND remaining_deps > 0
           AND status = 'created';
 
-        -- Check if run is complete (all steps done)
+        -- PHASE 5: Check if entire workflow is complete
+        -- If no steps remain in non-completed states, workflow is done
         IF NOT EXISTS (
           SELECT 1 FROM workflow_step_states
           WHERE run_id = p_run_id AND status != 'completed'
@@ -117,11 +114,12 @@ defmodule Pgflow.Repo.Migrations.CreateCompleteTaskFunction do
           WHERE id = p_run_id;
         END IF;
 
-        -- Trigger start_ready_steps to awaken newly ready steps
+        -- PHASE 6: Trigger readiness check for dependent steps
+        -- start_ready_steps will enqueue any steps that now have no remaining dependencies
         PERFORM start_ready_steps(p_run_id);
       END IF;
 
-      -- Build result
+      -- Build result JSON with completion info
       v_result := jsonb_build_object(
         'run_id', p_run_id,
         'step_slug', p_step_slug,

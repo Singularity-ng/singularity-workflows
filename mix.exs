@@ -11,8 +11,8 @@ defmodule ExPgflow.MixProject do
       docs: docs(),
       package: package(),
       description: description(),
-      source_url: "https://github.com/your-org/ex_pgflow",
-      homepage_url: "https://github.com/your-org/ex_pgflow",
+      source_url: "https://github.com/mikkihugo/ex_pgflow",
+      homepage_url: "https://github.com/mikkihugo/ex_pgflow",
       dialyzer: [
         plt_add_apps: [:mix, :ex_unit],
         plt_local_path: "priv/plts"
@@ -66,7 +66,7 @@ defmodule ExPgflow.MixProject do
       files: ~w(lib priv mix.exs README.md LICENSE.md CHANGELOG.md),
       licenses: ["MIT"],
       links: %{
-        "GitHub" => "https://github.com/your-org/ex_pgflow",
+        "GitHub" => "https://github.com/mikkihugo/ex_pgflow",
         "Compared to pgflow" => "https://github.com/pgflow-dev/pgflow"
       }
     ]
@@ -76,6 +76,9 @@ defmodule ExPgflow.MixProject do
     [
       extras: [
         "README.md",
+        "GETTING_STARTED.md",
+        "ARCHITECTURE.md",
+        "CHANGELOG.md",
         "DYNAMIC_WORKFLOWS_GUIDE.md",
         "PGFLOW_REFERENCE.md",
         "SECURITY_AUDIT.md"

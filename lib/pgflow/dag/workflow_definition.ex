@@ -174,23 +174,37 @@ defmodule Pgflow.DAG.WorkflowDefinition do
   @spec dfs_cycle(atom(), map(), MapSet.t(atom()), list(atom())) ::
           {:cycle, list(atom())} | :no_cycle
   defp dfs_cycle(step, dependencies, visited, path) do
+    # Depth-first search for cycles using visited tracking
+    #
+    # Algorithm:
+    # 1. If step already in visited set AND appears in current path → cycle found
+    # 2. Mark step as visited, add to current path
+    # 3. Recursively visit all dependencies
+    # 4. If any dependency returns {:cycle, path}, propagate it up
+    #
+    # Performance: O(V + E) where V=steps, E=dependencies (DFS complexity)
     cond do
       MapSet.member?(visited, step) ->
-        # Found a cycle
+        # Step already visited in this path → cycle detected!
+        # Extract the cycle portion (from step to current position)
         cycle_start = Enum.find_index(path, &(&1 == step))
         {:cycle, Enum.drop(path, cycle_start || 0)}
 
       true ->
+        # Mark as visited and add to current path
         new_visited = MapSet.put(visited, step)
         new_path = [step | path]
+
+        # Get dependencies (empty list if step has no dependencies)
         deps = Map.get(dependencies, step, [])
 
+        # Visit each dependency; if any returns a cycle, propagate it
         Enum.find_value(deps, :no_cycle, fn dep ->
           case dfs_cycle(dep, dependencies, new_visited, new_path) do
-            {:cycle, _} = result -> result
-            :no_cycle -> nil
+            {:cycle, _} = result -> result  # Cycle found, propagate
+            :no_cycle -> nil  # No cycle in this branch
           end
-        end) || :no_cycle
+        end) || :no_cycle  # All dependencies checked, no cycle found
     end
   end
 
