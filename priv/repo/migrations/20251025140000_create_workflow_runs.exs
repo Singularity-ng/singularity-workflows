@@ -7,6 +7,9 @@ defmodule Pgflow.Repo.Migrations.CreateWorkflowRuns do
   use Ecto.Migration
 
   def up do
+    # Enable UUID extension for v7 support
+    execute "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
+
     create table(:workflow_runs, primary_key: false) do
       add :id, :uuid, primary_key: true, default: fragment("uuid_generate_v7()")
       add :workflow_slug, :string, null: false
