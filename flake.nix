@@ -26,6 +26,7 @@
             postgresqlWithExtensions
             pkgs.nodejs  # For moon installation
             pkgs.yarn    # Alternative package manager
+            pkgs.gh      # GitHub CLI for repository management
           ];
 
           shellHook = ''

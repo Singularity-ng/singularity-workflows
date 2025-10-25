@@ -2,18 +2,21 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     services:
       postgres:
         image: postgres:17
         env:
+          POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -23,44 +26,51 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - uses: erlef/setup-elixir@v1
-        with:
-          elixir-version: 1.14.0
-          otp-version: 26.0
+    - name: Set up Elixir
+      uses: erlef/setup-beam@v1
+      with:
+        elixir-version: '1.14'
+        otp-version: '26'
 
-      - name: Cache deps
-        uses: actions/cache@v3
-        with:
-          path: deps
-          key: "${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}"
-          restore-keys: "${{ runner.os }}-mix-"
+    - name: Restore dependencies cache
+      uses: actions/cache@v4
+      with:
+        path: deps
+        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+        restore-keys: ${{ runner.os }}-mix-
 
-      - name: Install dependencies
-        run: mix deps.get
+    - name: Install dependencies
+      run: mix deps.get
 
-      - name: Create test database
-        run: |
-          export PGPASSWORD=postgres
-          psql -h localhost -U postgres -c "CREATE DATABASE ex_pgflow_test;"
-          psql -h localhost -U postgres ex_pgflow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
-        env:
-          PGPASSWORD: postgres
+    - name: Create test database
+      run: |
+        sudo -u postgres psql -c "CREATE DATABASE ex_pgflow_test;"
+        sudo -u postgres psql -d ex_pgflow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
 
-      - name: Run tests
-        run: mix test
-        env:
-          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/ex_pgflow_test"
+    - name: Run migrations
+      run: |
+        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ex_pgflow_test"
+        mix ecto.migrate
+      env:
+        MIX_ENV: test
 
-      - name: Check formatting
-        run: mix format --check-formatted
+    - name: Run tests
+      run: |
+        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ex_pgflow_test"
+        mix test
+      env:
+        MIX_ENV: test
 
-      - name: Run credo
-        run: mix credo --strict
+    - name: Check formatting
+      run: mix format --check-formatted
 
-      - name: Run sobelow
-        run: mix sobelow --exit-on-warning
+    - name: Run credo
+      run: mix credo --strict
 
-      - name: Check dependencies
-        run: mix deps.audit
+    - name: Run sobelow
+      run: mix sobelow --exit-on-warning
+
+    - name: Check dependencies
+      run: mix deps.audit
