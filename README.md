@@ -3,8 +3,12 @@
 **Elixir implementation of [pgflow](https://pgflow.dev) - Postgres-based workflow orchestration with 100% feature parity**
 
 [![Hex.pm](https://img.shields.io/hexpm/v/ex_pgflow.svg)](https://hex.pm/packages/ex_pgflow)
+[![Hex Downloads](https://img.shields.io/hexpm/dt/ex_pgflow.svg)](https://hex.pm/packages/ex_pgflow)
 [![Documentation](https://img.shields.io/badge/docs-hexpm-blue.svg)](https://hexdocs.pm/ex_pgflow)
+[![CI Status](https://github.com/mikkihugo/ex_pgflow/workflows/CI/badge.svg)](https://github.com/mikkihugo/ex_pgflow/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Elixir](https://img.shields.io/badge/elixir-1.14+-purple.svg)](https://elixir-lang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791.svg)](https://www.postgresql.org/)
 
 ## What is ex_pgflow?
 
@@ -175,10 +179,14 @@ step_functions = %{
 
 ## Documentation
 
-- **[PGFLOW_DEV_FEATURE_COMPARISON.md](PGFLOW_DEV_FEATURE_COMPARISON.md)** - Complete feature parity checklist
-- **[DYNAMIC_WORKFLOWS_GUIDE.md](DYNAMIC_WORKFLOWS_GUIDE.md)** - AI/LLM workflow creation
-- **[TIMEOUT_CHANGES_SUMMARY.md](TIMEOUT_CHANGES_SUMMARY.md)** - Timeout configuration details
-- **[SECURITY_AUDIT.md](SECURITY_AUDIT.md)** - Security best practices
+- **[GETTING_STARTED.md](GETTING_STARTED.md)** - Installation and first workflow
+- **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical deep dive and design decisions
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Development guidelines
+- **[docs/PGFLOW_DEV_FEATURE_COMPARISON.md](docs/PGFLOW_DEV_FEATURE_COMPARISON.md)** - Complete feature parity checklist
+- **[docs/DYNAMIC_WORKFLOWS_GUIDE.md](docs/DYNAMIC_WORKFLOWS_GUIDE.md)** - AI/LLM workflow creation
+- **[docs/TIMEOUT_CHANGES_SUMMARY.md](docs/TIMEOUT_CHANGES_SUMMARY.md)** - Timeout configuration details
+- **[docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md)** - Security best practices
+- **[SECURITY.md](SECURITY.md)** - Vulnerability reporting and best practices
 
 ## License
 
@@ -189,7 +197,3 @@ MIT License - see [LICENSE](LICENSE) for details
 - **[pgflow](https://pgflow.dev)** by [pgflow team](https://github.com/pgflow/pgflow) - Original TypeScript implementation
 - **[pgmq](https://github.com/tembo-io/pgmq)** by Tembo - PostgreSQL message queue extension
 - Built with ❤️ using [Elixir](https://elixir-lang.org/) and the [BEAM](https://www.erlang.org/)
-
----
-
-**Built with [Claude Code](https://claude.com/claude-code)**
