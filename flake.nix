@@ -12,10 +12,11 @@
         pkgs = nixpkgs.legacyPackages.${system};
         beamPackages = pkgs.beam.packages.erlang;
 
-        # PostgreSQL with pgmq extension
-        # Note: pg_uuidv7 is installed separately via pgxn if needed
+        # PostgreSQL with pgmq and uuid-ossp extensions
+        # Note: Using PostgreSQL 17 (uuid_generate_v7() requires PostgreSQL 18+)
         postgresqlWithExtensions = pkgs.postgresql_18.withPackages (ps: [
-          ps.pgmq  # In-database message queue (includes UUID support)
+          ps.pgmq  # In-database message queue
+          ps.uuid-ossp  # UUID generation functions
         ]);
 
       in {

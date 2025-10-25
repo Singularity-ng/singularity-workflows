@@ -284,18 +284,6 @@ defmodule Pgflow.DAG.RunInitializerTest do
     end
 
     test "handles workflows with no dependencies (all root steps)" do
-      defmodule TestAllRootsFlow do
-        def __workflow_steps__ do
-          [
-            {:step1, &__MODULE__.s/1, depends_on: []},
-            {:step2, &__MODULE__.s/1, depends_on: []},
-            {:step3, &__MODULE__.s/1, depends_on: []}
-          ]
-        end
-
-        def s(_input), do: {:ok, %{}}
-      end
-
       {:ok, definition} = WorkflowDefinition.parse(TestAllRootsFlow)
 
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
