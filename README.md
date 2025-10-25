@@ -164,18 +164,29 @@ graph TB
 
 **Service-to-Service Workflow Coordination**
 
-```
-API Request
-    ↓
-User Service → (gets user data)
-    ↓
-Order Service → (gets order data, waits for user)
-    ↓
-Payment Service → (waits for order)
-    ↓
-Notification Service → (parallel: email, SMS, webhook, waits for payment)
-    ↓
-Response to Client
+```mermaid
+graph TB
+    A["📥 API Request"]
+
+    A --> B["👤 User Service<br/>(gets user data)"]
+    B --> C["📦 Order Service<br/>(gets order data)"]
+    C --> D["💳 Payment Service<br/>(processes payment)"]
+    D --> E1["✉️ Email<br/>(parallel)"]
+    D --> E2["📱 SMS<br/>(parallel)"]
+    D --> E3["🔗 Webhook<br/>(parallel)"]
+
+    E1 --> F["📤 Response"]
+    E2 --> F
+    E3 --> F
+
+    style A fill:#E3F2FD
+    style B fill:#BBDEFB
+    style C fill:#BBDEFB
+    style D fill:#FFE082
+    style E1 fill:#C8E6C9
+    style E2 fill:#C8E6C9
+    style E3 fill:#C8E6C9
+    style F fill:#A5D6A7
 ```
 
 **Benefits:**
@@ -188,19 +199,28 @@ Response to Client
 
 **Multi-Section Report Generation**
 
-```
-Report Request
-    ↓
-[Section A]  [Section B]  [Section C]  (parallel)
-    ↓          ↓          ↓
-  Sales     Marketing   Operations
-  Analysis   Analysis    Analysis
-    ↓          ↓          ↓
-         Aggregate & Format
-              ↓
-         PDF Generation
-              ↓
-        Send to User
+```mermaid
+graph TB
+    A["📊 Report Request"]
+
+    A --> B["📈 Section A<br/>Sales Analysis<br/>(parallel)"]
+    A --> C["📢 Section B<br/>Marketing Analysis<br/>(parallel)"]
+    A --> D["⚙️ Section C<br/>Operations Analysis<br/>(parallel)"]
+
+    B --> E["🔄 Aggregate<br/>& Format"]
+    C --> E
+    D --> E
+
+    E --> F["📄 PDF<br/>Generation"]
+    F --> G["📤 Send to<br/>User"]
+
+    style A fill:#E3F2FD
+    style B fill:#FFE082
+    style C fill:#FFE082
+    style D fill:#FFE082
+    style E fill:#BBDEFB
+    style F fill:#BBDEFB
+    style G fill:#A5D6A7
 ```
 
 ### 6. Document Processing Pipeline

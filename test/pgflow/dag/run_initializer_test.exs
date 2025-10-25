@@ -238,7 +238,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
     end
 
     test "handles multiple root steps (fan-out)" do
-      defmodule FanOutWorkflow do
+      defmodule TestFanOutFlow do
         def __workflow_steps__ do
           [
             {:root1, &__MODULE__.root/1, depends_on: []},
@@ -251,7 +251,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
         def merge(_input), do: {:ok, %{}}
       end
 
-      {:ok, definition} = WorkflowDefinition.parse(FanOutWorkflow)
+      {:ok, definition} = WorkflowDefinition.parse(TestFanOutFlow)
 
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
@@ -271,7 +271,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
     end
 
     test "handles workflows with no dependencies (all root steps)" do
-      defmodule AllRootsWorkflow do
+      defmodule TestAllRootsFlow do
         def __workflow_steps__ do
           [
             {:step1, &__MODULE__.s/1, depends_on: []},
@@ -283,7 +283,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
         def s(_input), do: {:ok, %{}}
       end
 
-      {:ok, definition} = WorkflowDefinition.parse(AllRootsWorkflow)
+      {:ok, definition} = WorkflowDefinition.parse(TestAllRootsFlow)
 
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
