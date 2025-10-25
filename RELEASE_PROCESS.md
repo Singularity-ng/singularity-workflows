@@ -2,11 +2,27 @@
 
 ## CI/CD Protection
 
-The release process is protected by GitHub Actions workflows to ensure quality:
+The release process has multiple protection layers to ensure quality:
 
-1. **CI must pass** - The `CI` workflow runs on all tags starting with `v*`
-2. **Publish requires CI success** - The `Publish to Hex.pm` workflow only runs after CI succeeds
-3. **Automated publishing** - If CI passes, the package is automatically published to Hex.pm
+1. **CI must pass** - All tests, formatting, and security checks must succeed
+2. **Manual approval required** - A designated reviewer must approve the release
+3. **Then auto-publishes** - After approval, the package is automatically published to Hex.pm
+
+### Protection Layers
+
+#### 1. Branch Protection (for main)
+- Pull requests required with code review
+- CI status checks must pass
+- Code owner review required (via CODEOWNERS file)
+
+#### 2. Release Approval Gate
+- Uses GitHub Environment Protection
+- Requires manual approval in 'production' environment
+- Reviewers are notified when a release is pending
+
+#### 3. Tag Protection
+- Only maintainers can create `v*` tags
+- Prevents accidental releases
 
 ## Pre-Release Checklist
 
@@ -126,6 +142,30 @@ mix hex.publish
 ```
 
 You'll be prompted for confirmation and Hex.pm credentials.
+
+## Initial Setup (One-time)
+
+### Configure GitHub Protection
+
+Run the protection setup script:
+```bash
+chmod +x scripts/setup-github-protection.sh
+./scripts/setup-github-protection.sh
+```
+
+Then manually configure environment reviewers:
+1. Go to [Settings → Environments](https://github.com/mikkihugo/ex_pgflow/settings/environments)
+2. Click on 'production' environment
+3. Enable "Required reviewers"
+4. Add reviewers (yourself, team members, or teams)
+5. Save protection rules
+
+### Setup Complete!
+
+Now every release will require:
+- ✅ CI tests to pass
+- ✅ Manual approval from designated reviewer
+- ✅ Then auto-publish to Hex.pm
 
 ## Post-Release
 

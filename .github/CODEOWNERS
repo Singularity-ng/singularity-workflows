@@ -1,0 +1,23 @@
+# Code Owners for ex_pgflow
+# These owners will be automatically requested for review
+
+# Global owners
+* @mikkihugo
+
+# Elixir source code
+/lib/ @mikkihugo
+/test/ @mikkihugo
+
+# Database migrations
+/priv/repo/migrations/ @mikkihugo
+
+# CI/CD and GitHub workflows
+/.github/ @mikkihugo
+
+# Documentation
+*.md @mikkihugo
+/docs/ @mikkihugo
+
+# Package configuration
+mix.exs @mikkihugo
+mix.lock @mikkihugo
