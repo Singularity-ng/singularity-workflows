@@ -1,4 +1,4 @@
-.PHONY: help setup test quality clean docker-up docker-down
+.PHONY: help setup test quality clean docker-up docker-down check
 
 # Default target
 help:
@@ -9,6 +9,7 @@ help:
 	@echo "  make setup          - Set up development environment (interactive)"
 	@echo "  make setup-nix      - Set up using Nix"
 	@echo "  make setup-docker   - Set up using Docker (PostgreSQL only)"
+	@echo "  make check          - Validate environment setup"
 	@echo ""
 	@echo "Development:"
 	@echo "  make deps           - Install dependencies"
@@ -53,6 +54,9 @@ setup-nix:
 
 setup-docker:
 	@./scripts/setup-dev-environment.sh --method docker
+
+check:
+	@./scripts/check-environment.sh
 
 # Dependencies
 deps:
