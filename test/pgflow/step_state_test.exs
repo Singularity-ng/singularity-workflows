@@ -630,7 +630,7 @@ defmodule Pgflow.StepStateTest do
   end
 
   # Helper functions
-  defp valid_attrs(overrides \\ %{}) do
+  defp valid_attrs(overrides) do
     Map.merge(
       %{
         run_id: Ecto.UUID.generate(),

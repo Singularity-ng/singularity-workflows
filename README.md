@@ -26,16 +26,16 @@ graph TB
     end
 
     subgraph "Coordination Layer"
-        WorkflowRun[WorkflowRun<br/>Tracks execution]
-        StepState[StepState<br/>Counter-based DAG]
-        StepTask[StepTask<br/>Task execution + retries]
-        StepDep[StepDependency<br/>DAG graph]
+        WorkflowRun["WorkflowRun<br/>(Tracks execution)"]
+        StepState["StepState<br/>(Counter-based DAG)"]
+        StepTask["StepTask<br/>(Task execution)"]
+        StepDep["StepDependency<br/>(DAG graph)"]
     end
 
     subgraph "PostgreSQL"
-        Tables[(Tables:<br/>workflow_runs<br/>workflow_step_states<br/>workflow_step_tasks<br/>workflow_step_dependencies)]
-        PGMQ[pgmq Extension<br/>Message Queue]
-        Functions[SQL Functions:<br/>start_tasks()<br/>complete_task()<br/>fail_task()]
+        Tables["Database Tables<br/>(workflow_runs,<br/>step_states, etc)"]
+        PGMQ["pgmq Extension<br/>(Message Queue)"]
+        Functions["SQL Functions<br/>(start, complete)"]
     end
 
     App -->|Define workflow| Executor
@@ -75,7 +75,7 @@ sequenceDiagram
     Executor->>DB: INSERT step_states (remaining_deps, remaining_tasks)
     Executor->>DB: INSERT step_dependencies
 
-    Note over DB: Steps with remaining_deps=0<br/>are ready to start
+    Note over DB: Steps with remaining_deps=0 are ready
 
     Executor->>DB: start_tasks() - create tasks
     DB->>PGMQ: Enqueue tasks via pgmq
@@ -253,18 +253,18 @@ See how ex_pgflow executes workflows with automatic dependency resolution and pa
 ```mermaid
 graph LR
     subgraph "Step 1: fetch_subscribers"
-        F[Fetch Subscribers<br/>status: completed<br/>output: 1000 subscribers]
+        F["Fetch Subscribers<br/>(1000 subscribers)"]
     end
 
     subgraph "Step 2: send_emails (Map Step)"
-        E1[Email 1-250<br/>Worker 1]
-        E2[Email 251-500<br/>Worker 2]
-        E3[Email 501-750<br/>Worker 3]
-        E4[Email 751-1000<br/>Worker 4]
+        E1["Email 1-250<br/>(Worker 1)"]
+        E2["Email 251-500<br/>(Worker 2)"]
+        E3["Email 501-750<br/>(Worker 3)"]
+        E4["Email 751-1000<br/>(Worker 4)"]
     end
 
     subgraph "Step 3: track_results"
-        T[Track Results<br/>Aggregate 1000 results<br/>status: completed]
+        T["Track Results<br/>(Aggregate all)"]
     end
 
     F -->|decrement_remaining_deps| E1
