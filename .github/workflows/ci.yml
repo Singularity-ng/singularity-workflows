@@ -13,9 +13,9 @@ jobs:
 
     services:
       postgres:
-        # Use pgmq image with PostgreSQL 16 and pgmq pre-installed
-        # This is the official pgmq development image from Tembo
-        image: ghcr.io/tembo-io/pgmq-pg:latest
+        # Use pgmq image with PostgreSQL 17 and pgmq pre-installed
+        # Official pgmq image from GitHub Container Registry
+        image: ghcr.io/pgmq/pg17-pgmq:latest
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres

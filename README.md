@@ -8,7 +8,7 @@
 [![CI Status](https://github.com/mikkihugo/ex_pgflow/workflows/CI/badge.svg)](https://github.com/mikkihugo/ex_pgflow/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Elixir](https://img.shields.io/badge/elixir-1.14+-purple.svg)](https://elixir-lang.org/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-336791.svg)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791.svg)](https://www.postgresql.org/)
 
 ## What is ex_pgflow?
 
@@ -148,10 +148,17 @@ end
 
 **Option A: Use Docker with pgmq pre-installed (recommended for development)**
 \`\`\`bash
+# PostgreSQL 17 with pgmq
 docker run -d --name pgmq-postgres \
   -e POSTGRES_PASSWORD=postgres \
   -p 5432:5432 \
-  ghcr.io/tembo-io/pgmq-pg:latest
+  ghcr.io/pgmq/pg17-pgmq:latest
+
+# Or PostgreSQL 18 (latest) with pgmq
+docker run -d --name pgmq-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  ghcr.io/pgmq/pg18-pgmq:latest
 \`\`\`
 
 **Option B: Manual installation**
