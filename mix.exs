@@ -64,13 +64,13 @@ defmodule ExPgflow.MixProject do
 
   defp deps do
     [
-  {:ecto_sql, "~> 3.10"},
-  # Allow newer Postgrex drivers (0.21+). Keep upper bound < 2.0.0
-  {:postgrex, ">= 0.19.0 and < 2.0.0"},
-  # Provide CA root bundle used by HTTP clients / excoveralls poster
-  # ExCoveralls references `CAStore.file_path/0` when present; add castore
-  # as a test-only dep to avoid the undefined function warning.
-  {:castore, "~> 1.0", only: :test},
+      {:ecto_sql, "~> 3.10"},
+      # Allow newer Postgrex drivers (0.21+). Keep upper bound < 2.0.0
+      {:postgrex, ">= 0.19.0 and < 2.0.0"},
+      # Provide CA root bundle used by HTTP clients / excoveralls poster
+      # ExCoveralls references `CAStore.file_path/0` when present; add castore
+      # as a test-only dep to avoid the undefined function warning.
+      {:castore, "~> 1.0", only: :test},
       {:jason, "~> 1.4"},
       {:ex_doc, "~> 0.31", only: :dev},
       {:credo, "~> 1.7", only: [:dev, :test]},
