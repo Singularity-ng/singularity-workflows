@@ -12,6 +12,14 @@ The easiest way to get started:
 
 This interactive script will guide you through the setup process.
 
+**After setup, validate your environment:**
+
+```bash
+./scripts/check-environment.sh
+# or
+make check
+```
+
 ## Setup Methods
 
 ### Method 1: Nix (Recommended) ⭐
@@ -261,6 +269,14 @@ mix sobelow
 
 Ensure your environment is properly set up:
 
+**Automated Check (Recommended):**
+```bash
+./scripts/check-environment.sh
+# or
+make check
+```
+
+**Manual Verification:**
 - [ ] Elixir installed (`elixir --version` shows 1.14+)
 - [ ] Mix available (`mix --version`)
 - [ ] PostgreSQL running (`pg_isready -h localhost`)

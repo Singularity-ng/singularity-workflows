@@ -581,6 +581,7 @@ Different tools serve different coordination patterns:
 
 ## Documentation
 
+- **[QUICKREF.md](QUICKREF.md)** - Quick reference for common development tasks ⭐
 - **[SETUP.md](SETUP.md)** - Complete development environment setup guide
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** - Installation and first workflow
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical deep dive and design decisions
