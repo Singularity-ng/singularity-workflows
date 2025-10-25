@@ -15,7 +15,7 @@
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             elixir
-            postgresql_17
+            postgresql_15
           ];
 
           shellHook = ''

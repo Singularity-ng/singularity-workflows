@@ -10,11 +10,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    steps:
-    - uses: ikalnytskyi/action-setup-postgres@v8
-      with:
-        postgres-version: "17"
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
+    steps:
     - uses: actions/checkout@v4
 
     - name: Set up Elixir
@@ -33,17 +44,19 @@ jobs:
     - name: Install dependencies
       run: mix deps.get
 
-    - name: Install pgxn-tools and pgmq extension
+    - name: Install pgmq extension
       run: |
         sudo apt-get update
-        sudo apt-get install -y pgxnclient
-        sudo pgxn install pgmq
+        sudo apt-get install -y postgresql-server-dev-15 build-essential git
+        git clone https://github.com/tembo-io/pgmq.git /tmp/pgmq
+        cd /tmp/pgmq
+        make
+        sudo make install
+        sudo -u postgres psql -c "CREATE EXTENSION pgmq;"
 
     - name: Create test database
       run: |
-        psql -c "CREATE DATABASE ex_pgflow;"
-      env:
-        PGSERVICE: postgres
+        sudo -u postgres psql -c "CREATE DATABASE ex_pgflow;"
 
     - name: Run migrations
       run: |
@@ -51,7 +64,6 @@ jobs:
         mix ecto.migrate
       env:
         MIX_ENV: test
-        PGSERVICE: postgres
 
     - name: Run tests
       run: |
@@ -59,4 +71,3 @@ jobs:
         mix test
       env:
         MIX_ENV: test
-        PGSERVICE: postgres

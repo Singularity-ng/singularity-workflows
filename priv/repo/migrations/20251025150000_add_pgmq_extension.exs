@@ -4,7 +4,7 @@ defmodule Pgflow.Repo.Migrations.AddPgmqExtension do
   def up do
     # Create pgmq extension (PostgreSQL Message Queue)
     # Matches pgflow's architecture: https://github.com/tembo-io/pgmq
-    execute("CREATE EXTENSION IF NOT EXISTS pgmq")
+    execute("CREATE EXTENSION IF NOT EXISTS pgmq VERSION '1.4.4'")
   end
 
   def down do
