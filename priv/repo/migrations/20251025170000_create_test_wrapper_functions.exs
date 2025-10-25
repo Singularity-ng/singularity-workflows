@@ -14,15 +14,16 @@ defmodule Pgflow.Repo.Migrations.CreateTestWrapperFunctions do
   use Ecto.Migration
 
   def up do
-    # Wrapper for complete_task that returns boolean instead of void
+    # Wrapper for complete_task that returns TABLE instead of void
+    # Note: RETURNS TABLE works with Postgrex prepared statements, while RETURNS boolean does not
     execute("""
-    CREATE OR REPLACE FUNCTION test_complete_task(
+    CREATE OR REPLACE FUNCTION test_complete_task_v2(
       p_run_id UUID,
       p_step_slug TEXT,
       p_task_index INTEGER,
-      p_output JSONB DEFAULT NULL
+      p_output JSONB
     )
-    RETURNS boolean
+    RETURNS TABLE(success boolean)
     LANGUAGE plpgsql
     AS $$
     BEGIN
@@ -30,19 +31,22 @@ defmodule Pgflow.Repo.Migrations.CreateTestWrapperFunctions do
       PERFORM complete_task(p_run_id, p_step_slug, p_task_index, p_output);
 
       -- Return true to indicate successful execution
-      RETURN true;
+      RETURN QUERY SELECT true;
     END;
     $$;
     """)
 
     execute("""
-    COMMENT ON FUNCTION test_complete_task(UUID, TEXT, INTEGER, JSONB) IS
-    'Test wrapper for complete_task that returns boolean for Postgrex compatibility.
+    COMMENT ON FUNCTION test_complete_task_v2(UUID, TEXT, INTEGER, JSONB) IS
+    'Test wrapper for complete_task that returns TABLE for Postgrex compatibility.
+     Uses RETURNS TABLE instead of RETURNS boolean to avoid prepared statement protocol issues.
      DO NOT USE IN PRODUCTION - use complete_task directly instead.';
     """)
   end
 
   def down do
+    execute("DROP FUNCTION IF EXISTS test_complete_task_v2(UUID, TEXT, INTEGER, JSONB)")
+    # Also drop the old version if it exists
     execute("DROP FUNCTION IF EXISTS test_complete_task(UUID, TEXT, INTEGER, JSONB)")
   end
 end

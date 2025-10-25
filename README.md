@@ -24,21 +24,49 @@ Perfect for **AI agents**, **data pipelines**, and **distributed workflows** tha
 ex_pgflow is purpose-built for AI agent orchestration:
 
 **Single Agent Workflow**
-```
-User Query → LLM Analysis → Tool Calls → Aggregation → Response
-   ↓            ↓              ↓              ↓           ↓
-(input)    (analysis)    (parallel)    (collect)      (output)
+
+```mermaid
+graph LR
+    A["🔍 User Query<br/>(input)"] --> B["🧠 LLM Analysis<br/>(analysis)"]
+    B --> C["🔧 Tool Calls<br/>(parallel)"]
+    C --> D["📊 Aggregation<br/>(collect)"]
+    D --> E["💬 Response<br/>(output)"]
+
+    style A fill:#E3F2FD
+    style B fill:#BBDEFB
+    style C fill:#FFE082
+    style D fill:#FFE082
+    style E fill:#A5D6A7
 ```
 
 **Multi-Agent Collaboration**
-```
-Task Definition
-    ↓
-Agent 1 (Research)  ← Agent 2 (Analysis) ← Agent 3 (Validation)
-    ↓                       ↓                    ↓
-  [Subtasks]            [Analysis]          [Checks]
-    ↓                       ↓                    ↓
-Consolidate Results → Final Decision → Return to User
+
+```mermaid
+graph TB
+    A["📋 Task Definition"]
+
+    A --> B["🔬 Agent 1: Research"]
+    A --> C["📈 Agent 2: Analysis"]
+    A --> D["✓ Agent 3: Validation"]
+
+    B --> B1["[Subtasks]"]
+    C --> C1["[Analysis]"]
+    D --> D1["[Checks]"]
+
+    B1 --> E["🔄 Consolidate Results"]
+    C1 --> E
+    D1 --> E
+
+    E --> F["🎯 Final Decision"]
+    F --> G["📤 Return to User"]
+
+    style A fill:#E3F2FD
+    style B fill:#90CAF9
+    style C fill:#90CAF9
+    style D fill:#90CAF9
+    style E fill:#FFE082
+    style F fill:#FFE082
+    style G fill:#A5D6A7
 ```
 
 **Dynamic Workflow Generation** (perfect for AI agents that plan their own workflows):
@@ -63,10 +91,18 @@ Consolidate Results → Final Decision → Return to User
 
 **ETL/ELT Workflows with Error Isolation**
 
-```
-Extract Data → [Validation, Cleaning, Transformation] → Load
-     ↓              ↓              ↓            ↓        ↓
-  (1 task)      (10k tasks)  (10k tasks)  (10k tasks)  (1 task)
+```mermaid
+graph LR
+    A["📥 Extract Data<br/>(1 task)"] --> B["✓ Validation<br/>(10k tasks)"]
+    B --> C["🧹 Cleaning<br/>(10k tasks)"]
+    C --> D["🔄 Transformation<br/>(10k tasks)"]
+    D --> E["💾 Load<br/>(1 task)"]
+
+    style A fill:#A5D6A7
+    style B fill:#FFE082
+    style C fill:#FFE082
+    style D fill:#FFE082
+    style E fill:#90CAF9
 ```
 
 Each validation failure doesn't block the whole pipeline—failed records are retried independently. Failed items can be tracked and reprocessed.
@@ -82,20 +118,46 @@ Each validation failure doesn't block the whole pipeline—failed records are re
 
 **Batch Image Processing**
 
-```
-Upload Image Batch → [Preprocess] → [Model Inference] → [Postprocess] → Store Results
-                     (parallel)        (parallel)        (parallel)
-                   100 images        100 inferences    100 transforms
+```mermaid
+graph LR
+    A["📤 Upload<br/>Image Batch"] --> B["🔧 Preprocess<br/>(parallel)<br/>100 images"]
+    B --> C["🧠 Model<br/>Inference<br/>(parallel)<br/>100 inferences"]
+    C --> D["🎨 Postprocess<br/>(parallel)<br/>100 transforms"]
+    D --> E["💾 Store<br/>Results"]
+
+    style A fill:#E3F2FD
+    style B fill:#FFE082
+    style C fill:#FFE082
+    style D fill:#FFE082
+    style E fill:#A5D6A7
 ```
 
 **Multi-Model Ensemble**
 
-```
-Single Image
-    ↓
-[Model A]  [Model B]  [Model C]  (parallel)
-    ↓          ↓          ↓
-  Aggregate → Voting → Confidence Score → Return
+```mermaid
+graph TB
+    A["📸 Single Image"]
+
+    A --> B["🤖 Model A<br/>(parallel)"]
+    A --> C["🤖 Model B<br/>(parallel)"]
+    A --> D["🤖 Model C<br/>(parallel)"]
+
+    B --> E["🔄 Aggregate"]
+    C --> E
+    D --> E
+
+    E --> F["🗳️ Voting"]
+    F --> G["📊 Confidence Score"]
+    G --> H["✅ Return"]
+
+    style A fill:#E3F2FD
+    style B fill:#FFE082
+    style C fill:#FFE082
+    style D fill:#FFE082
+    style E fill:#BBDEFB
+    style F fill:#BBDEFB
+    style G fill:#BBDEFB
+    style H fill:#A5D6A7
 ```
 
 ### 4. Microservice Orchestration

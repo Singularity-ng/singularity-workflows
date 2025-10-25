@@ -88,13 +88,19 @@ defmodule Pgflow.CompleteTaskTest do
           [binary_id, "child", "parent"]
         )
 
-        # Call test_complete_task wrapper with an array output so child initial_tasks will be set
-        # Use test wrapper that returns boolean instead of void for Postgrex compatibility
-        Postgrex.query!(
-          conn,
-          "SELECT test_complete_task($1, $2, $3, $4)",
-          [binary_id, "parent", 0, [1, 2, 3]]
-        )
+        # Call test_complete_task_v2 wrapper with an array output so child initial_tasks will be set
+        # Use test wrapper that returns TABLE instead of scalar for Postgrex compatibility
+        Postgrex.transaction(conn, fn tx_conn ->
+          result = Postgrex.query!(tx_conn, "SELECT * FROM test_complete_task_v2($1, $2, $3, $4)", [
+            binary_id,
+            "parent",
+            0,
+            [1, 2, 3]
+          ])
+
+          # Verify the wrapper executed successfully
+          assert result.rows == [[true]]
+        end)
 
         # Verify parent task status
         res =
@@ -180,12 +186,15 @@ defmodule Pgflow.CompleteTaskTest do
         )
 
         # Non-array output (null) should trigger type-violation and mark run failed
-        # Use test wrapper that returns boolean instead of void for Postgrex compatibility
-        Postgrex.query!(
+        # Use test wrapper that returns TABLE instead of scalar for Postgrex compatibility
+        result = Postgrex.query!(
           conn,
-          "SELECT test_complete_task($1, $2, $3, $4)",
+          "SELECT * FROM test_complete_task_v2($1, $2, $3, $4)",
           [binary_id, "p", 0, nil]
         )
+
+        # Verify the wrapper executed successfully
+        assert result.rows == [[true]]
 
         res = Postgrex.query!(conn, "SELECT status FROM workflow_runs WHERE id=$1", [binary_id])
         assert res.rows == [["failed"]]

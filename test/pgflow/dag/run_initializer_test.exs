@@ -1,334 +1,398 @@
+# Test workflow fixtures (defined outside test module to keep queue names short)
+defmodule TestSimpleFlow do
+  def __workflow_steps__ do
+    [
+      {:step1, &__MODULE__.step1/1, depends_on: []},
+      {:step2, &__MODULE__.step2/1, depends_on: [:step1]}
+    ]
+  end
+
+  def step1(_input), do: {:ok, %{result: "step1_done"}}
+  def step2(_input), do: {:ok, %{result: "step2_done"}}
+end
+
+defmodule TestDiamondFlow do
+  def __workflow_steps__ do
+    [
+      {:fetch, &__MODULE__.fetch/1, depends_on: []},
+      {:left, &__MODULE__.left/1, depends_on: [:fetch]},
+      {:right, &__MODULE__.right/1, depends_on: [:fetch]},
+      {:merge, &__MODULE__.merge/1, depends_on: [:left, :right]}
+    ]
+  end
+
+  def fetch(_input), do: {:ok, %{data: [1, 2, 3]}}
+  def left(_input), do: {:ok, %{}}
+  def right(_input), do: {:ok, %{}}
+  def merge(_input), do: {:ok, %{}}
+end
+
+defmodule TestMapFlow do
+  def __workflow_steps__ do
+    [
+      {:fetch, &__MODULE__.fetch/1, depends_on: []},
+      {:process, &__MODULE__.process/1, depends_on: [:fetch], initial_tasks: 10},
+      {:save, &__MODULE__.save/1, depends_on: [:process]}
+    ]
+  end
+
+  def fetch(_input), do: {:ok, %{}}
+  def process(_input), do: {:ok, %{}}
+  def save(_input), do: {:ok, %{}}
+end
+
 defmodule Pgflow.DAG.RunInitializerTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
+
+  alias Pgflow.DAG.{RunInitializer, WorkflowDefinition}
+  alias Pgflow.{WorkflowRun, StepState, StepDependency, Repo}
+  import Ecto.Query
 
   @moduledoc """
   Comprehensive RunInitializer tests covering:
   - Chicago-style TDD (state-based testing)
-  - Run initialization
+  - Run initialization with real database
   - Step state creation
   - Dependency graph setup
   - Counter initialization
+
+  NOTE: These tests require PostgreSQL with pgflow SQL functions.
+  Set DATABASE_URL or start database with migrations.
+  Run with: mix test test/pgflow/dag/run_initializer_test.exs
+
+  Tests are tagged :integration and can be skipped if database is unavailable.
   """
 
-  describe "RunInitializer documentation" do
-    test "initializes workflow runs in database" do
-      # RunInitializer should:
-      # 1. Create a workflow_runs record
-      # 2. Create step_states for each step
-      # 3. Create step_dependencies for each dependency
-      # 4. Create step_tasks for root steps
-      # 5. Initialize counters (remaining_deps, remaining_tasks)
-      assert true
+  describe "initialize/3 - Basic workflow initialization" do
+    test "successfully initializes simple workflow and creates run record" do
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
+      input = %{"user_id" => 123}
+
+      {:ok, run_id} = RunInitializer.initialize(definition, input, Repo)
+
+      # Verify run was created
+      run = Repo.get!(WorkflowRun, run_id)
+      assert run.workflow_slug == definition.slug
+      assert run.input == input
+      assert run.status == "started"
+      assert run.remaining_steps == 2
+    end
+
+    test "creates step_states for each step" do
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      # Should create 2 step_states
+      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      assert length(step_states) == 2
+
+      # Verify step names
+      step_slugs = Enum.map(step_states, & &1.step_slug)
+      assert "step1" in step_slugs
+      assert "step2" in step_slugs
+    end
+
+    test "creates step_dependencies for each dependency" do
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      # Should create 1 dependency (step2 depends on step1)
+      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id)
+      assert length(deps) == 1
+
+      dep = hd(deps)
+      assert dep.step_slug == "step2"
+      assert dep.depends_on_step == "step1"
     end
 
     test "sets remaining_deps counter correctly" do
-      # For each step, remaining_deps = number of steps it depends on
-      # This is used for coordination - decrement when dependency completes
-      assert true
-    end
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
 
-    test "sets remaining_tasks counter correctly" do
-      # For single steps: remaining_tasks = 1 initially
-      # For map steps: remaining_tasks = number of array elements
-      # Decrements as tasks complete
-      assert true
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      step1_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "step1")
+      step2_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "step2")
+
+      # step1 is root (no dependencies)
+      assert step1_state.remaining_deps == 0
+
+      # step2 depends on step1
+      assert step2_state.remaining_deps == 1
     end
 
     test "handles root steps specially" do
-      # Root steps (no dependencies):
-      # - remaining_deps = 0
-      # - Can execute immediately
-      # - Create initial step_tasks
-      assert true
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      step1_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "step1")
+
+      # Root step has remaining_deps = 0
+      assert step1_state.remaining_deps == 0
+      # Root step should be started by start_ready_steps()
+      assert step1_state.status == "started"
     end
 
     test "handles dependent steps" do
-      # Dependent steps:
-      # - remaining_deps = count of steps they depend on
-      # - Cannot execute until all dependencies complete
-      # - No initial step_tasks
-      assert true
-    end
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
 
-    test "initializes counters for sequential workflow" do
-      # Sequential: s1 → s2 → s3
-      # s1: remaining_deps=0, remaining_tasks=1 (root)
-      # s2: remaining_deps=1 (depends on s1), remaining_tasks=0 initially
-      # s3: remaining_deps=1 (depends on s2), remaining_tasks=0 initially
-      assert true
-    end
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
-    test "initializes counters for DAG workflow" do
-      # DAG: root → {a, b} → merge
-      # root: remaining_deps=0, remaining_tasks=1
-      # a: remaining_deps=1 (root), remaining_tasks=0
-      # b: remaining_deps=1 (root), remaining_tasks=0
-      # merge: remaining_deps=2 (a, b), remaining_tasks=0
-      assert true
-    end
+      step2_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "step2")
 
+      # Dependent step has remaining_deps > 0
+      assert step2_state.remaining_deps == 1
+      # Dependent step stays as 'created' (not started yet)
+      assert step2_state.status == "created"
+    end
+  end
+
+  describe "initialize/3 - Complex DAG workflows" do
     test "initializes counters for diamond workflow" do
-      # Diamond: fetch → {left, right} → merge
-      # fetch: remaining_deps=0, remaining_tasks=1
-      # left: remaining_deps=1 (fetch), remaining_tasks=0
-      # right: remaining_deps=1 (fetch), remaining_tasks=0
-      # merge: remaining_deps=2 (left, right), remaining_tasks=0
-      assert true
-    end
-  end
+      {:ok, definition} = WorkflowDefinition.parse(TestDiamondFlow)
 
-  describe "Counter initialization logic" do
-    test "root step counter initialization" do
-      # Root steps always have:
-      # - remaining_deps = 0 (no dependencies)
-      # - remaining_tasks = 1 (single execution)
-      # - Status: 'created' initially
-      assert true
-    end
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
-    test "dependent step counter initialization" do
-      # When a step depends on N other steps:
-      # - remaining_deps = N
-      # - Decremented when each dependency completes
-      # - Can execute when remaining_deps reaches 0
-      assert true
+      fetch_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "fetch")
+      left_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "left")
+      right_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "right")
+      merge_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "merge")
+
+      # fetch: remaining_deps=0 (root)
+      assert fetch_state.remaining_deps == 0
+      # left: remaining_deps=1 (depends on fetch)
+      assert left_state.remaining_deps == 1
+      # right: remaining_deps=1 (depends on fetch)
+      assert right_state.remaining_deps == 1
+      # merge: remaining_deps=2 (depends on left AND right)
+      assert merge_state.remaining_deps == 2
     end
 
-    test "map step task initialization" do
-      # Map steps with array output:
-      # - initial_tasks = array length (set at runtime by complete_task)
-      # - remaining_tasks = initial_tasks
-      # - Each array element gets a task
-      assert true
-    end
+    test "creates correct dependencies for diamond pattern" do
+      {:ok, definition} = WorkflowDefinition.parse(TestDiamondFlow)
 
-    test "single step task initialization" do
-      # Single steps always:
-      # - Have exactly 1 task (task_index = 0)
-      # - remaining_tasks = 1
-      # - When completed, no dependent map steps created
-      assert true
-    end
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
-    test "counter boundaries" do
-      # Counters should never go negative:
-      # - remaining_deps >= 0
-      # - remaining_tasks >= 0
-      # - Both clamped at 0 minimum
-      assert true
-    end
-  end
+      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id, order_by: d.step_slug)
 
-  describe "Dependency graph initialization" do
-    test "creates step_dependency records" do
-      # For each "step B depends on step A":
-      # Create a step_dependency record with:
-      # - run_id: the run being initialized
-      # - step_slug: "B"
-      # - depends_on_step: "A"
-      assert true
-    end
-
-    test "creates one record per dependency" do
-      # If step depends on 3 other steps:
-      # Create 3 step_dependency records
-      assert true
-    end
-
-    test "preserves dependency direction" do
-      # A → B is different from B → A
-      # Initialization preserves the correct direction
-      assert true
-    end
-
-    test "handles diamond dependencies correctly" do
-      # Diamond: fetch → {left, right} → merge
-      # Should create:
+      # Should have 4 dependencies:
       # - left depends on fetch
       # - right depends on fetch
-      # - merge depends on left AND right (2 records)
-      assert true
+      # - merge depends on left
+      # - merge depends on right
+      assert length(deps) == 4
+
+      # Verify left and right both depend on fetch
+      left_deps = Enum.filter(deps, &(&1.step_slug == "left"))
+      assert length(left_deps) == 1
+      assert hd(left_deps).depends_on_step == "fetch"
+
+      right_deps = Enum.filter(deps, &(&1.step_slug == "right"))
+      assert length(right_deps) == 1
+      assert hd(right_deps).depends_on_step == "fetch"
+
+      # Verify merge depends on both left and right
+      merge_deps = Enum.filter(deps, &(&1.step_slug == "merge"))
+      assert length(merge_deps) == 2
+      merge_depends_on = Enum.map(merge_deps, & &1.depends_on_step) |> Enum.sort()
+      assert merge_depends_on == ["left", "right"]
+    end
+
+    test "initializes map step with initial_tasks" do
+      {:ok, definition} = WorkflowDefinition.parse(TestMapFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      process_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "process")
+
+      # Map step should have initial_tasks set
+      assert process_state.initial_tasks == 10
     end
   end
 
-  describe "Step state initialization" do
-    test "creates step_state for each step" do
-      # For each step in workflow:
-      # Create a step_state record with:
-      # - run_id
-      # - step_slug
-      # - workflow_slug
-      # - status: 'created'
-      # - remaining_deps and remaining_tasks
-      assert true
+  describe "Edge cases and validation" do
+    test "handles single-step workflow" do
+      defmodule TestSingleFlow do
+        def __workflow_steps__ do
+          [{:only_step, &__MODULE__.only_step/1, depends_on: []}]
+        end
+
+        def only_step(_input), do: {:ok, %{}}
+      end
+
+      {:ok, definition} = WorkflowDefinition.parse(TestSingleFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      # Should create 1 run, 1 step_state, 0 dependencies
+      run = Repo.get!(WorkflowRun, run_id)
+      assert run.remaining_steps == 1
+
+      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      assert length(step_states) == 1
+
+      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id)
+      assert length(deps) == 0
     end
 
-    test "step_state status starts as created" do
-      # All step_states initially have status = 'created'
-      # Transitions: created → started → completed
-      assert true
+    test "handles multiple root steps (fan-out)" do
+      defmodule FanOutWorkflow do
+        def __workflow_steps__ do
+          [
+            {:root1, &__MODULE__.root/1, depends_on: []},
+            {:root2, &__MODULE__.root/1, depends_on: []},
+            {:merge, &__MODULE__.merge/1, depends_on: [:root1, :root2]}
+          ]
+        end
+
+        def root(_input), do: {:ok, %{}}
+        def merge(_input), do: {:ok, %{}}
+      end
+
+      {:ok, definition} = WorkflowDefinition.parse(FanOutWorkflow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      root1_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "root1")
+      root2_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "root2")
+      merge_state = Repo.get_by!(StepState, run_id: run_id, step_slug: "merge")
+
+      # Both root steps should be started
+      assert root1_state.status == "started"
+      assert root2_state.status == "started"
+      assert root1_state.remaining_deps == 0
+      assert root2_state.remaining_deps == 0
+
+      # Merge depends on both roots
+      assert merge_state.remaining_deps == 2
+      assert merge_state.status == "created"
     end
 
-    test "preserves step order in step_state records" do
-      # All steps should have step_state regardless of execution order
-      assert true
+    test "handles workflows with no dependencies (all root steps)" do
+      defmodule AllRootsWorkflow do
+        def __workflow_steps__ do
+          [
+            {:step1, &__MODULE__.s/1, depends_on: []},
+            {:step2, &__MODULE__.s/1, depends_on: []},
+            {:step3, &__MODULE__.s/1, depends_on: []}
+          ]
+        end
+
+        def s(_input), do: {:ok, %{}}
+      end
+
+      {:ok, definition} = WorkflowDefinition.parse(AllRootsWorkflow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      # All steps should be started (all are roots)
+      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      assert length(step_states) == 3
+
+      Enum.each(step_states, fn state ->
+        assert state.status == "started"
+        assert state.remaining_deps == 0
+      end)
+
+      # No dependencies
+      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id)
+      assert length(deps) == 0
     end
 
-    test "handles many steps efficiently" do
-      # Should handle workflows with 100+ steps
-      assert true
-    end
-  end
+    test "handles complex input data structures" do
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
 
-  describe "Task creation for root steps" do
-    test "creates initial tasks for root steps" do
-      # Root steps (remaining_deps = 0) get:
-      # - One step_task per task_index (for single: index 0)
-      # - Status: 'queued'
-      # - Ready for immediate execution
-      assert true
-    end
+      complex_input = %{
+        "user" => %{"id" => 123, "name" => "Test User"},
+        "items" => [1, 2, 3, 4, 5],
+        "config" => %{"timeout" => 60, "retries" => 3}
+      }
 
-    test "no initial tasks for dependent steps" do
-      # Non-root steps don't get tasks initially
-      # Tasks created when dependencies complete via complete_task()
-      assert true
+      {:ok, run_id} = RunInitializer.initialize(definition, complex_input, Repo)
+
+      run = Repo.get!(WorkflowRun, run_id)
+      assert run.input == complex_input
     end
 
-    test "root step task has correct initial state" do
-      # Initial task for root step:
-      # - status: 'queued'
-      # - attempts_count: 0 (not yet claimed)
-      # - claimed_by: nil
-      # - input: the workflow input
-      assert true
+    test "generates valid UUID for run_id" do
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      # UUID should be valid binary format
+      assert is_binary(run_id)
+      # UUID length is 36 characters with dashes
+      assert String.length(run_id) == 36
+      # Should match UUID pattern
+      assert String.match?(run_id, ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
     end
 
-    test "single root step creates one task" do
-      # Single-type root step:
-      # - One step_task with task_index = 0
-      assert true
+    test "creates run with started_at timestamp" do
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      run = Repo.get!(WorkflowRun, run_id)
+      assert run.started_at != nil
+      assert %DateTime{} = run.started_at
     end
 
-    test "multiple root steps each get a task" do
-      # Fan-out workflow with root1, root2:
-      # - root1 gets task_index=0
-      # - root2 gets task_index=0
-      # Both can execute in parallel
-      assert true
-    end
-  end
+    test "sets workflow_slug correctly" do
+      {:ok, definition} = WorkflowDefinition.parse(TestDiamondFlow)
 
-  describe "Error conditions" do
-    test "handles invalid workflow definition" do
-      # Should error if workflow_definition is nil or invalid
-      assert true
-    end
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
-    test "handles database errors gracefully" do
-      # Network error, constraint violation, etc.
-      # Should return error tuple
-      assert true
-    end
+      run = Repo.get!(WorkflowRun, run_id)
+      assert String.contains?(run.workflow_slug, "TestDiamondFlow")
 
-    test "rolls back on partial failure" do
-      # If any insert fails after some succeed:
-      # All created records should be rolled back
-      # Transaction ensures atomicity
-      assert true
-    end
-
-    test "validates input parameters" do
-      # run_id should be valid UUID
-      # workflow_slug should match workflow definition
-      # input should be valid JSON
-      assert true
-    end
-  end
-
-  describe "Complex workflow initialization" do
-    test "initializes ETL workflow" do
-      # Extract → Transform → Load
-      # extract: remaining_deps=0, remaining_tasks=1, task created
-      # transform: remaining_deps=1, remaining_tasks=0, no task
-      # load: remaining_deps=1, remaining_tasks=0, no task
-      assert true
-    end
-
-    test "initializes data processing workflow" do
-      # Fetch → {Split, Validate, Clean} → Merge → Save
-      # fetch: root, gets task
-      # split, validate, clean: each depend on fetch, no tasks
-      # merge: depends on 3 steps, no task
-      # save: depends on merge, no task
-      assert true
-    end
-
-    test "initializes parallel worker workflow" do
-      # Start → {Worker1..N} → Gather → Report
-      # Should handle 100+ workers correctly
-      assert true
-    end
-
-    test "initializes map step workflow" do
-      # Input provides array for map step
-      # Map step should get initial_tasks from array length
-      # Other steps adjusted based on dependencies
-      assert true
-    end
-  end
-
-  describe "Atomicity and consistency" do
-    test "all or nothing initialization" do
-      # Either complete run initialization succeeds:
-      # - run created
-      # - all step_states created
-      # - all dependencies created
-      # - all tasks created
-      # Or nothing is created (transaction rollback)
-      assert true
-    end
-
-    test "maintains referential integrity" do
-      # All created records reference existing entities:
-      # - step_states reference valid run_id
-      # - dependencies reference valid step_slugs
-      # - tasks reference valid run_id and step_slug
-      assert true
-    end
-
-    test "consistent counter values" do
-      # Sum of all remaining_deps across all steps:
-      # = total number of step_dependency records
-      # Provides validation check
-      assert true
+      # All step_states should have same workflow_slug
+      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      Enum.each(step_states, fn state ->
+        assert state.workflow_slug == run.workflow_slug
+      end)
     end
   end
 
-  describe "Integration with execution" do
-    test "initialized state is ready for execution" do
-      # After initialization:
-      # - Root steps have queued tasks
-      # - Executor can immediately start claiming tasks
-      # - Workers can begin execution
-      assert true
+  describe "Transaction behavior and error handling" do
+    test "wraps initialization in transaction" do
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
+
+      # If this succeeds, the transaction committed
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      # All records should exist
+      assert Repo.get(WorkflowRun, run_id) != nil
     end
 
-    test "counter mechanics support cascading completion" do
-      # When a step completes:
-      # - Its dependent steps have remaining_deps decremented
-      # - When remaining_deps reaches 0, step is ready to start
-      # - Initialized counters support this flow
-      assert true
+    test "transaction returns run_id on success" do
+      {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      assert is_binary(run_id)
+      assert byte_size(run_id) == 36
     end
 
-    test "task creation mechanics support map expansion" do
-      # When single parent completes with array output:
-      # - Map child's initial_tasks set to array length
-      # - remaining_tasks set to array length
-      # - One task created per array element
-      # Initialized state supports this
-      assert true
+    test "all step_states created in single batch" do
+      {:ok, definition} = WorkflowDefinition.parse(TestDiamondFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      # All 4 step_states should be created
+      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      assert length(step_states) == 4
+    end
+
+    test "all dependencies created in single batch" do
+      {:ok, definition} = WorkflowDefinition.parse(TestDiamondFlow)
+
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
+
+      # All 4 dependencies should be created
+      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id)
+      assert length(deps) == 4
     end
   end
 end

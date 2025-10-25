@@ -148,11 +148,14 @@ defmodule Pgflow.DAG.RunInitializer do
   # Step 5: Call start_ready_steps() to mark root steps as 'started' and send to pgmq
   # NOTE: start_ready_steps now creates task records AND sends messages to pgmq
   defp start_ready_steps(run_id, repo) do
+    # Convert string UUID to binary format for PostgreSQL
+    {:ok, binary_run_id} = Ecto.UUID.dump(run_id)
+
     # Call PostgreSQL function via raw SQL
     result =
       repo.query(
         "SELECT * FROM start_ready_steps($1)",
-        [run_id]
+        [binary_run_id]
       )
 
     case result do
