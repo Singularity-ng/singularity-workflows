@@ -32,11 +32,11 @@ graph LR
     C --> D["📊 Aggregation<br/>(collect)"]
     D --> E["💬 Response<br/>(output)"]
 
-    style A fill:#E3F2FD
-    style B fill:#BBDEFB
-    style C fill:#FFE082
-    style D fill:#FFE082
-    style E fill:#A5D6A7
+    style A fill:#1a237e,color:#fff
+    style B fill:#0d47a1,color:#fff
+    style C fill:#f57f17,color:#fff
+    style D fill:#f57f17,color:#fff
+    style E fill:#1b5e20,color:#fff
 ```
 
 **Multi-Agent Collaboration**
@@ -60,13 +60,13 @@ graph TB
     E --> F["🎯 Final Decision"]
     F --> G["📤 Return to User"]
 
-    style A fill:#E3F2FD
-    style B fill:#90CAF9
-    style C fill:#90CAF9
-    style D fill:#90CAF9
-    style E fill:#FFE082
-    style F fill:#FFE082
-    style G fill:#A5D6A7
+    style A fill:#1a237e,color:#fff
+    style B fill:#0d47a1,color:#fff
+    style C fill:#0d47a1,color:#fff
+    style D fill:#0d47a1,color:#fff
+    style E fill:#f57f17,color:#fff
+    style F fill:#f57f17,color:#fff
+    style G fill:#1b5e20,color:#fff
 ```
 
 **Dynamic Workflow Generation** (perfect for AI agents that plan their own workflows):
@@ -98,11 +98,11 @@ graph LR
     C --> D["🔄 Transformation<br/>(10k tasks)"]
     D --> E["💾 Load<br/>(1 task)"]
 
-    style A fill:#A5D6A7
-    style B fill:#FFE082
-    style C fill:#FFE082
-    style D fill:#FFE082
-    style E fill:#90CAF9
+    style A fill:#1b5e20,color:#fff
+    style B fill:#f57f17,color:#fff
+    style C fill:#f57f17,color:#fff
+    style D fill:#f57f17,color:#fff
+    style E fill:#0d47a1,color:#fff
 ```
 
 Each validation failure doesn't block the whole pipeline—failed records are retried independently. Failed items can be tracked and reprocessed.
@@ -125,11 +125,11 @@ graph LR
     C --> D["🎨 Postprocess<br/>(parallel)<br/>100 transforms"]
     D --> E["💾 Store<br/>Results"]
 
-    style A fill:#E3F2FD
-    style B fill:#FFE082
-    style C fill:#FFE082
-    style D fill:#FFE082
-    style E fill:#A5D6A7
+    style A fill:#1a237e,color:#fff
+    style B fill:#f57f17,color:#fff
+    style C fill:#f57f17,color:#fff
+    style D fill:#f57f17,color:#fff
+    style E fill:#1b5e20,color:#fff
 ```
 
 **Multi-Model Ensemble**
@@ -150,14 +150,14 @@ graph TB
     F --> G["📊 Confidence Score"]
     G --> H["✅ Return"]
 
-    style A fill:#E3F2FD
-    style B fill:#FFE082
-    style C fill:#FFE082
-    style D fill:#FFE082
-    style E fill:#BBDEFB
-    style F fill:#BBDEFB
-    style G fill:#BBDEFB
-    style H fill:#A5D6A7
+    style A fill:#1a237e,color:#fff
+    style B fill:#f57f17,color:#fff
+    style C fill:#f57f17,color:#fff
+    style D fill:#f57f17,color:#fff
+    style E fill:#0d47a1,color:#fff
+    style F fill:#0d47a1,color:#fff
+    style G fill:#0d47a1,color:#fff
+    style H fill:#1b5e20,color:#fff
 ```
 
 ### 4. Microservice Orchestration
@@ -179,14 +179,14 @@ graph TB
     E2 --> F
     E3 --> F
 
-    style A fill:#E3F2FD
-    style B fill:#BBDEFB
-    style C fill:#BBDEFB
-    style D fill:#FFE082
-    style E1 fill:#C8E6C9
-    style E2 fill:#C8E6C9
-    style E3 fill:#C8E6C9
-    style F fill:#A5D6A7
+    style A fill:#1a237e,color:#fff
+    style B fill:#0d47a1,color:#fff
+    style C fill:#0d47a1,color:#fff
+    style D fill:#f57f17,color:#fff
+    style E1 fill:#2e7d32,color:#fff
+    style E2 fill:#2e7d32,color:#fff
+    style E3 fill:#2e7d32,color:#fff
+    style F fill:#1b5e20,color:#fff
 ```
 
 **Benefits:**
@@ -214,13 +214,13 @@ graph TB
     E --> F["📄 PDF<br/>Generation"]
     F --> G["📤 Send to<br/>User"]
 
-    style A fill:#E3F2FD
-    style B fill:#FFE082
-    style C fill:#FFE082
-    style D fill:#FFE082
-    style E fill:#BBDEFB
-    style F fill:#BBDEFB
-    style G fill:#A5D6A7
+    style A fill:#1a237e,color:#fff
+    style B fill:#f57f17,color:#fff
+    style C fill:#f57f17,color:#fff
+    style D fill:#f57f17,color:#fff
+    style E fill:#0d47a1,color:#fff
+    style F fill:#0d47a1,color:#fff
+    style G fill:#1b5e20,color:#fff
 ```
 
 ### 6. Document Processing Pipeline
@@ -244,15 +244,15 @@ graph TB
 
     H --> I["✅ Document<br/>Available for<br/>Search"]
 
-    style A fill:#E3F2FD
-    style B fill:#BBDEFB
-    style C fill:#FFE082
-    style D fill:#FFE082
-    style E fill:#FFE082
-    style F fill:#FFE082
-    style G fill:#C8E6C9
-    style H fill:#C8E6C9
-    style I fill:#A5D6A7
+    style A fill:#1a237e,color:#fff
+    style B fill:#0d47a1,color:#fff
+    style C fill:#f57f17,color:#fff
+    style D fill:#f57f17,color:#fff
+    style E fill:#f57f17,color:#fff
+    style F fill:#f57f17,color:#fff
+    style G fill:#2e7d32,color:#fff
+    style H fill:#2e7d32,color:#fff
+    style I fill:#1b5e20,color:#fff
 ```
 
 ### 7. Real-Time Analytics & Stream Processing
@@ -272,11 +272,11 @@ graph LR
     C --> D
     D --> E
 
-    style A fill:#E3F2FD
-    style B fill:#BBDEFB
-    style C fill:#FFE082
-    style D fill:#FFE082
-    style E fill:#A5D6A7
+    style A fill:#1a237e,color:#fff
+    style B fill:#0d47a1,color:#fff
+    style C fill:#f57f17,color:#fff
+    style D fill:#f57f17,color:#fff
+    style E fill:#1b5e20,color:#fff
 ```
 
 ### 8. Recommendation System Pipelines
@@ -298,14 +298,14 @@ graph TB
     E --> F["🎯 Diversify"]
     F --> G["✅ Return Top 10"]
 
-    style A fill:#E3F2FD
-    style B fill:#BBDEFB
-    style C1 fill:#FFE082
-    style C2 fill:#FFE082
-    style D fill:#BBDEFB
-    style E fill:#BBDEFB
-    style F fill:#BBDEFB
-    style G fill:#A5D6A7
+    style A fill:#1a237e,color:#fff
+    style B fill:#0d47a1,color:#fff
+    style C1 fill:#f57f17,color:#fff
+    style C2 fill:#f57f17,color:#fff
+    style D fill:#0d47a1,color:#fff
+    style E fill:#0d47a1,color:#fff
+    style F fill:#0d47a1,color:#fff
+    style G fill:#1b5e20,color:#fff
 ```
 
 ## When to Use ex_pgflow
@@ -468,11 +468,13 @@ graph TB
     PGMQ -.->|Task queue| StepTask
     Functions -.->|Updates| Tables
 
-    style App fill:#E1F5FE
-    style PostgreSQL fill:#F1F8E9
-    style WorkflowRun fill:#FFE082
-    style StepState fill:#A5D6A7
-    style StepTask fill:#90CAF9
+    style App fill:#0d47a1,color:#fff
+    style PostgreSQL fill:#1b5e20,color:#fff
+    style WorkflowRun fill:#f57f17,color:#fff
+    style StepState fill:#2e7d32,color:#fff
+    style StepTask fill:#0d47a1,color:#fff
+    style Executor fill:#0d47a1,color:#fff
+    style FlowBuilder fill:#0d47a1,color:#fff
 ```
 
 ### Workflow Execution Flow
@@ -552,12 +554,12 @@ graph LR
     E3 --> T
     E4 --> T
 
-    style F fill:#90EE90
-    style E1 fill:#90EE90
-    style E2 fill:#90EE90
-    style E3 fill:#FFD700
-    style E4 fill:#FFD700
-    style T fill:#FFB6C1
+    style F fill:#1b5e20,color:#fff
+    style E1 fill:#1b5e20,color:#fff
+    style E2 fill:#1b5e20,color:#fff
+    style E3 fill:#f57f17,color:#fff
+    style E4 fill:#f57f17,color:#fff
+    style T fill:#0d47a1,color:#fff
 ```
 
 **What's happening:**
