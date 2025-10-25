@@ -79,9 +79,9 @@ defmodule ExPgflow.MixProject do
         "GETTING_STARTED.md",
         "ARCHITECTURE.md",
         "CHANGELOG.md",
-        "DYNAMIC_WORKFLOWS_GUIDE.md",
-        "PGFLOW_REFERENCE.md",
-        "SECURITY_AUDIT.md"
+        "docs/DYNAMIC_WORKFLOWS_GUIDE.md",
+        "docs/PGFLOW_REFERENCE.md",
+        "docs/SECURITY_AUDIT.md"
       ],
       main: "readme",
       source_ref: "main",
