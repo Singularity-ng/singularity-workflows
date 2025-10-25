@@ -13,7 +13,9 @@ jobs:
 
     services:
       postgres:
-        image: postgres:17
+        # Use pgmq image with PostgreSQL 16 and pgmq pre-installed
+        # This is the official pgmq development image from Tembo
+        image: ghcr.io/tembo-io/pgmq-pg:latest
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -45,10 +47,11 @@ jobs:
     - name: Install dependencies
       run: mix deps.get
 
-    - name: Create test database
+    - name: Create test database with pgmq
       run: |
-        sudo -u postgres psql -c "CREATE DATABASE ex_pgflow_test;"
-        sudo -u postgres psql -d ex_pgflow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
+        PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE ex_pgflow_test;"
+        # pgmq should already be available in the ghcr.io/tembo-io/pgmq-pg image
+        PGPASSWORD=postgres psql -h localhost -U postgres -d ex_pgflow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
 
     - name: Run migrations
       run: |

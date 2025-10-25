@@ -146,6 +146,15 @@ end
 
 ### 1. Install PostgreSQL Extensions
 
+**Option A: Use Docker with pgmq pre-installed (recommended for development)**
+\`\`\`bash
+docker run -d --name pgmq-postgres \
+  -e POSTGRES_PASSWORD=postgres \
+  -p 5432:5432 \
+  ghcr.io/tembo-io/pgmq-pg:latest
+\`\`\`
+
+**Option B: Manual installation**
 \`\`\`bash
 # Install pgmq extension (required)
 mix ecto.migrate
