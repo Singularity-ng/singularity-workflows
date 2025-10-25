@@ -45,33 +45,33 @@ defmodule Pgflow.FlowBuilderTest do
   describe "create_flow/3 - Workflow creation with options" do
     test "validates max_attempts option" do
       # Should accept valid max_attempts
-      assert validate_max_attempts([max_attempts: 5]) == :ok
+      assert validate_max_attempts(max_attempts: 5) == :ok
       assert validate_max_attempts([]) == :ok
     end
 
     test "rejects negative max_attempts" do
-      assert validate_max_attempts([max_attempts: -1]) ==
+      assert validate_max_attempts(max_attempts: -1) ==
                {:error, :invalid_max_attempts}
     end
 
     test "rejects zero max_attempts" do
-      assert validate_max_attempts([max_attempts: 0]) ==
+      assert validate_max_attempts(max_attempts: 0) ==
                {:error, :invalid_max_attempts}
     end
 
     test "validates timeout option" do
       # Should accept valid timeout
-      assert validate_timeout([timeout: 120]) == :ok
+      assert validate_timeout(timeout: 120) == :ok
       assert validate_timeout([]) == :ok
     end
 
     test "rejects negative timeout" do
-      assert validate_timeout([timeout: -1]) ==
+      assert validate_timeout(timeout: -1) ==
                {:error, :invalid_timeout}
     end
 
     test "rejects zero timeout" do
-      assert validate_timeout([timeout: 0]) ==
+      assert validate_timeout(timeout: 0) ==
                {:error, :invalid_timeout}
     end
 
@@ -103,36 +103,38 @@ defmodule Pgflow.FlowBuilderTest do
     end
 
     test "validates step type option" do
-      assert validate_step_type([]) == :ok  # Defaults to "single"
-      assert validate_step_type([step_type: "single"]) == :ok
-      assert validate_step_type([step_type: "map"]) == :ok
+      # Defaults to "single"
+      assert validate_step_type([]) == :ok
+      assert validate_step_type(step_type: "single") == :ok
+      assert validate_step_type(step_type: "map") == :ok
     end
 
     test "rejects invalid step type" do
-      assert validate_step_type([step_type: "invalid"]) ==
+      assert validate_step_type(step_type: "invalid") ==
                {:error, :invalid_step_type}
     end
 
     test "validates initial_tasks for map steps" do
       # For map steps, initial_tasks should be valid
-      assert validate_initial_tasks([step_type: "map", initial_tasks: 10]) == :ok
-      assert validate_initial_tasks([step_type: "single"]) == :ok
+      assert validate_initial_tasks(step_type: "map", initial_tasks: 10) == :ok
+      assert validate_initial_tasks(step_type: "single") == :ok
     end
 
     test "rejects negative initial_tasks" do
-      assert validate_initial_tasks([initial_tasks: -1]) ==
+      assert validate_initial_tasks(initial_tasks: -1) ==
                {:error, :invalid_initial_tasks}
     end
 
     test "rejects zero initial_tasks" do
-      assert validate_initial_tasks([initial_tasks: 0]) ==
+      assert validate_initial_tasks(initial_tasks: 0) ==
                {:error, :invalid_initial_tasks}
     end
   end
 
   describe "Dependency validation" do
     test "validates dependency list format" do
-      assert validate_dependencies([]) == :ok  # Root step
+      # Root step
+      assert validate_dependencies([]) == :ok
       assert validate_dependencies(["parent"]) == :ok
       assert validate_dependencies(["parent1", "parent2"]) == :ok
     end
@@ -196,37 +198,40 @@ defmodule Pgflow.FlowBuilderTest do
 
   describe "Step type validation" do
     test "single step executes once per run" do
-      assert validate_step_type([step_type: "single"]) == :ok
+      assert validate_step_type(step_type: "single") == :ok
     end
 
     test "map step executes for each array element" do
-      assert validate_step_type([step_type: "map"]) == :ok
+      assert validate_step_type(step_type: "map") == :ok
     end
 
     test "map step with initial_tasks" do
-      assert validate_step_type([step_type: "map", initial_tasks: 50]) == :ok
+      assert validate_step_type(step_type: "map", initial_tasks: 50) == :ok
     end
 
     test "single step ignores initial_tasks" do
       # For single steps, initial_tasks should be ignored or validated differently
-      assert validate_step_type([step_type: "single", initial_tasks: 10]) == :ok
+      assert validate_step_type(step_type: "single", initial_tasks: 10) == :ok
     end
   end
 
   describe "Default value handling" do
     test "default max_attempts is 3" do
       # Workflows should default to 3 retry attempts if not specified
-      assert true  # Contract: default max_attempts = 3
+      # Contract: default max_attempts = 3
+      assert true
     end
 
     test "default timeout is 60 seconds" do
       # Workflows should default to 60 second timeout if not specified
-      assert true  # Contract: default timeout = 60
+      # Contract: default timeout = 60
+      assert true
     end
 
     test "default step_type is 'single'" do
       # Steps default to single execution if not specified
-      assert true  # Contract: default step_type = "single"
+      # Contract: default step_type = "single"
+      assert true
     end
   end
 
@@ -284,11 +289,12 @@ defmodule Pgflow.FlowBuilderTest do
     end
 
     test "very high max_attempts" do
-      assert validate_max_attempts([max_attempts: 1000]) == :ok
+      assert validate_max_attempts(max_attempts: 1000) == :ok
     end
 
     test "very high timeout" do
-      assert validate_timeout([timeout: 86400]) == :ok  # 24 hours
+      # 24 hours
+      assert validate_timeout(timeout: 86400) == :ok
     end
   end
 
@@ -326,14 +332,14 @@ defmodule Pgflow.FlowBuilderTest do
     test "creating AI inference workflow" do
       # Preprocess → {Model1, Model2, Model3} → Aggregate → Postprocess
       assert validate_workflow_slug("ai_inference") == :ok
-      assert validate_step_type([step_type: "single"]) == :ok
-      assert validate_step_type([step_type: "map"]) == :ok
+      assert validate_step_type(step_type: "single") == :ok
+      assert validate_step_type(step_type: "map") == :ok
     end
 
     test "creating batch processing workflow" do
       # Queue → {Workers...} → Aggregate → Report
       # Map step for parallel processing
-      assert validate_step_type([step_type: "map", initial_tasks: 100]) == :ok
+      assert validate_step_type(step_type: "map", initial_tasks: 100) == :ok
     end
   end
 

@@ -1,4 +1,5 @@
 # Test workflow fixtures (defined outside test module to keep queue names short)
+# Queue name limit is 47 chars - module names must be short!
 defmodule TestSimpleFlow do
   def __workflow_steps__ do
     [
@@ -39,6 +40,39 @@ defmodule TestMapFlow do
   def fetch(_input), do: {:ok, %{}}
   def process(_input), do: {:ok, %{}}
   def save(_input), do: {:ok, %{}}
+end
+
+defmodule TestSingleFlow do
+  def __workflow_steps__ do
+    [{:only_step, &__MODULE__.only_step/1, depends_on: []}]
+  end
+
+  def only_step(_input), do: {:ok, %{}}
+end
+
+defmodule TestFanOutFlow do
+  def __workflow_steps__ do
+    [
+      {:root1, &__MODULE__.root/1, depends_on: []},
+      {:root2, &__MODULE__.root/1, depends_on: []},
+      {:merge, &__MODULE__.merge/1, depends_on: [:root1, :root2]}
+    ]
+  end
+
+  def root(_input), do: {:ok, %{}}
+  def merge(_input), do: {:ok, %{}}
+end
+
+defmodule TestAllRootsFlow do
+  def __workflow_steps__ do
+    [
+      {:step1, &__MODULE__.s/1, depends_on: []},
+      {:step2, &__MODULE__.s/1, depends_on: []},
+      {:step3, &__MODULE__.s/1, depends_on: []}
+    ]
+  end
+
+  def s(_input), do: {:ok, %{}}
 end
 
 defmodule Pgflow.DAG.RunInitializerTest do
@@ -84,7 +118,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # Should create 2 step_states
-      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      step_states = Repo.all(from(s in StepState, where: s.run_id == ^run_id))
       assert length(step_states) == 2
 
       # Verify step names
@@ -99,7 +133,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # Should create 1 dependency (step2 depends on step1)
-      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id)
+      deps = Repo.all(from(d in StepDependency, where: d.run_id == ^run_id))
       assert length(deps) == 1
 
       dep = hd(deps)
@@ -175,7 +209,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
 
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
-      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id, order_by: d.step_slug)
+      deps = Repo.all(from(d in StepDependency, where: d.run_id == ^run_id, order_by: d.step_slug))
 
       # Should have 4 dependencies:
       # - left depends on fetch
@@ -214,14 +248,6 @@ defmodule Pgflow.DAG.RunInitializerTest do
 
   describe "Edge cases and validation" do
     test "handles single-step workflow" do
-      defmodule TestSingleFlow do
-        def __workflow_steps__ do
-          [{:only_step, &__MODULE__.only_step/1, depends_on: []}]
-        end
-
-        def only_step(_input), do: {:ok, %{}}
-      end
-
       {:ok, definition} = WorkflowDefinition.parse(TestSingleFlow)
 
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
@@ -230,27 +256,14 @@ defmodule Pgflow.DAG.RunInitializerTest do
       run = Repo.get!(WorkflowRun, run_id)
       assert run.remaining_steps == 1
 
-      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      step_states = Repo.all(from(s in StepState, where: s.run_id == ^run_id))
       assert length(step_states) == 1
 
-      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id)
+      deps = Repo.all(from(d in StepDependency, where: d.run_id == ^run_id))
       assert length(deps) == 0
     end
 
     test "handles multiple root steps (fan-out)" do
-      defmodule TestFanOutFlow do
-        def __workflow_steps__ do
-          [
-            {:root1, &__MODULE__.root/1, depends_on: []},
-            {:root2, &__MODULE__.root/1, depends_on: []},
-            {:merge, &__MODULE__.merge/1, depends_on: [:root1, :root2]}
-          ]
-        end
-
-        def root(_input), do: {:ok, %{}}
-        def merge(_input), do: {:ok, %{}}
-      end
-
       {:ok, definition} = WorkflowDefinition.parse(TestFanOutFlow)
 
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
@@ -288,7 +301,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # All steps should be started (all are roots)
-      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      step_states = Repo.all(from(s in StepState, where: s.run_id == ^run_id))
       assert length(step_states) == 3
 
       Enum.each(step_states, fn state ->
@@ -297,7 +310,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
       end)
 
       # No dependencies
-      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id)
+      deps = Repo.all(from(d in StepDependency, where: d.run_id == ^run_id))
       assert length(deps) == 0
     end
 
@@ -326,7 +339,10 @@ defmodule Pgflow.DAG.RunInitializerTest do
       # UUID length is 36 characters with dashes
       assert String.length(run_id) == 36
       # Should match UUID pattern
-      assert String.match?(run_id, ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+      assert String.match?(
+               run_id,
+               ~r/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+             )
     end
 
     test "creates run with started_at timestamp" do
@@ -348,7 +364,8 @@ defmodule Pgflow.DAG.RunInitializerTest do
       assert String.contains?(run.workflow_slug, "TestDiamondFlow")
 
       # All step_states should have same workflow_slug
-      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      step_states = Repo.all(from(s in StepState, where: s.run_id == ^run_id))
+
       Enum.each(step_states, fn state ->
         assert state.workflow_slug == run.workflow_slug
       end)
@@ -381,7 +398,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # All 4 step_states should be created
-      step_states = Repo.all(from s in StepState, where: s.run_id == ^run_id)
+      step_states = Repo.all(from(s in StepState, where: s.run_id == ^run_id))
       assert length(step_states) == 4
     end
 
@@ -391,7 +408,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # All 4 dependencies should be created
-      deps = Repo.all(from d in StepDependency, where: d.run_id == ^run_id)
+      deps = Repo.all(from(d in StepDependency, where: d.run_id == ^run_id))
       assert length(deps) == 4
     end
   end

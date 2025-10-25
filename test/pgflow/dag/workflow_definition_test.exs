@@ -192,7 +192,7 @@ defmodule Pgflow.DAG.WorkflowDefinitionTest do
       result = WorkflowDefinition.parse(MissingDependencyWorkflow)
 
       assert match?({:error, {:invalid_dependencies, _}}, result) or
-             match?({:error, :dependency_not_found}, result)
+               match?({:error, :dependency_not_found}, result)
     end
 
     test "validates all dependencies reference existing steps" do
@@ -286,8 +286,8 @@ defmodule Pgflow.DAG.WorkflowDefinitionTest do
       result = WorkflowDefinition.parse(EmptyWorkflow)
 
       assert match?({:error, :no_root_steps}, result) or
-             match?({:error, :no_steps}, result) or
-             match?({:error, :empty_workflow}, result)
+               match?({:error, :no_steps}, result) or
+               match?({:error, :empty_workflow}, result)
     end
 
     test "single step workflow" do
@@ -345,8 +345,9 @@ defmodule Pgflow.DAG.WorkflowDefinitionTest do
       {:ok, definition} = WorkflowDefinition.parse(DiamondWorkflow)
 
       assert definition.root_steps == [:fetch]
+
       assert definition.dependencies[:merge] == [:left, :right] or
-             definition.dependencies[:merge] == [:right, :left]
+               definition.dependencies[:merge] == [:right, :left]
     end
 
     test "long linear chain" do
@@ -435,6 +436,7 @@ defmodule Pgflow.DAG.WorkflowDefinitionTest do
       {:ok, definition} = WorkflowDefinition.parse(SequentialWorkflow)
 
       assert is_map(definition.steps)
+
       Enum.each(definition.steps, fn {key, value} ->
         assert is_atom(key)
         assert is_function(value)
@@ -445,6 +447,7 @@ defmodule Pgflow.DAG.WorkflowDefinitionTest do
       {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
 
       assert is_map(definition.dependencies)
+
       Enum.each(definition.dependencies, fn {key, value} ->
         assert is_atom(key)
         assert is_list(value)
