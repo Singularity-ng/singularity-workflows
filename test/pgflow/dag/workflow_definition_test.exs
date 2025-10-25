@@ -465,4 +465,174 @@ defmodule Pgflow.DAG.WorkflowDefinitionTest do
       assert is_binary(definition.slug)
     end
   end
+
+  describe "get_dependents/2 - Forward Dependencies" do
+    test "returns steps that depend on given step" do
+      {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
+
+      # Both analyze and summarize depend on fetch
+      dependents = WorkflowDefinition.get_dependents(definition, :fetch)
+      assert :analyze in dependents
+      assert :summarize in dependents
+      assert length(dependents) == 2
+    end
+
+    test "returns empty list for terminal steps" do
+      {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
+
+      # Save is terminal (no steps depend on it)
+      dependents = WorkflowDefinition.get_dependents(definition, :save)
+      assert dependents == []
+    end
+
+    test "handles multiple levels of dependents" do
+      {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
+
+      # Analyze has save as dependent
+      dependents = WorkflowDefinition.get_dependents(definition, :analyze)
+      assert :save in dependents
+    end
+  end
+
+  describe "get_dependencies/2 - Reverse Dependencies" do
+    test "returns steps that given step depends on" do
+      {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
+
+      # Save depends on both analyze and summarize
+      deps = WorkflowDefinition.get_dependencies(definition, :save)
+      assert :analyze in deps
+      assert :summarize in deps
+      assert length(deps) == 2
+    end
+
+    test "returns empty list for root steps" do
+      {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
+
+      # Fetch is root (no dependencies)
+      deps = WorkflowDefinition.get_dependencies(definition, :fetch)
+      assert deps == []
+    end
+
+    test "returns single dependency" do
+      {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
+
+      # Analyze depends only on fetch
+      deps = WorkflowDefinition.get_dependencies(definition, :analyze)
+      assert deps == [:fetch]
+    end
+  end
+
+  describe "get_step_function/2" do
+    test "returns function for valid step" do
+      {:ok, definition} = WorkflowDefinition.parse(SequentialWorkflow)
+
+      step_fn = WorkflowDefinition.get_step_function(definition, :step1)
+      assert is_function(step_fn)
+      assert is_function(step_fn, 1)
+    end
+
+    test "returns nil for non-existent step" do
+      {:ok, definition} = WorkflowDefinition.parse(SequentialWorkflow)
+
+      step_fn = WorkflowDefinition.get_step_function(definition, :non_existent)
+      assert step_fn == nil
+    end
+
+    test "returned function is callable" do
+      {:ok, definition} = WorkflowDefinition.parse(SequentialWorkflow)
+
+      step_fn = WorkflowDefinition.get_step_function(definition, :step1)
+      assert {:ok, %{}} = step_fn.(%{})
+    end
+  end
+
+  describe "dependency_count/2" do
+    test "counts dependencies correctly" do
+      {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
+
+      # Save has 2 dependencies
+      assert WorkflowDefinition.dependency_count(definition, :save) == 2
+    end
+
+    test "returns zero for root steps" do
+      {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
+
+      # Fetch has no dependencies
+      assert WorkflowDefinition.dependency_count(definition, :fetch) == 0
+    end
+
+    test "returns one for single dependency" do
+      {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
+
+      # Analyze has 1 dependency
+      assert WorkflowDefinition.dependency_count(definition, :analyze) == 1
+    end
+
+    test "returns zero for non-existent step" do
+      {:ok, definition} = WorkflowDefinition.parse(SequentialWorkflow)
+
+      # Non-existent step has no dependencies
+      assert WorkflowDefinition.dependency_count(definition, :non_existent) == 0
+    end
+  end
+
+  describe "get_step_metadata/2" do
+    test "returns metadata for step with explicit metadata" do
+      defmodule MetadataTestWorkflow do
+        def __workflow_steps__ do
+          [
+            {:step1, &__MODULE__.step1/1,
+             depends_on: [], initial_tasks: 10, timeout: 300, max_attempts: 5}
+          ]
+        end
+
+        def step1(_input), do: {:ok, %{}}
+      end
+
+      {:ok, definition} = WorkflowDefinition.parse(MetadataTestWorkflow)
+
+      metadata = WorkflowDefinition.get_step_metadata(definition, :step1)
+      assert metadata.initial_tasks == 10
+      assert metadata.timeout == 300
+      assert metadata.max_attempts == 5
+    end
+
+    test "returns defaults for step with no explicit metadata" do
+      {:ok, definition} = WorkflowDefinition.parse(SequentialWorkflow)
+
+      metadata = WorkflowDefinition.get_step_metadata(definition, :step1)
+      assert metadata.initial_tasks == 1
+      assert metadata.timeout == nil
+      assert metadata.max_attempts == 3
+    end
+
+    test "returns defaults for non-existent step" do
+      {:ok, definition} = WorkflowDefinition.parse(SequentialWorkflow)
+
+      metadata = WorkflowDefinition.get_step_metadata(definition, :non_existent)
+      assert metadata.initial_tasks == 1
+      assert metadata.timeout == nil
+      assert metadata.max_attempts == 3
+    end
+
+    test "handles partial metadata" do
+      defmodule PartialMetadataWorkflow do
+        def __workflow_steps__ do
+          [
+            {:step1, &__MODULE__.step1/1, depends_on: [], timeout: 120}
+          ]
+        end
+
+        def step1(_input), do: {:ok, %{}}
+      end
+
+      {:ok, definition} = WorkflowDefinition.parse(PartialMetadataWorkflow)
+
+      metadata = WorkflowDefinition.get_step_metadata(definition, :step1)
+      assert metadata.timeout == 120
+      # Defaults should still apply
+      assert metadata.initial_tasks == 1
+      assert metadata.max_attempts == 3
+    end
+  end
 end

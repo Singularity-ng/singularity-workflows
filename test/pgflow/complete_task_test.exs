@@ -11,23 +11,21 @@ defmodule Pgflow.CompleteTaskTest do
   NOTE: These tests have database state management issues with simultaneous test execution.
   They should be run in isolation with @tag :integration.
 
-  ## Known Limitation
+  ## Solution: Test Wrapper Function
 
   The `complete_task` function returns `void`, which creates a PostgreSQL prepared
   statement issue when called via Postgrex. PostgreSQL's prepared statement protocol
   requires a destination for SELECT results, but void functions have no result to store.
 
-  Workarounds attempted:
-  - `SELECT complete_task(...)` - fails with "no destination for result data"
-  - `DO $$ BEGIN PERFORM complete_task(...); END $$;` - doesn't support parameters
-  - String interpolation - still fails due to prepared statement parsing
+  **Solution**: Use `test_complete_task()` wrapper function (created in migration
+  20251025170000) that calls `complete_task()` internally and returns boolean for
+  Postgrex compatibility.
 
-  The function works correctly in production (verified via direct psql testing).
-  These tests are skipped to avoid false negatives in CI.
+  The wrapper function is test-only and should not be used in production code.
+  Production code calls `complete_task()` directly (which works fine outside Postgrex).
   """
 
   @tag :integration
-  @tag :skip
   test "complete_task marks task completed and updates dependent state" do
     case Pgflow.SqlCase.connect_or_skip() do
       {:skip, reason} ->
@@ -90,15 +88,13 @@ defmodule Pgflow.CompleteTaskTest do
           [binary_id, "child", "parent"]
         )
 
-        # Call complete_task with an array output so child initial_tasks will be set
-        # Use direct SQL for void-returning functions (DO blocks don't support parameters)
-        output_json = Jason.encode!([1, 2, 3])
-        Postgrex.query!(conn, """
-          DO $$
-          BEGIN
-            PERFORM complete_task('#{id}'::uuid, 'parent'::text, 0::int, '#{output_json}'::jsonb);
-          END $$;
-        """)
+        # Call test_complete_task wrapper with an array output so child initial_tasks will be set
+        # Use test wrapper that returns boolean instead of void for Postgrex compatibility
+        Postgrex.query!(
+          conn,
+          "SELECT test_complete_task($1, $2, $3, $4)",
+          [binary_id, "parent", 0, [1, 2, 3]]
+        )
 
         # Verify parent task status
         res =
@@ -123,7 +119,6 @@ defmodule Pgflow.CompleteTaskTest do
   end
 
   @tag :integration
-  @tag :skip
   test "type violation (single -> map non-array) marks run failed" do
     case Pgflow.SqlCase.connect_or_skip() do
       {:skip, reason} ->
@@ -185,13 +180,12 @@ defmodule Pgflow.CompleteTaskTest do
         )
 
         # Non-array output (null) should trigger type-violation and mark run failed
-        # Use direct SQL for void-returning functions (DO blocks don't support parameters)
-        Postgrex.query!(conn, """
-          DO $$
-          BEGIN
-            PERFORM complete_task('#{id}'::uuid, 'p'::text, 0::int, NULL::jsonb);
-          END $$;
-        """)
+        # Use test wrapper that returns boolean instead of void for Postgrex compatibility
+        Postgrex.query!(
+          conn,
+          "SELECT test_complete_task($1, $2, $3, $4)",
+          [binary_id, "p", 0, nil]
+        )
 
         res = Postgrex.query!(conn, "SELECT status FROM workflow_runs WHERE id=$1", [binary_id])
         assert res.rows == [["failed"]]
