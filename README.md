@@ -26,22 +26,18 @@ ex_pgflow is purpose-built for AI agent orchestration:
 **Single Agent Workflow**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph LR
     A["🔍 User Query<br/>(input)"] --> B["🧠 LLM Analysis<br/>(analysis)"]
     B --> C["🔧 Tool Calls<br/>(parallel)"]
     C --> D["📊 Aggregation<br/>(collect)"]
     D --> E["💬 Response<br/>(output)"]
-
-    style A fill:#1a237e,color:#fff
-    style B fill:#0d47a1,color:#fff
-    style C fill:#f57f17,color:#fff
-    style D fill:#f57f17,color:#fff
-    style E fill:#1b5e20,color:#fff
 ```
 
 **Multi-Agent Collaboration**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph TB
     A["📋 Task Definition"]
 
@@ -59,14 +55,6 @@ graph TB
 
     E --> F["🎯 Final Decision"]
     F --> G["📤 Return to User"]
-
-    style A fill:#1a237e,color:#fff
-    style B fill:#0d47a1,color:#fff
-    style C fill:#0d47a1,color:#fff
-    style D fill:#0d47a1,color:#fff
-    style E fill:#f57f17,color:#fff
-    style F fill:#f57f17,color:#fff
-    style G fill:#1b5e20,color:#fff
 ```
 
 **Dynamic Workflow Generation** (perfect for AI agents that plan their own workflows):
@@ -92,17 +80,12 @@ graph TB
 **ETL/ELT Workflows with Error Isolation**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph LR
     A["📥 Extract Data<br/>(1 task)"] --> B["✓ Validation<br/>(10k tasks)"]
     B --> C["🧹 Cleaning<br/>(10k tasks)"]
     C --> D["🔄 Transformation<br/>(10k tasks)"]
     D --> E["💾 Load<br/>(1 task)"]
-
-    style A fill:#1b5e20,color:#fff
-    style B fill:#f57f17,color:#fff
-    style C fill:#f57f17,color:#fff
-    style D fill:#f57f17,color:#fff
-    style E fill:#0d47a1,color:#fff
 ```
 
 Each validation failure doesn't block the whole pipeline—failed records are retried independently. Failed items can be tracked and reprocessed.
@@ -119,22 +102,18 @@ Each validation failure doesn't block the whole pipeline—failed records are re
 **Batch Image Processing**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph LR
     A["📤 Upload<br/>Image Batch"] --> B["🔧 Preprocess<br/>(parallel)<br/>100 images"]
     B --> C["🧠 Model<br/>Inference<br/>(parallel)<br/>100 inferences"]
     C --> D["🎨 Postprocess<br/>(parallel)<br/>100 transforms"]
     D --> E["💾 Store<br/>Results"]
-
-    style A fill:#1a237e,color:#fff
-    style B fill:#f57f17,color:#fff
-    style C fill:#f57f17,color:#fff
-    style D fill:#f57f17,color:#fff
-    style E fill:#1b5e20,color:#fff
 ```
 
 **Multi-Model Ensemble**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph TB
     A["📸 Single Image"]
 
@@ -149,15 +128,6 @@ graph TB
     E --> F["🗳️ Voting"]
     F --> G["📊 Confidence Score"]
     G --> H["✅ Return"]
-
-    style A fill:#1a237e,color:#fff
-    style B fill:#f57f17,color:#fff
-    style C fill:#f57f17,color:#fff
-    style D fill:#f57f17,color:#fff
-    style E fill:#0d47a1,color:#fff
-    style F fill:#0d47a1,color:#fff
-    style G fill:#0d47a1,color:#fff
-    style H fill:#1b5e20,color:#fff
 ```
 
 ### 4. Microservice Orchestration
@@ -165,6 +135,7 @@ graph TB
 **Service-to-Service Workflow Coordination**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph TB
     A["📥 API Request"]
 
@@ -178,15 +149,6 @@ graph TB
     E1 --> F["📤 Response"]
     E2 --> F
     E3 --> F
-
-    style A fill:#1a237e,color:#fff
-    style B fill:#0d47a1,color:#fff
-    style C fill:#0d47a1,color:#fff
-    style D fill:#f57f17,color:#fff
-    style E1 fill:#2e7d32,color:#fff
-    style E2 fill:#2e7d32,color:#fff
-    style E3 fill:#2e7d32,color:#fff
-    style F fill:#1b5e20,color:#fff
 ```
 
 **Benefits:**
@@ -200,6 +162,7 @@ graph TB
 **Multi-Section Report Generation**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph TB
     A["📊 Report Request"]
 
@@ -213,14 +176,6 @@ graph TB
 
     E --> F["📄 PDF<br/>Generation"]
     F --> G["📤 Send to<br/>User"]
-
-    style A fill:#1a237e,color:#fff
-    style B fill:#f57f17,color:#fff
-    style C fill:#f57f17,color:#fff
-    style D fill:#f57f17,color:#fff
-    style E fill:#0d47a1,color:#fff
-    style F fill:#0d47a1,color:#fff
-    style G fill:#1b5e20,color:#fff
 ```
 
 ### 6. Document Processing Pipeline
@@ -228,6 +183,7 @@ graph TB
 **Scanning to Searchable Documents**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph TB
     A["📄 Raw PDF<br/>Upload"]
 
@@ -243,16 +199,6 @@ graph TB
     G --> H["🔍 Index Search<br/>(Elasticsearch)"]
 
     H --> I["✅ Document<br/>Available for<br/>Search"]
-
-    style A fill:#1a237e,color:#fff
-    style B fill:#0d47a1,color:#fff
-    style C fill:#f57f17,color:#fff
-    style D fill:#f57f17,color:#fff
-    style E fill:#f57f17,color:#fff
-    style F fill:#f57f17,color:#fff
-    style G fill:#2e7d32,color:#fff
-    style H fill:#2e7d32,color:#fff
-    style I fill:#1b5e20,color:#fff
 ```
 
 ### 7. Real-Time Analytics & Stream Processing
@@ -260,6 +206,7 @@ graph TB
 **Streaming Data Aggregation**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph LR
     A["📡 Event Stream<br/>(Kafka/NATS/etc)"]
     B["📦 Buffer & Batch<br/>(every 100 events)"]
@@ -271,12 +218,6 @@ graph LR
     B --> C
     C --> D
     D --> E
-
-    style A fill:#1a237e,color:#fff
-    style B fill:#0d47a1,color:#fff
-    style C fill:#f57f17,color:#fff
-    style D fill:#f57f17,color:#fff
-    style E fill:#1b5e20,color:#fff
 ```
 
 ### 8. Recommendation System Pipelines
@@ -284,6 +225,7 @@ graph LR
 **Cold-Start Recommendation Generation**
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph TB
     A["👤 New User<br/>Signup"]
 
@@ -297,15 +239,6 @@ graph TB
     D --> E["⭐ Score<br/>& Rank"]
     E --> F["🎯 Diversify"]
     F --> G["✅ Return Top 10"]
-
-    style A fill:#1a237e,color:#fff
-    style B fill:#0d47a1,color:#fff
-    style C1 fill:#f57f17,color:#fff
-    style C2 fill:#f57f17,color:#fff
-    style D fill:#0d47a1,color:#fff
-    style E fill:#0d47a1,color:#fff
-    style F fill:#0d47a1,color:#fff
-    style G fill:#1b5e20,color:#fff
 ```
 
 ## When to Use ex_pgflow
@@ -434,6 +367,7 @@ step_functions = %{
 ### Architecture Overview
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph TB
     subgraph "Application Layer"
         App[Your Elixir App]
@@ -467,19 +401,12 @@ graph TB
     StepTask -.->|Writes| Tables
     PGMQ -.->|Task queue| StepTask
     Functions -.->|Updates| Tables
-
-    style App fill:#0d47a1,color:#fff
-    style PostgreSQL fill:#1b5e20,color:#fff
-    style WorkflowRun fill:#f57f17,color:#fff
-    style StepState fill:#2e7d32,color:#fff
-    style StepTask fill:#0d47a1,color:#fff
-    style Executor fill:#0d47a1,color:#fff
-    style FlowBuilder fill:#0d47a1,color:#fff
 ```
 
 ### Workflow Execution Flow
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 sequenceDiagram
     participant App as Your App
     participant Executor
@@ -528,6 +455,7 @@ sequenceDiagram
 See how ex_pgflow executes workflows with automatic dependency resolution and parallel execution:
 
 ```mermaid
+%%{init: {'theme':'dark'}}%%
 graph LR
     subgraph "Step 1: fetch_subscribers"
         F["Fetch Subscribers<br/>(1000 subscribers)"]
@@ -553,13 +481,6 @@ graph LR
     E2 --> T
     E3 --> T
     E4 --> T
-
-    style F fill:#1b5e20,color:#fff
-    style E1 fill:#1b5e20,color:#fff
-    style E2 fill:#1b5e20,color:#fff
-    style E3 fill:#f57f17,color:#fff
-    style E4 fill:#f57f17,color:#fff
-    style T fill:#0d47a1,color:#fff
 ```
 
 **What's happening:**
