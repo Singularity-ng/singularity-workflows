@@ -5,7 +5,7 @@ defmodule TestTaskExecSimpleWorkflow do
     [{:step1, &__MODULE__.step1/1, depends_on: []}]
   end
 
-  def step1(input), do: {:ok, Map.put(input, :result, "done")}
+  def step1(input), do: {:ok, Map.put(input, "result", "done")}
 end
 
 defmodule TestTaskExecFailingWorkflow do
@@ -74,14 +74,14 @@ defmodule Pgflow.DAG.TaskExecutorTest do
 
   describe "execute_run/4 - Core execution loop" do
     test "successfully executes simple workflow" do
-      input = %{test: "data"}
+      input = %{"test" => "data"}
 
       # Create run via Executor
       {:ok, result} = Executor.execute(TestTaskExecSimpleWorkflow, input, Repo)
 
-      # Verify output
-      assert result.test == "data"
-      assert result.result == "done"
+      # Verify output (results from database have string keys)
+      assert result["test"] == "data"
+      assert result["result"] == "done"
 
       # Verify run completed
       run = Repo.one!(WorkflowRun)

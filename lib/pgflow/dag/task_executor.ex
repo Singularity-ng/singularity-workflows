@@ -378,7 +378,7 @@ defmodule Pgflow.DAG.TaskExecutor do
     result =
       repo.query(
         "SELECT complete_task($1::uuid, $2::text, $3::integer, $4::jsonb)",
-        [run_id, step_slug, task_index, Jason.encode!(output)]
+        [run_id, step_slug, task_index, output]
       )
 
     case result do

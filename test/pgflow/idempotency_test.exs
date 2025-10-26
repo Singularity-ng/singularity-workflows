@@ -7,7 +7,7 @@ defmodule Pgflow.IdempotencyTest do
   - Retries don't create duplicate work
   - Idempotency keys are computed correctly
   """
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   alias Pgflow.{StepTask, Repo}
   import Ecto.Query
@@ -269,6 +269,7 @@ defmodule Pgflow.IdempotencyTest do
   end
 
   describe "Migration verification" do
+    @tag :schema_check
     test "idempotency_key column exists in database" do
       # Query database schema
       result = Repo.query!("""
@@ -286,6 +287,7 @@ defmodule Pgflow.IdempotencyTest do
       assert is_nullable == "NO"
     end
 
+    @tag :schema_check
     test "unique index exists on idempotency_key" do
       result = Repo.query!("""
         SELECT indexname, indexdef

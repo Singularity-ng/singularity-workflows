@@ -21,24 +21,36 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
       v_completed_run workflow_runs%ROWTYPE;
       v_leaf_output jsonb;
       v_leaf_count integer;
+      v_first_key text;
     BEGIN
-      -- Get leaf step outputs
-      SELECT
-        jsonb_object_agg(step_slug, output),
-        count(*)
-      INTO v_leaf_output, v_leaf_count
+      -- Get count of completed leaf steps
+      SELECT count(*)
+      INTO v_leaf_count
+      FROM workflow_step_states leaf_state
+      WHERE leaf_state.run_id = p_run_id
+        AND leaf_state.status = 'completed'
+        AND NOT EXISTS (
+          SELECT 1
+          FROM workflow_step_dependencies dep
+          WHERE dep.run_id = leaf_state.run_id
+            AND dep.depends_on_step = leaf_state.step_slug
+        );
+
+      -- Get leaf step outputs (aggregate for multi-step workflows)
+      SELECT jsonb_object_agg(step_slug, COALESCE(output, 'null'::jsonb))
+      INTO v_leaf_output
       FROM (
         SELECT DISTINCT
           leaf_state.step_slug,
-          -- Get the first task's output for this step
-          (SELECT t.output
+          (SELECT output
            FROM workflow_step_tasks t
-           WHERE t.run_id = maybe_complete_run.p_run_id
+           WHERE t.run_id = p_run_id
              AND t.step_slug = leaf_state.step_slug
              AND t.status = 'completed'
+           ORDER BY t.completed_at DESC
            LIMIT 1) as output
         FROM workflow_step_states leaf_state
-        WHERE leaf_state.run_id = maybe_complete_run.p_run_id
+        WHERE leaf_state.run_id = p_run_id
           AND leaf_state.status = 'completed'
           AND NOT EXISTS (
             SELECT 1
@@ -48,10 +60,10 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
           )
       ) leaf_outputs;
 
-      -- For single-step workflows, return the step output directly
-      -- For multi-step workflows, return object with step_slug keys
-      IF v_leaf_count = 1 THEN
-        v_leaf_output := v_leaf_output -> (SELECT jsonb_object_keys(v_leaf_output) LIMIT 1);
+      -- For single-step workflows, extract the step output directly
+      IF v_leaf_count = 1 AND v_leaf_output IS NOT NULL THEN
+        SELECT jsonb_object_keys(v_leaf_output) INTO v_first_key;
+        v_leaf_output := v_leaf_output -> v_first_key;
       END IF;
 
       -- Complete run if all steps are done
@@ -59,17 +71,11 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
       SET
         status = 'completed',
         completed_at = NOW(),
-        output = v_leaf_output
-      WHERE workflow_runs.id = maybe_complete_run.p_run_id
+        output = COALESCE(v_leaf_output, '{}'::jsonb)
+      WHERE workflow_runs.id = p_run_id
         AND workflow_runs.remaining_steps = 0
         AND workflow_runs.status != 'completed'
       RETURNING * INTO v_completed_run;
-
-      -- Log completion (optional: would broadcast event in pgflow)
-      IF v_completed_run.id IS NOT NULL THEN
-        RAISE NOTICE 'Run completed: run_id=%, output=%',
-          v_completed_run.id, v_completed_run.output;
-      END IF;
     END;
     $$;
     """)
