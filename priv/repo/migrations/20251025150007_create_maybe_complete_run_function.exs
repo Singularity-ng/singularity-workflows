@@ -5,7 +5,7 @@ defmodule Pgflow.Repo.Migrations.CreateMaybeCompleteRunFunction do
   Matches pgflow's implementation:
   1. Check if all steps are completed (remaining_steps = 0)
   2. If yes, mark run as completed
-  3. Aggregate outputs from leaf steps (steps with no dependents)
+  3. Aggregate outputs from leaf steps (steps with no dependents) into a flat array
   4. Set run.output to aggregated leaf outputs
 
   Called by complete_task() when a step completes.
@@ -28,10 +28,7 @@ defmodule Pgflow.Repo.Migrations.CreateMaybeCompleteRunFunction do
         completed_at = NOW(),
         -- Aggregate outputs from leaf steps (steps with no dependents)
         output = (
-          SELECT jsonb_object_agg(
-            step_slug,
-            output
-          )
+          SELECT jsonb_agg(output)
           FROM (
             SELECT DISTINCT
               leaf_state.step_slug,
@@ -70,7 +67,7 @@ defmodule Pgflow.Repo.Migrations.CreateMaybeCompleteRunFunction do
 
     execute("""
     COMMENT ON FUNCTION pgflow.maybe_complete_run(UUID) IS
-    'Checks if run is complete (all steps done), marks as completed, and aggregates leaf step outputs. Matches pgflow implementation.'
+    'Checks if run is complete (all steps done), marks as completed, and aggregates leaf step outputs into a flat array. Matches pgflow implementation.'
     """)
   end
 

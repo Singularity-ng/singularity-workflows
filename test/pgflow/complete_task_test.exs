@@ -3,7 +3,7 @@ defmodule Pgflow.CompleteTaskTest do
   use Pgflow.SqlCase
 
   @moduledoc """
-  Basic integration tests ported from pgflow SQL suite that exercise `complete_task`.
+  Integration tests for complete_task() SQL function.
 
   These tests require a running Postgres with the pgflow schema/migrations applied.
   Set DATABASE_URL to point to the DB before running `mix test` to enable them.
@@ -11,38 +11,14 @@ defmodule Pgflow.CompleteTaskTest do
   NOTE: These tests have database state management issues with simultaneous test execution.
   They should be run in isolation with @tag :integration.
 
-  ## Known Limitation: Postgrex Extended Query Protocol Incompatibility
+  ## complete_task Return Values
 
-  The `complete_task` function returns `void`, which creates a PostgreSQL prepared
-  statement issue when called via Postgrex in the ExUnit test environment.
+  The function returns INTEGER:
+  - `1` on success (task completed)
+  - `0` on guard (run already failed, no mutation)
+  - `-1` on type violation (map step expects array, got non-array)
 
-  ### Problem
-  PostgreSQL's extended query protocol (used by Postgrex) throws "query has no destination
-  for result data" when calling certain functions, even wrapper functions that return values.
-
-  ### Attempted Solutions (All Failed in ExUnit Context)
-  1. `SELECT complete_task(...)` - "no destination for result data"
-  2. `DO $ BEGIN PERFORM complete_task(...); END $;` - doesn't support parameters
-  3. String interpolation in DO blocks - still fails (prepared statement parsing)
-  4. Wrapper function returning boolean - same error
-  5. Wrapper function returning TABLE - same error
-  6. CTE (WITH clause) wrapper - same error
-  7. Postgrex.transaction wrapper - same error
-
-  ### Why This Only Affects Tests
-  - Works perfectly in production (direct psql)
-  - Works in manual testing (`mix run` with Postgrex)
-  - Only fails in ExUnit test environment
-  - Likely an interaction between ExUnit, Postgrex connection state, and PostgreSQL protocol
-
-  ### Verification
-  The function logic is verified via:
-  - Direct psql testing
-  - Manual Postgrex testing outside ExUnit
-  - Tests of underlying helper functions
-
-  These integration tests are skipped to avoid false negatives in CI while the core
-  functionality remains thoroughly tested and verified in production.
+  See migration 20251025210500_change_complete_task_return_type.exs for details.
   """
 
   @tag :integration
@@ -108,15 +84,17 @@ defmodule Pgflow.CompleteTaskTest do
           [binary_id, "child", "parent"]
         )
 
-        # Attempt to call complete_task - will fail with "no destination for result data"
-        # See moduledoc for explanation of why this cannot be tested via Postgrex in ExUnit
-        # The function works correctly in production (verified via direct psql)
-        Postgrex.query!(conn, """
-          DO $$
-          BEGIN
-            PERFORM complete_task('#{id}'::uuid, 'parent'::text, 0::int, '[1,2,3]'::jsonb);
-          END $$;
-        """)
+        # Call complete_task and verify return value (1 = success)
+        # Use array output (not object) since child is a map step
+        result =
+          Postgrex.query!(
+            conn,
+            "SELECT complete_task($1, $2, $3, $4)",
+            [binary_id, "parent", 0, [1, 2, 3]]
+          )
+
+        # complete_task returns 1 on success
+        assert result.rows == [[1]]
 
         # Verify parent task status
         res =
@@ -136,7 +114,28 @@ defmodule Pgflow.CompleteTaskTest do
             [binary_id, "child"]
           )
 
+        # initial_tasks should be 3 (length of the array output [1, 2, 3])
         assert res2.rows == [[3]]
+
+        # Verify step's remaining_deps was decremented to 0 (child step is now ready)
+        res3 =
+          Postgrex.query!(
+            conn,
+            "SELECT remaining_deps FROM workflow_step_states WHERE run_id=$1 AND step_slug=$2",
+            [binary_id, "child"]
+          )
+
+        assert res3.rows == [[0]]
+
+        # Verify workflow_runs remaining_steps was decremented
+        res4 =
+          Postgrex.query!(
+            conn,
+            "SELECT remaining_steps FROM workflow_runs WHERE id=$1",
+            [binary_id]
+          )
+
+        assert res4.rows == [[1]]
     end
   end
 
@@ -201,17 +200,294 @@ defmodule Pgflow.CompleteTaskTest do
           [binary_id, "c", "p"]
         )
 
-        # Attempt to call complete_task - will fail with "no destination for result data"
-        # See moduledoc for explanation of why this cannot be tested via Postgrex in ExUnit
-        Postgrex.query!(conn, """
-          DO $$
-          BEGIN
-            PERFORM complete_task('#{id}'::uuid, 'p'::text, 0::int, NULL::jsonb);
-          END $$;
-        """)
+        # Call complete_task with NULL output (type violation - map step expects array)
+        # This should return -1 and mark the run as failed
+        result =
+          Postgrex.query!(
+            conn,
+            "SELECT complete_task($1, $2, $3, $4)",
+            [binary_id, "p", 0, nil]
+          )
 
+        # complete_task returns -1 on type violation
+        assert result.rows == [[-1]]
+
+        # Verify run was marked as failed
         res = Postgrex.query!(conn, "SELECT status FROM workflow_runs WHERE id=$1", [binary_id])
         assert res.rows == [["failed"]]
+
+        # Verify error message contains type violation info
+        res2 =
+          Postgrex.query!(
+            conn,
+            "SELECT error_message FROM workflow_runs WHERE id=$1",
+            [binary_id]
+          )
+
+        [[error_message]] = res2.rows
+        assert error_message =~ "[TYPE_VIOLATION]"
+        assert error_message =~ "Map step c"
+        assert error_message =~ "null"
+
+        # Verify task was marked as failed
+        res3 =
+          Postgrex.query!(
+            conn,
+            "SELECT status FROM workflow_step_tasks WHERE run_id=$1 AND step_slug=$2",
+            [binary_id, "p"]
+          )
+
+        assert res3.rows == [["failed"]]
+    end
+  end
+
+  @tag :integration
+  test "complete_task returns 0 guard when run already failed (no mutation)" do
+    case Pgflow.SqlCase.connect_or_skip() do
+      {:skip, reason} ->
+        IO.puts("SKIPPED: #{reason}")
+        assert true
+
+      conn ->
+        id = Ecto.UUID.generate()
+        {:ok, binary_id} = Ecto.UUID.dump(id)
+        workflow_slug = "test_flow_#{String.replace(Ecto.UUID.generate(), "-", "")}"
+
+        # Create run already marked as failed
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_runs (id, workflow_slug, status, remaining_steps, created_at, inserted_at, updated_at) VALUES ($1, $2, 'failed', 1, now(), now(), now())",
+          [binary_id, workflow_slug]
+        )
+
+        # Insert workflow definition
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflows (workflow_slug, max_attempts, timeout) VALUES ($1, 3, 60)",
+          [workflow_slug]
+        )
+
+        # Insert step
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_steps (workflow_slug, step_slug, step_type, step_index) VALUES ($1, $2, 'single', $3)",
+          [workflow_slug, "step1", 0]
+        )
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_step_states (run_id, step_slug, workflow_slug, status, remaining_tasks, remaining_deps, initial_tasks, inserted_at, updated_at) VALUES ($1, $2, $3, 'created', 1, 0, NULL, now(), now())",
+          [binary_id, "step1", workflow_slug]
+        )
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', now(), now())",
+          [binary_id, "step1", workflow_slug]
+        )
+
+        # Attempt to complete task on failed run - should return 0 (guard)
+        result =
+          Postgrex.query!(
+            conn,
+            "SELECT complete_task($1, $2, $3, $4)",
+            [binary_id, "step1", 0, nil]
+          )
+
+        # complete_task returns 0 when run already failed (guard prevents mutation)
+        assert result.rows == [[0]]
+
+        # Verify task status unchanged (still 'started' - no mutation occurred)
+        res =
+          Postgrex.query!(
+            conn,
+            "SELECT status FROM workflow_step_tasks WHERE run_id=$1 AND step_slug=$2",
+            [binary_id, "step1"]
+          )
+
+        assert res.rows == [["started"]]
+    end
+  end
+
+  @tag :integration
+  test "complete_task with array output sets child map step initial_tasks correctly" do
+    case Pgflow.SqlCase.connect_or_skip() do
+      {:skip, reason} ->
+        IO.puts("SKIPPED: #{reason}")
+        assert true
+
+      conn ->
+        id = Ecto.UUID.generate()
+        {:ok, binary_id} = Ecto.UUID.dump(id)
+        workflow_slug = "test_flow_#{String.replace(Ecto.UUID.generate(), "-", "")}"
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_runs (id, workflow_slug, status, remaining_steps, created_at, inserted_at, updated_at) VALUES ($1, $2, 'running', 2, now(), now(), now())",
+          [binary_id, workflow_slug]
+        )
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflows (workflow_slug, max_attempts, timeout) VALUES ($1, 3, 60)",
+          [workflow_slug]
+        )
+
+        # Parent single step
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_steps (workflow_slug, step_slug, step_type, step_index) VALUES ($1, $2, 'single', $3)",
+          [workflow_slug, "parent", 0]
+        )
+
+        # Child map step
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_steps (workflow_slug, step_slug, step_type, step_index) VALUES ($1, $2, 'map', $3)",
+          [workflow_slug, "child_map", 1]
+        )
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_step_states (run_id, step_slug, workflow_slug, status, remaining_tasks, remaining_deps, initial_tasks, inserted_at, updated_at) VALUES ($1, $2, $3, 'created', 1, 0, NULL, now(), now())",
+          [binary_id, "parent", workflow_slug]
+        )
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_step_states (run_id, step_slug, workflow_slug, status, remaining_tasks, remaining_deps, initial_tasks, inserted_at, updated_at) VALUES ($1, $2, $3, 'created', 0, 1, NULL, now(), now())",
+          [binary_id, "child_map", workflow_slug]
+        )
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', now(), now())",
+          [binary_id, "parent", workflow_slug]
+        )
+
+        # Create dependency
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_step_dependencies (run_id, step_slug, depends_on_step, inserted_at) VALUES ($1, $2, $3, now())",
+          [binary_id, "child_map", "parent"]
+        )
+
+        # Complete parent with 5-element array output
+        result =
+          Postgrex.query!(
+            conn,
+            "SELECT complete_task($1, $2, $3, $4)",
+            [binary_id, "parent", 0, ["a", "b", "c", "d", "e"]]
+          )
+
+        assert result.rows == [[1]]
+
+        # Verify child_map initial_tasks set to 5 (array length)
+        res =
+          Postgrex.query!(
+            conn,
+            "SELECT initial_tasks FROM workflow_step_states WHERE run_id=$1 AND step_slug=$2",
+            [binary_id, "child_map"]
+          )
+
+        assert res.rows == [[5]]
+
+        # Verify child remaining_deps decremented to 0
+        res2 =
+          Postgrex.query!(
+            conn,
+            "SELECT remaining_deps FROM workflow_step_states WHERE run_id=$1 AND step_slug=$2",
+            [binary_id, "child_map"]
+          )
+
+        assert res2.rows == [[0]]
+    end
+  end
+
+  @tag :integration
+  test "complete_task marks workflow as completed when all steps done" do
+    case Pgflow.SqlCase.connect_or_skip() do
+      {:skip, reason} ->
+        IO.puts("SKIPPED: #{reason}")
+        assert true
+
+      conn ->
+        id = Ecto.UUID.generate()
+        {:ok, binary_id} = Ecto.UUID.dump(id)
+        workflow_slug = "test_flow_#{String.replace(Ecto.UUID.generate(), "-", "")}"
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_runs (id, workflow_slug, status, remaining_steps, created_at, inserted_at, updated_at) VALUES ($1, $2, 'running', 1, now(), now(), now())",
+          [binary_id, workflow_slug]
+        )
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflows (workflow_slug, max_attempts, timeout) VALUES ($1, 3, 60)",
+          [workflow_slug]
+        )
+
+        # Single step workflow
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_steps (workflow_slug, step_slug, step_type, step_index) VALUES ($1, $2, 'single', $3)",
+          [workflow_slug, "only_step", 0]
+        )
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_step_states (run_id, step_slug, workflow_slug, status, remaining_tasks, remaining_deps, initial_tasks, inserted_at, updated_at) VALUES ($1, $2, $3, 'created', 1, 0, NULL, now(), now())",
+          [binary_id, "only_step", workflow_slug]
+        )
+
+        Postgrex.query!(
+          conn,
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', now(), now())",
+          [binary_id, "only_step", workflow_slug]
+        )
+
+        # Complete the only task
+        result =
+          Postgrex.query!(
+            conn,
+            "SELECT complete_task($1, $2, $3, $4)",
+            [binary_id, "only_step", 0, %{"result" => "success"}]
+          )
+
+        assert result.rows == [[1]]
+
+        # Verify workflow marked as completed
+        res =
+          Postgrex.query!(
+            conn,
+            "SELECT status, completed_at IS NOT NULL FROM workflow_runs WHERE id=$1",
+            [binary_id]
+          )
+
+        assert res.rows == [["completed", true]]
+
+        # Verify step marked as completed
+        res2 =
+          Postgrex.query!(
+            conn,
+            "SELECT status FROM workflow_step_states WHERE run_id=$1 AND step_slug=$2",
+            [binary_id, "only_step"]
+          )
+
+        assert res2.rows == [["completed"]]
+
+        # Verify task marked as completed with output
+        res3 =
+          Postgrex.query!(
+            conn,
+            "SELECT status, output FROM workflow_step_tasks WHERE run_id=$1 AND step_slug=$2",
+            [binary_id, "only_step"]
+          )
+
+        assert [[status, output]] = res3.rows
+        assert status == "completed"
+        assert output == %{"result" => "success"}
     end
   end
 end
