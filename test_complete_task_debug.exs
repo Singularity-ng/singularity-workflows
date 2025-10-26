@@ -63,7 +63,7 @@ if length(tasks) > 0 do
 
   result = Repo.query(
     "SELECT complete_task($1::uuid, $2::text, $3::integer, $4::jsonb)",
-    [run_id, task.step_slug, task.task_index, Jason.encode!(output)]
+    [run_id, task.step_slug, task.task_index, output]
   )
 
   case result do
