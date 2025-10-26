@@ -97,6 +97,12 @@ defmodule Pgflow.DAG.RunInitializerTest do
   Tests are tagged :integration and can be skipped if database is unavailable.
   """
 
+  setup do
+    # Set up sandbox for this test
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Pgflow.Repo)
+    :ok
+  end
+
   describe "initialize/3 - Basic workflow initialization" do
     test "successfully initializes simple workflow and creates run record" do
       {:ok, definition} = WorkflowDefinition.parse(TestSimpleFlow)

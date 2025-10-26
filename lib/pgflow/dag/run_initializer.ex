@@ -90,30 +90,59 @@ defmodule Pgflow.DAG.RunInitializer do
       # Workflow steps already exist (FlowBuilder workflow)
       :ok
     else
-      # Create workflow_steps for code-based workflow
-      step_records =
-        Enum.with_index(definition.steps, 1)
-        |> Enum.map(fn {{step_name, _step_fn}, index} ->
-          metadata = WorkflowDefinition.get_step_metadata(definition, step_name)
+      # Check if workflow record exists, create if not (for code-based workflows)
+      workflow_exists =
+        repo.one(
+          from w in "workflows",
+          where: w.workflow_slug == ^definition.slug,
+          select: count(w.workflow_slug)
+        )
 
-          %{
-            workflow_slug: definition.slug,
-            step_slug: to_string(step_name),
-            step_index: index,
-            step_type: "single",  # Code-based workflows are always single steps
-            deps_count: WorkflowDefinition.dependency_count(definition, step_name),
-            inserted_at: DateTime.utc_now(),
-            updated_at: DateTime.utc_now()
-          }
-        end)
-
-      {count, _} = repo.insert_all("workflow_steps", step_records)
-
-      if count == map_size(definition.steps) do
+      with :ok <- create_workflow_record_if_needed(definition, repo, workflow_exists),
+           :ok <- create_workflow_step_records(definition, repo) do
         :ok
       else
-        {:error, :workflow_steps_insert_failed}
+        error -> error
       end
+    end
+  end
+
+  defp create_workflow_record_if_needed(definition, repo, 0) do
+    # Create workflow record for code-based workflow
+    workflow_record = %{
+      workflow_slug: definition.slug,
+      max_attempts: 3,
+      timeout: 60,
+      created_at: DateTime.utc_now()
+    }
+
+    case repo.insert_all("workflows", [workflow_record]) do
+      {1, _} -> :ok
+      _ -> {:error, :workflow_creation_failed}
+    end
+  end
+
+  defp create_workflow_record_if_needed(_definition, _repo, _), do: :ok
+
+  defp create_workflow_step_records(definition, repo) do
+    step_records =
+      Enum.with_index(definition.steps, 1)
+      |> Enum.map(fn {{step_name, _step_fn}, index} ->
+        _metadata = WorkflowDefinition.get_step_metadata(definition, step_name)
+
+        %{
+          workflow_slug: definition.slug,
+          step_slug: to_string(step_name),
+          step_index: index,
+          step_type: "single",  # Code-based workflows are always single steps
+          deps_count: WorkflowDefinition.dependency_count(definition, step_name),
+          created_at: DateTime.utc_now()
+        }
+      end)
+
+    case repo.insert_all("workflow_steps", step_records) do
+      {count, _} when count == map_size(definition.steps) -> :ok
+      _ -> {:error, :workflow_steps_insert_failed}
     end
   end
 

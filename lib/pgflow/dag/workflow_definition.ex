@@ -93,7 +93,7 @@ defmodule Pgflow.DAG.WorkflowDefinition do
   @spec parse(module()) :: {:ok, t()} | {:error, term()}
   def parse(workflow_module) do
     steps_list = workflow_module.__workflow_steps__()
-    workflow_slug = to_string(workflow_module)
+    workflow_slug = workflow_module |> to_string() |> slugify()
 
     with {:ok, parsed} <- parse_steps(steps_list),
          :ok <- validate_dependencies(parsed.steps, parsed.dependencies),
@@ -312,5 +312,31 @@ defmodule Pgflow.DAG.WorkflowDefinition do
   @spec get_step_metadata(t(), atom()) :: step_metadata()
   def get_step_metadata(%__MODULE__{step_metadata: metadata}, step_name) do
     Map.get(metadata, step_name, %{initial_tasks: 1, timeout: nil, max_attempts: 3})
+  end
+
+  # Convert module name to valid database slug
+  # Example: "Elixir.TestExecSimpleFlow" -> "test_exec_simple_flow"
+  defp slugify(module_name) do
+    module_name
+    |> String.trim_leading("Elixir.")
+    |> to_snake_case()
+  end
+
+  # Convert CamelCase to snake_case
+  defp to_snake_case(string) do
+    string
+    |> String.graphemes()
+    |> Enum.reduce([], fn
+      char, [] ->
+        [String.downcase(char)]
+
+      char, acc ->
+        case char =~ ~r/[A-Z]/ do
+          true -> [String.downcase(char) | ["_" | acc]]
+          false -> [char | acc]
+        end
+    end)
+    |> Enum.reverse()
+    |> Enum.join()
   end
 end
