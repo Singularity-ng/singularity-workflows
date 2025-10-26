@@ -112,10 +112,10 @@ defmodule Pgflow.DAG.WorkflowDefinitionTest do
       assert definition.dependencies[:step3] == [:step2]
     end
 
-    test "sequential workflow slug is module name" do
+    test "sequential workflow slug is snake_case module name" do
       {:ok, definition} = WorkflowDefinition.parse(SequentialWorkflow)
 
-      assert String.contains?(definition.slug, "SequentialWorkflow")
+      assert definition.slug == "sequential_workflow"
     end
   end
 
