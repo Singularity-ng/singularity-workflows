@@ -23,7 +23,7 @@ defmodule Pgflow.Repo.Migrations.CreateCreateFlowFunction do
       created_at TIMESTAMPTZ
     )
     LANGUAGE plpgsql
-    SET search_path = ''
+    SET search_path = 'public'
     AS $$
     BEGIN
       -- Validate slug

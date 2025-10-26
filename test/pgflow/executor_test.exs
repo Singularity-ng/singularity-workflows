@@ -72,6 +72,12 @@ defmodule Pgflow.ExecutorTest do
   """
 
   setup do
+    # Set up sandbox for this test
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Pgflow.Repo)
+
+    # Allow all processes spawned during this test to use the sandbox connection
+    Ecto.Adapters.SQL.Sandbox.mode(Pgflow.Repo, {:shared, self()})
+
     # Clean up any existing test data
     Repo.delete_all(WorkflowRun)
     :ok

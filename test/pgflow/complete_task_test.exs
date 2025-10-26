@@ -46,7 +46,6 @@ defmodule Pgflow.CompleteTaskTest do
   """
 
   @tag :integration
-  @tag :skip
   test "complete_task marks task completed and updates dependent state" do
     case Pgflow.SqlCase.connect_or_skip() do
       {:skip, reason} ->
@@ -142,7 +141,6 @@ defmodule Pgflow.CompleteTaskTest do
   end
 
   @tag :integration
-  @tag :skip
   test "type violation (single -> map non-array) marks run failed" do
     case Pgflow.SqlCase.connect_or_skip() do
       {:skip, reason} ->

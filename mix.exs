@@ -26,7 +26,7 @@ defmodule ExPgflow.MixProject do
     [
       app: :ex_pgflow,
       version: "0.1.0",
-      elixir: "~> 1.14",
+      elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       docs: docs(),
@@ -40,7 +40,10 @@ defmodule ExPgflow.MixProject do
       ],
       test_coverage: [tool: ExCoveralls],
       # Aliases for TDD workflow
-      aliases: aliases()
+      aliases: aliases(),
+      # Explicitly set config paths
+      config_path: "config/config.exs",
+      config_paths: ["config/config.exs", "config/#{Mix.env()}.exs"]
     ]
   end
 

@@ -17,13 +17,13 @@ defmodule Pgflow.SqlCase do
   def connect_or_skip do
     _db_url =
       System.get_env("DATABASE_URL") || System.get_env("POSTGRES_URL") ||
-        "postgresql://postgres:postgres@localhost:5432/ex_pgflow"
+        "postgresql://#{System.get_env("USER") || "mhugo"}@localhost:5432/ex_pgflow"
 
     case Postgrex.start_link(
            hostname: "localhost",
            port: 5432,
-           username: "postgres",
-           password: "postgres",
+           username: System.get_env("USER") || "mhugo",
+           password: "",
            database: "ex_pgflow"
          ) do
       {:ok, conn} ->

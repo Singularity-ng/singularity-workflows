@@ -30,6 +30,8 @@ defmodule Pgflow.DAG.RunInitializer do
 
   require Logger
 
+  import Ecto.Query
+
   alias Pgflow.DAG.WorkflowDefinition
   alias Pgflow.{WorkflowRun, StepState, StepDependency}
 
@@ -43,6 +45,7 @@ defmodule Pgflow.DAG.RunInitializer do
   def initialize(%WorkflowDefinition{} = definition, input, repo) do
     repo.transaction(fn ->
       with {:ok, run} <- create_run(definition, input, repo),
+           :ok <- create_workflow_steps(definition, repo),
            :ok <- create_step_states(definition, run.id, repo),
            :ok <- create_dependencies(definition, run.id, repo),
            :ok <- ensure_workflow_queue(definition.slug, repo),
@@ -70,6 +73,48 @@ defmodule Pgflow.DAG.RunInitializer do
       started_at: DateTime.utc_now()
     })
     |> repo.insert()
+  end
+
+  # Step 1.5: Create workflow_steps records for code-based workflows
+  # (FlowBuilder workflows already have these records)
+  defp create_workflow_steps(definition, repo) do
+    # Check if workflow_steps already exist for this workflow
+    existing_count =
+      repo.one(
+        from ws in "workflow_steps",
+        where: ws.workflow_slug == ^definition.slug,
+        select: count(ws.workflow_slug)
+      )
+
+    if existing_count > 0 do
+      # Workflow steps already exist (FlowBuilder workflow)
+      :ok
+    else
+      # Create workflow_steps for code-based workflow
+      step_records =
+        Enum.with_index(definition.steps, 1)
+        |> Enum.map(fn {{step_name, _step_fn}, index} ->
+          metadata = WorkflowDefinition.get_step_metadata(definition, step_name)
+
+          %{
+            workflow_slug: definition.slug,
+            step_slug: to_string(step_name),
+            step_index: index,
+            step_type: "single",  # Code-based workflows are always single steps
+            deps_count: WorkflowDefinition.dependency_count(definition, step_name),
+            inserted_at: DateTime.utc_now(),
+            updated_at: DateTime.utc_now()
+          }
+        end)
+
+      {count, _} = repo.insert_all("workflow_steps", step_records)
+
+      if count == map_size(definition.steps) do
+        :ok
+      else
+        {:error, :workflow_steps_insert_failed}
+      end
+    end
   end
 
   # Step 2: Create workflow_step_states records

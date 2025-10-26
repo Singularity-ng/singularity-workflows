@@ -35,7 +35,7 @@ defmodule Pgflow.Repo.Migrations.CreateAddStepFunction do
       created_at TIMESTAMPTZ
     )
     LANGUAGE plpgsql
-    SET search_path = ''
+    SET search_path = 'public'
     AS $$
     DECLARE
       v_next_index INTEGER;

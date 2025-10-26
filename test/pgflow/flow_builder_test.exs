@@ -26,6 +26,9 @@ defmodule Pgflow.FlowBuilderTest do
   """
 
   setup do
+    # Set up sandbox for this test
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Pgflow.Repo)
+
     # Clean up any existing test workflows
     Repo.query("DELETE FROM workflows WHERE workflow_slug LIKE 'test_%'", [])
     :ok
