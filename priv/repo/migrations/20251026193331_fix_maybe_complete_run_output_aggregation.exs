@@ -19,38 +19,47 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
     AS $$
     DECLARE
       v_completed_run workflow_runs%ROWTYPE;
+      v_leaf_output jsonb;
+      v_leaf_count integer;
     BEGIN
+      -- Get leaf step outputs
+      SELECT
+        jsonb_object_agg(step_slug, output),
+        count(*)
+      INTO v_leaf_output, v_leaf_count
+      FROM (
+        SELECT DISTINCT
+          leaf_state.step_slug,
+          -- Get the first task's output for this step
+          (SELECT t.output
+           FROM workflow_step_tasks t
+           WHERE t.run_id = maybe_complete_run.p_run_id
+             AND t.step_slug = leaf_state.step_slug
+             AND t.status = 'completed'
+           LIMIT 1) as output
+        FROM workflow_step_states leaf_state
+        WHERE leaf_state.run_id = maybe_complete_run.p_run_id
+          AND leaf_state.status = 'completed'
+          AND NOT EXISTS (
+            SELECT 1
+            FROM workflow_step_dependencies dep
+            WHERE dep.run_id = leaf_state.run_id
+              AND dep.depends_on_step = leaf_state.step_slug
+          )
+      ) leaf_outputs;
+
+      -- For single-step workflows, return the step output directly
+      -- For multi-step workflows, return object with step_slug keys
+      IF v_leaf_count = 1 THEN
+        v_leaf_output := v_leaf_output -> (SELECT jsonb_object_keys(v_leaf_output) LIMIT 1);
+      END IF;
+
       -- Complete run if all steps are done
       UPDATE workflow_runs
       SET
         status = 'completed',
         completed_at = NOW(),
-        -- Aggregate outputs from leaf steps (steps with no dependents)
-        output = (
-          SELECT output
-          FROM (
-            SELECT DISTINCT
-              leaf_state.step_slug,
-              -- For now, just get the first task's output
-              -- TODO: Aggregate for map steps once we support them
-              (SELECT t.output
-               FROM workflow_step_tasks t
-               WHERE t.run_id = leaf_state.run_id
-                 AND t.step_slug = leaf_state.step_slug
-                 AND t.status = 'completed'
-               LIMIT 1) as output
-            FROM workflow_step_states leaf_state
-            WHERE leaf_state.run_id = maybe_complete_run.p_run_id
-              AND leaf_state.status = 'completed'
-              AND NOT EXISTS (
-                SELECT 1
-                FROM workflow_step_dependencies dep
-                WHERE dep.run_id = leaf_state.run_id
-                  AND dep.depends_on_step = leaf_state.step_slug
-              )
-          ) leaf_outputs
-          LIMIT 1
-        )
+        output = v_leaf_output
       WHERE workflow_runs.id = maybe_complete_run.p_run_id
         AND workflow_runs.remaining_steps = 0
         AND workflow_runs.status != 'completed'

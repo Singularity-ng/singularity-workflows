@@ -7,7 +7,7 @@ defmodule Pgflow.IdempotencyTest do
   - Retries don't create duplicate work
   - Idempotency keys are computed correctly
   """
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Pgflow.{StepTask, Repo}
   import Ecto.Query
@@ -16,6 +16,27 @@ defmodule Pgflow.IdempotencyTest do
     # Set up sandbox for this test
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Repo)
     :ok
+  end
+
+  # Helper function to create a test workflow and run
+  defp create_test_run(workflow_slug \\ "test-workflow") do
+    # Create workflow first (insert directly to workflows table)
+    {:ok, _} = Repo.query(
+      "INSERT INTO workflows (workflow_slug, timeout, max_attempts, created_at) VALUES ($1, $2, $3, NOW()) ON CONFLICT DO NOTHING",
+      [workflow_slug, 60, 3]
+    )
+
+    # Create run
+    run_id = Ecto.UUID.generate()
+    run_attrs = %{
+      id: run_id,
+      workflow_slug: workflow_slug,
+      status: "started",
+      remaining_steps: 1,
+      input: %{},
+      started_at: DateTime.utc_now()
+    }
+    Repo.insert!(%Pgflow.WorkflowRun{} |> Pgflow.WorkflowRun.changeset(run_attrs))
   end
 
   describe "StepTask.compute_idempotency_key/4" do
@@ -208,8 +229,9 @@ defmodule Pgflow.IdempotencyTest do
       elixir_key = StepTask.compute_idempotency_key(workflow_slug, step_slug, run_id_string, task_index)
 
       # Compute key using SQL function (needs binary UUID)
+      # Use public schema prefix to ensure function is found
       {:ok, result} = Repo.query(
-        "SELECT compute_idempotency_key($1, $2, $3, $4)",
+        "SELECT public.compute_idempotency_key($1, $2, $3, $4)",
         [workflow_slug, step_slug, run_id_binary, task_index]
       )
 
