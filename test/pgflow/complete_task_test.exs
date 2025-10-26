@@ -2,6 +2,8 @@ defmodule Pgflow.CompleteTaskTest do
   use ExUnit.Case, async: false
   use Pgflow.SqlCase
 
+  alias Pgflow.StepTask
+
   @moduledoc """
   Integration tests for complete_task() SQL function.
 
@@ -71,10 +73,12 @@ defmodule Pgflow.CompleteTaskTest do
           [binary_id, "child", workflow_slug]
         )
 
+        {:ok, uuid_string} = Ecto.UUID.load(binary_id)
+        idempotency_key = StepTask.compute_idempotency_key(workflow_slug, "parent", uuid_string, 0)
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
-          [binary_id, "parent", workflow_slug]
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', $4, now(), now())",
+          [binary_id, "parent", workflow_slug, idempotency_key]
         )
 
         # Create dependency: child depends on parent
@@ -188,10 +192,12 @@ defmodule Pgflow.CompleteTaskTest do
           [binary_id, "c", workflow_slug]
         )
 
+        {:ok, uuid_string} = Ecto.UUID.load(binary_id)
+        idempotency_key_p = StepTask.compute_idempotency_key(workflow_slug, "p", uuid_string, 0)
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
-          [binary_id, "p", workflow_slug]
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', $4, now(), now())",
+          [binary_id, "p", workflow_slug, idempotency_key_p]
         )
 
         Postgrex.query!(
@@ -280,10 +286,12 @@ defmodule Pgflow.CompleteTaskTest do
           [binary_id, "step1", workflow_slug]
         )
 
+        {:ok, uuid_string} = Ecto.UUID.load(binary_id)
+        idempotency_key = StepTask.compute_idempotency_key(workflow_slug, "step1", uuid_string, 0)
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
-          [binary_id, "step1", workflow_slug]
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', $4, now(), now())",
+          [binary_id, "step1", workflow_slug, idempotency_key]
         )
 
         # Attempt to complete task on failed run - should return 0 (guard)
@@ -359,10 +367,12 @@ defmodule Pgflow.CompleteTaskTest do
           [binary_id, "child_map", workflow_slug]
         )
 
+        {:ok, uuid_string} = Ecto.UUID.load(binary_id)
+        idempotency_key = StepTask.compute_idempotency_key(workflow_slug, "parent", uuid_string, 0)
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
-          [binary_id, "parent", workflow_slug]
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', $4, now(), now())",
+          [binary_id, "parent", workflow_slug, idempotency_key]
         )
 
         # Create dependency
@@ -441,10 +451,12 @@ defmodule Pgflow.CompleteTaskTest do
           [binary_id, "only_step", workflow_slug]
         )
 
+        {:ok, uuid_string} = Ecto.UUID.load(binary_id)
+        idempotency_key = StepTask.compute_idempotency_key(workflow_slug, "only_step", uuid_string, 0)
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
-          [binary_id, "only_step", workflow_slug]
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', $4, now(), now())",
+          [binary_id, "only_step", workflow_slug, idempotency_key]
         )
 
         # Complete the only task
