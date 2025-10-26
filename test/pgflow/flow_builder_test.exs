@@ -631,9 +631,9 @@ defmodule Pgflow.FlowBuilderTest do
 
     test "orders workflows by created_at DESC" do
       {:ok, _wf1} = FlowBuilder.create_flow("test_order_1", Repo)
-      Process.sleep(10)
+      Pgflow.TestClock.advance(10)
       {:ok, _wf2} = FlowBuilder.create_flow("test_order_2", Repo)
-      Process.sleep(10)
+      Pgflow.TestClock.advance(10)
       {:ok, _wf3} = FlowBuilder.create_flow("test_order_3", Repo)
 
       {:ok, workflows} = FlowBuilder.list_flows(Repo)

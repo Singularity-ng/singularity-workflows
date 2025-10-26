@@ -15,10 +15,11 @@ defmodule Pgflow.ClockTest do
   describe "Clock behaviour - default implementation" do
     test "now/0 returns current UTC time" do
       time1 = Clock.now()
-      Process.sleep(10)
+      # Small sleep for real clock to advance
+      :timer.sleep(50)
       time2 = Clock.now()
 
-      # Real clock should advance
+      # Real clock should advance (or be equal due to timing)
       assert DateTime.compare(time2, time1) in [:gt, :eq]
     end
 
