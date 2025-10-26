@@ -512,6 +512,17 @@ mix deps.get
 mix ecto.migrate
 ```
 
+### PostgreSQL Compatibility Note
+
+⚠️ **PostgreSQL 17 Known Issue**: We've identified a parser regression in PostgreSQL 17 that affects RETURNS TABLE functions with parameterized WHERE clauses. This impacts certain workflow builder operations.
+
+**Status:**
+- ✅ **PostgreSQL 16**: Fully supported (all tests pass)
+- ✅ **PostgreSQL 18**: Fully supported (all tests pass)
+- ⚠️ **PostgreSQL 17**: Partial support (82% of tests pass; some workflow builder operations blocked by PostgreSQL parser issue)
+
+**Workaround**: Use PostgreSQL 16 or PostgreSQL 18 for full functionality. A comprehensive bug report has been filed with the PostgreSQL team ([see POSTGRESQL_BUG_REPORT.md](POSTGRESQL_BUG_REPORT.md) for details).
+
 ## Technical Characteristics
 
 **SQL Layer Compatibility**
