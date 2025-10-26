@@ -355,7 +355,7 @@ defmodule Pgflow.DAG.RunInitializerTest do
       {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       run = Repo.get!(WorkflowRun, run_id)
-      assert String.contains?(run.workflow_slug, "TestDiamondFlow")
+      assert String.ends_with?(run.workflow_slug, "test_diamond_flow")
 
       # All step_states should have same workflow_slug
       step_states = Repo.all(from(s in StepState, where: s.run_id == ^run_id))
