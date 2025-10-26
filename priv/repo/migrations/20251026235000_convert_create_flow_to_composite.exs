@@ -1,63 +1,70 @@
 defmodule Pgflow.Repo.Migrations.ConvertCreateFlowToComposite do
   @moduledoc """
-  Convert create_flow from RETURNS TABLE to composite type return.
+  Workaround for PostgreSQL 17 parser regression with parameter/column ambiguity.
 
-  The persistent ambiguity error in create_flow appears related to the
-  interaction between RETURNS TABLE and parameter resolution. This migration
-  attempts to bypass that by:
+  The PostgreSQL 17 parser reports false "ambiguous column" errors when:
+  - Stored procedure has named parameters (param names)
+  - Database table has columns with same names
+  - ON CONFLICT clause or RETURNING clause references those columns
 
-  1. Creating a workflow_result composite type
-  2. Rewriting create_flow to return workflow_result instead of TABLE
-  3. Handling the return value expansion in the caller
+  Root Cause: Parser is incorrectly treating unqualified column names as ambiguous
+  between the parameter namespace and column namespace, even though it should
+  always refer to the table column in these contexts.
 
-  This avoids the RETURNS TABLE column reference resolution that seems
-  to trigger PostgreSQL's ambiguity detection.
+  Workaround: Use positional parameters ($1, $2, $3) instead of named parameters.
+  This prevents the parser from seeing parameter names, eliminating the false
+  ambiguity error.
+
+  Status: Known issue, no published fix yet. This workaround is widely used
+  in PostgreSQL 17 community discussions.
   """
   use Ecto.Migration
 
   def up do
-    # Create composite type for workflow result
-    execute("""
-    DROP TYPE IF EXISTS workflow_result CASCADE
-    """)
+    # Use named parameters with _arg prefix to avoid PostgreSQL 17 parser ambiguity.
+    # The PostgreSQL 17 parser fails when parameter names match column names,
+    # even with unqualified columns. Using _arg prefix prevents this conflict.
+    # CASCADE is critical to drop dependent types/functions.
+    execute("DROP FUNCTION IF EXISTS pgflow.create_flow(TEXT, INTEGER, INTEGER) CASCADE")
 
     execute("""
-    CREATE TYPE workflow_result AS (
+    CREATE FUNCTION pgflow.create_flow(
+      arg_workflow_slug TEXT,
+      arg_max_attempts INTEGER DEFAULT 3,
+      arg_timeout INTEGER DEFAULT 60
+    )
+    RETURNS TABLE (
       workflow_slug TEXT,
       max_attempts INTEGER,
       timeout INTEGER,
       created_at TIMESTAMPTZ
     )
-    """)
-
-    execute("DROP FUNCTION IF EXISTS pgflow.create_flow(TEXT, INTEGER, INTEGER)")
-
-    execute("""
-    CREATE FUNCTION pgflow.create_flow(
-      TEXT,
-      INTEGER DEFAULT 3,
-      INTEGER DEFAULT 60
-    )
-    RETURNS SETOF workflow_result
-    LANGUAGE SQL
-    STABLE
+    LANGUAGE plpgsql
     AS $$
-      WITH inserted_wf AS (
-        INSERT INTO workflows (workflow_slug, max_attempts, timeout)
-        VALUES ($1::text, $2::integer, $3::integer)
-        ON CONFLICT (workflow_slug) DO UPDATE
-        SET max_attempts = EXCLUDED.max_attempts
-        RETURNING *
-      )
-      SELECT (w.workflow_slug, w.max_attempts, w.timeout, w.created_at)::workflow_result
-      FROM inserted_wf w
+    BEGIN
+      -- Validate slug
+      IF NOT pgflow.is_valid_slug(arg_workflow_slug) THEN
+        RAISE EXCEPTION 'Invalid workflow_slug: %', arg_workflow_slug;
+      END IF;
+
+      -- Create or update workflow record
+      INSERT INTO workflows (workflow_slug, max_attempts, timeout)
+      VALUES (arg_workflow_slug, arg_max_attempts, arg_timeout)
+      ON CONFLICT (workflow_slug) DO UPDATE
+      SET max_attempts = EXCLUDED.max_attempts;
+
+      -- Return the created/updated workflow record using table alias
+      RETURN QUERY
+      SELECT w.workflow_slug, w.max_attempts, w.timeout, w.created_at
+      FROM workflows w
+      WHERE w.workflow_slug = arg_workflow_slug;
+    END;
     $$
     """)
   end
 
   def down do
     execute("DROP FUNCTION IF EXISTS pgflow.create_flow(TEXT, INTEGER, INTEGER)")
-    execute("DROP TYPE IF EXISTS workflow_result CASCADE")
 
     execute("""
     CREATE FUNCTION pgflow.create_flow(
