@@ -315,10 +315,12 @@ defmodule Pgflow.DAG.WorkflowDefinition do
   end
 
   # Convert module name to valid database slug
-  # Example: "Elixir.TestExecSimpleFlow" -> "test_exec_simple_flow"
+  # Example: "Elixir.Pgflow.DAG.TestExecSimpleFlow" -> "pgflow_dag_test_exec_simple_flow"
+  # Replaces dots with underscores to comply with is_valid_slug() pattern: ^[a-zA-Z_][a-zA-Z0-9_]*$
   defp slugify(module_name) do
     module_name
     |> String.trim_leading("Elixir.")
+    |> String.replace(".", "_")
     |> to_snake_case()
   end
 
