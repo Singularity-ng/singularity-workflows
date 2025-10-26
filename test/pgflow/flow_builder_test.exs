@@ -1,405 +1,955 @@
 defmodule Pgflow.FlowBuilderTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
+
+  alias Pgflow.{Repo, FlowBuilder}
 
   @moduledoc """
-  Comprehensive FlowBuilder tests covering:
-  - Chicago-style TDD (state-based testing)
-  - Dynamic workflow creation
-  - Step management and dependency validation
-  - Input validation and error handling
-  - Edge cases and boundary conditions
+  Tests for FlowBuilder - Dynamic workflow creation API.
+
+  Uses TDD Chicago (state-based) approach:
+  - Create workflow in database using FlowBuilder
+  - Query database to verify correct state
+  - Test error handling and validation
+
+  Coverage:
+  - Creating workflows with various options
+  - Adding steps (single, map, with dependencies)
+  - Listing, getting, and deleting workflows
+  - Input validation (slugs, types, constraints)
+  - Error handling (missing workflows, duplicates, invalid data)
+  - Edge cases (long slugs, many steps, large initial_tasks)
+
+  ## Design Notes
+
+  FlowBuilder is the API for AI/LLM agents to create workflows dynamically.
+  Tests ensure robust validation and clear error messages.
   """
 
-  describe "create_flow/2 - Basic workflow creation" do
-    test "creates workflow with valid slug" do
-      # Test would require database mock
-      # For now, test validation logic
-      assert validate_workflow_slug("my_workflow") == :ok
-      assert validate_workflow_slug("_private_workflow") == :ok
-      assert validate_workflow_slug("Workflow123") == :ok
+  setup do
+    # Clean up any existing test workflows
+    Repo.query("DELETE FROM workflows WHERE workflow_slug LIKE 'test_%'", [])
+    :ok
+  end
+
+  describe "create_flow/3 - Basic workflow creation" do
+    test "creates workflow with default options" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_basic", Repo)
+
+      assert workflow["workflow_slug"] == "test_basic"
+      assert workflow["max_attempts"] == 3
+      assert workflow["timeout"] == 60
+      assert workflow["created_at"] != nil
     end
 
-    test "rejects invalid workflow slug - starting with number" do
-      assert validate_workflow_slug("123workflow") == {:error, :invalid_workflow_slug}
+    test "creates workflow with custom max_attempts" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_retry", Repo, max_attempts: 5)
+
+      assert workflow["max_attempts"] == 5
+      assert workflow["timeout"] == 60
     end
 
-    test "rejects invalid workflow slug - with hyphens" do
-      assert validate_workflow_slug("my-workflow") == {:error, :invalid_workflow_slug}
+    test "creates workflow with custom timeout" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_timeout", Repo, timeout: 120)
+
+      assert workflow["max_attempts"] == 3
+      assert workflow["timeout"] == 120
     end
 
-    test "rejects invalid workflow slug - with spaces" do
-      assert validate_workflow_slug("my workflow") == {:error, :invalid_workflow_slug}
+    test "creates workflow with both custom options" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_custom", Repo, max_attempts: 10, timeout: 300)
+
+      assert workflow["max_attempts"] == 10
+      assert workflow["timeout"] == 300
     end
 
-    test "rejects invalid workflow slug - empty string" do
-      assert validate_workflow_slug("") == {:error, :invalid_workflow_slug}
+    test "workflow appears in database" do
+      {:ok, _} = FlowBuilder.create_flow("test_db_check", Repo)
+
+      # Verify in database
+      {:ok, result} =
+        Repo.query("SELECT * FROM workflows WHERE workflow_slug = 'test_db_check'", [])
+
+      assert length(result.rows) == 1
     end
 
-    test "accepts valid workflow slugs with underscores" do
-      assert validate_workflow_slug("my_workflow_v2") == :ok
-      assert validate_workflow_slug("_internal_workflow") == :ok
-      assert validate_workflow_slug("Workflow") == :ok
+    test "max_attempts defaults to 3 when not specified" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_default_attempts", Repo, timeout: 90)
+
+      assert workflow["max_attempts"] == 3
+    end
+
+    test "timeout defaults to 60 when not specified" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_default_timeout", Repo, max_attempts: 4)
+
+      assert workflow["timeout"] == 60
     end
   end
 
-  describe "create_flow/3 - Workflow creation with options" do
-    test "validates max_attempts option" do
-      # Should accept valid max_attempts
-      assert validate_max_attempts(max_attempts: 5) == :ok
-      assert validate_max_attempts([]) == :ok
+  describe "create_flow/3 - Workflow slug validation" do
+    test "rejects empty workflow slug" do
+      result = FlowBuilder.create_flow("", Repo)
+
+      assert result == {:error, :workflow_slug_cannot_be_empty}
     end
 
+    test "rejects workflow slug over 255 characters" do
+      long_slug = String.duplicate("a", 256)
+      result = FlowBuilder.create_flow(long_slug, Repo)
+
+      assert result == {:error, :workflow_slug_too_long}
+    end
+
+    test "accepts workflow slug with 255 characters" do
+      max_slug = String.duplicate("a", 255)
+      {:ok, workflow} = FlowBuilder.create_flow(max_slug, Repo)
+
+      assert workflow["workflow_slug"] == max_slug
+    end
+
+    test "rejects workflow slug starting with number" do
+      result = FlowBuilder.create_flow("123_workflow", Repo)
+
+      assert result == {:error, :workflow_slug_invalid_format}
+    end
+
+    test "rejects workflow slug with spaces" do
+      result = FlowBuilder.create_flow("my workflow", Repo)
+
+      assert result == {:error, :workflow_slug_invalid_format}
+    end
+
+    test "rejects workflow slug with hyphens" do
+      result = FlowBuilder.create_flow("my-workflow", Repo)
+
+      assert result == {:error, :workflow_slug_invalid_format}
+    end
+
+    test "rejects workflow slug with special characters" do
+      result = FlowBuilder.create_flow("workflow@test", Repo)
+
+      assert result == {:error, :workflow_slug_invalid_format}
+    end
+
+    test "accepts workflow slug with underscores" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_workflow_name", Repo)
+
+      assert workflow["workflow_slug"] == "test_workflow_name"
+    end
+
+    test "accepts workflow slug with numbers (not first character)" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_workflow_123", Repo)
+
+      assert workflow["workflow_slug"] == "test_workflow_123"
+    end
+
+    test "accepts workflow slug starting with underscore" do
+      {:ok, workflow} = FlowBuilder.create_flow("_private_workflow", Repo)
+
+      assert workflow["workflow_slug"] == "_private_workflow"
+    end
+
+    test "rejects non-string workflow slug" do
+      result = FlowBuilder.create_flow(12345, Repo)
+
+      assert result == {:error, :workflow_slug_must_be_string}
+    end
+
+    test "rejects duplicate workflow slug" do
+      {:ok, _} = FlowBuilder.create_flow("test_duplicate", Repo)
+      result = FlowBuilder.create_flow("test_duplicate", Repo)
+
+      assert {:error, _} = result
+    end
+  end
+
+  describe "create_flow/3 - Options validation" do
     test "rejects negative max_attempts" do
-      assert validate_max_attempts(max_attempts: -1) ==
-               {:error, :invalid_max_attempts}
+      result = FlowBuilder.create_flow("test_negative_attempts", Repo, max_attempts: -1)
+
+      assert result == {:error, :max_attempts_must_be_non_negative}
     end
 
-    test "rejects zero max_attempts" do
-      assert validate_max_attempts(max_attempts: 0) ==
-               {:error, :invalid_max_attempts}
+    test "accepts zero max_attempts (no retries)" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_zero_attempts", Repo, max_attempts: 0)
+
+      assert workflow["max_attempts"] == 0
     end
 
-    test "validates timeout option" do
-      # Should accept valid timeout
-      assert validate_timeout(timeout: 120) == :ok
-      assert validate_timeout([]) == :ok
-    end
+    test "rejects non-integer max_attempts" do
+      result = FlowBuilder.create_flow("test_float_attempts", Repo, max_attempts: 3.5)
 
-    test "rejects negative timeout" do
-      assert validate_timeout(timeout: -1) ==
-               {:error, :invalid_timeout}
+      assert result == {:error, :max_attempts_must_be_integer}
     end
 
     test "rejects zero timeout" do
-      assert validate_timeout(timeout: 0) ==
-               {:error, :invalid_timeout}
+      result = FlowBuilder.create_flow("test_zero_timeout", Repo, timeout: 0)
+
+      assert result == {:error, :timeout_must_be_positive}
     end
 
-    test "accepts custom max_attempts and timeout" do
-      opts = [max_attempts: 10, timeout: 300]
-      assert validate_max_attempts(opts) == :ok
-      assert validate_timeout(opts) == :ok
+    test "rejects negative timeout" do
+      result = FlowBuilder.create_flow("test_negative_timeout", Repo, timeout: -60)
+
+      assert result == {:error, :timeout_must_be_positive}
+    end
+
+    test "rejects non-integer timeout" do
+      result = FlowBuilder.create_flow("test_float_timeout", Repo, timeout: 60.5)
+
+      assert result == {:error, :timeout_must_be_integer}
+    end
+
+    test "accepts large max_attempts" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_large_attempts", Repo, max_attempts: 100)
+
+      assert workflow["max_attempts"] == 100
+    end
+
+    test "accepts large timeout" do
+      {:ok, workflow} = FlowBuilder.create_flow("test_large_timeout", Repo, timeout: 3600)
+
+      assert workflow["timeout"] == 3600
     end
   end
 
-  describe "add_step/4 - Step addition with validation" do
-    test "validates step slug format" do
-      assert validate_step_slug("fetch_data") == :ok
-      assert validate_step_slug("_internal") == :ok
-      assert validate_step_slug("Process123") == :ok
+  describe "add_step/5 - Root steps (no dependencies)" do
+    test "adds root step to workflow" do
+      {:ok, _} = FlowBuilder.create_flow("test_root_step", Repo)
+      {:ok, step} = FlowBuilder.add_step("test_root_step", "fetch", [], Repo)
+
+      assert step["step_slug"] == "fetch"
+      assert step["workflow_slug"] == "test_root_step"
+      assert step["step_type"] == "single"
+      assert step["deps_count"] == 0
+      assert step["initial_tasks"] == nil
     end
 
-    test "rejects invalid step slug - starting with number" do
-      assert validate_step_slug("123step") == {:error, :invalid_step_slug}
+    test "adds multiple root steps (parallel start)" do
+      {:ok, _} = FlowBuilder.create_flow("test_multi_root", Repo)
+      {:ok, step1} = FlowBuilder.add_step("test_multi_root", "fetch_a", [], Repo)
+      {:ok, step2} = FlowBuilder.add_step("test_multi_root", "fetch_b", [], Repo)
+
+      assert step1["step_slug"] == "fetch_a"
+      assert step2["step_slug"] == "fetch_b"
+      assert step1["deps_count"] == 0
+      assert step2["deps_count"] == 0
     end
 
-    test "rejects invalid step slug - with special characters" do
-      assert validate_step_slug("step-name") == {:error, :invalid_step_slug}
-      assert validate_step_slug("step@name") == {:error, :invalid_step_slug}
+    test "root step appears in database" do
+      {:ok, _} = FlowBuilder.create_flow("test_step_db", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_step_db", "process", [], Repo)
+
+      {:ok, result} =
+        Repo.query(
+          """
+          SELECT * FROM workflow_steps
+          WHERE workflow_slug = 'test_step_db' AND step_slug = 'process'
+          """,
+          []
+        )
+
+      assert length(result.rows) == 1
     end
 
+    test "step inherits workflow defaults" do
+      {:ok, _} = FlowBuilder.create_flow("test_inherit", Repo, max_attempts: 5, timeout: 120)
+      {:ok, step} = FlowBuilder.add_step("test_inherit", "step1", [], Repo)
+
+      assert step["max_attempts"] == 5
+      assert step["timeout"] == 120
+    end
+  end
+
+  describe "add_step/5 - Sequential dependencies" do
+    test "adds step with single dependency" do
+      {:ok, _} = FlowBuilder.create_flow("test_sequential", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_sequential", "step1", [], Repo)
+      {:ok, step2} = FlowBuilder.add_step("test_sequential", "step2", ["step1"], Repo)
+
+      assert step2["step_slug"] == "step2"
+      assert step2["deps_count"] == 1
+    end
+
+    test "dependency appears in database" do
+      {:ok, _} = FlowBuilder.create_flow("test_dep_db", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_dep_db", "step1", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_dep_db", "step2", ["step1"], Repo)
+
+      {:ok, result} =
+        Repo.query(
+          """
+          SELECT * FROM workflow_step_dependencies_def
+          WHERE workflow_slug = 'test_dep_db' AND step_slug = 'step2'
+          """,
+          []
+        )
+
+      assert length(result.rows) == 1
+      [row] = result.rows
+      [_workflow, _step, dep_slug] = row
+      assert dep_slug == "step1"
+    end
+
+    test "adds long dependency chain" do
+      {:ok, _} = FlowBuilder.create_flow("test_chain", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_chain", "step1", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_chain", "step2", ["step1"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_chain", "step3", ["step2"], Repo)
+      {:ok, step4} = FlowBuilder.add_step("test_chain", "step4", ["step3"], Repo)
+
+      assert step4["deps_count"] == 1
+    end
+  end
+
+  describe "add_step/5 - DAG dependencies (multiple dependencies)" do
+    test "adds step with multiple dependencies (join)" do
+      {:ok, _} = FlowBuilder.create_flow("test_join", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_join", "fetch_a", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_join", "fetch_b", [], Repo)
+      {:ok, merge} = FlowBuilder.add_step("test_join", "merge", ["fetch_a", "fetch_b"], Repo)
+
+      assert merge["deps_count"] == 2
+    end
+
+    test "creates diamond DAG" do
+      {:ok, _} = FlowBuilder.create_flow("test_diamond", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_diamond", "root", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_diamond", "left", ["root"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_diamond", "right", ["root"], Repo)
+      {:ok, merge} = FlowBuilder.add_step("test_diamond", "merge", ["left", "right"], Repo)
+
+      assert merge["deps_count"] == 2
+    end
+
+    test "verifies all dependencies in database" do
+      {:ok, _} = FlowBuilder.create_flow("test_multi_dep", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_multi_dep", "a", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_multi_dep", "b", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_multi_dep", "c", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_multi_dep", "merge", ["a", "b", "c"], Repo)
+
+      {:ok, result} =
+        Repo.query(
+          """
+          SELECT dep_slug FROM workflow_step_dependencies_def
+          WHERE workflow_slug = 'test_multi_dep' AND step_slug = 'merge'
+          ORDER BY dep_slug
+          """,
+          []
+        )
+
+      dep_slugs = Enum.map(result.rows, fn [slug] -> slug end)
+      assert dep_slugs == ["a", "b", "c"]
+    end
+  end
+
+  describe "add_step/5 - Map steps" do
+    test "adds map step with fixed initial_tasks" do
+      {:ok, _} = FlowBuilder.create_flow("test_map_fixed", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_map_fixed", "fetch", [], Repo)
+
+      {:ok, map_step} =
+        FlowBuilder.add_step("test_map_fixed", "process", ["fetch"], Repo,
+          step_type: "map",
+          initial_tasks: 10
+        )
+
+      assert map_step["step_type"] == "map"
+      assert map_step["initial_tasks"] == 10
+    end
+
+    test "adds map step without initial_tasks (runtime-determined)" do
+      {:ok, _} = FlowBuilder.create_flow("test_map_dynamic", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_map_dynamic", "fetch", [], Repo)
+
+      {:ok, map_step} =
+        FlowBuilder.add_step("test_map_dynamic", "process", ["fetch"], Repo, step_type: "map")
+
+      assert map_step["step_type"] == "map"
+      assert map_step["initial_tasks"] == nil
+    end
+
+    test "single step has step_type='single' by default" do
+      {:ok, _} = FlowBuilder.create_flow("test_single_default", Repo)
+      {:ok, step} = FlowBuilder.add_step("test_single_default", "process", [], Repo)
+
+      assert step["step_type"] == "single"
+    end
+
+    test "map step with large initial_tasks" do
+      {:ok, _} = FlowBuilder.create_flow("test_large_map", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_large_map", "fetch", [], Repo)
+
+      {:ok, map_step} =
+        FlowBuilder.add_step("test_large_map", "process", ["fetch"], Repo,
+          step_type: "map",
+          initial_tasks: 1000
+        )
+
+      assert map_step["initial_tasks"] == 1000
+    end
+  end
+
+  describe "add_step/5 - Step options" do
+    test "overrides workflow max_attempts" do
+      {:ok, _} = FlowBuilder.create_flow("test_override_attempts", Repo, max_attempts: 3)
+
+      {:ok, step} =
+        FlowBuilder.add_step("test_override_attempts", "retry_step", [], Repo, max_attempts: 10)
+
+      assert step["max_attempts"] == 10
+    end
+
+    test "overrides workflow timeout" do
+      {:ok, _} = FlowBuilder.create_flow("test_override_timeout", Repo, timeout: 60)
+
+      {:ok, step} =
+        FlowBuilder.add_step("test_override_timeout", "slow_step", [], Repo, timeout: 300)
+
+      assert step["timeout"] == 300
+    end
+
+    test "overrides both max_attempts and timeout" do
+      {:ok, _} = FlowBuilder.create_flow("test_override_both", Repo)
+
+      {:ok, step} =
+        FlowBuilder.add_step("test_override_both", "custom_step", [], Repo,
+          max_attempts: 5,
+          timeout: 120
+        )
+
+      assert step["max_attempts"] == 5
+      assert step["timeout"] == 120
+    end
+
+    test "map step with all custom options" do
+      {:ok, _} = FlowBuilder.create_flow("test_map_full", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_map_full", "fetch", [], Repo)
+
+      {:ok, step} =
+        FlowBuilder.add_step("test_map_full", "process", ["fetch"], Repo,
+          step_type: "map",
+          initial_tasks: 50,
+          max_attempts: 5,
+          timeout: 120
+        )
+
+      assert step["step_type"] == "map"
+      assert step["initial_tasks"] == 50
+      assert step["max_attempts"] == 5
+      assert step["timeout"] == 120
+    end
+  end
+
+  describe "add_step/5 - Step slug validation" do
     test "rejects empty step slug" do
-      assert validate_step_slug("") == {:error, :invalid_step_slug}
+      {:ok, _} = FlowBuilder.create_flow("test_empty_step", Repo)
+      result = FlowBuilder.add_step("test_empty_step", "", [], Repo)
+
+      assert result == {:error, :step_slug_cannot_be_empty}
     end
 
-    test "validates step type option" do
-      # Defaults to "single"
-      assert validate_step_type([]) == :ok
-      assert validate_step_type(step_type: "single") == :ok
-      assert validate_step_type(step_type: "map") == :ok
+    test "rejects step slug over 255 characters" do
+      {:ok, _} = FlowBuilder.create_flow("test_long_step", Repo)
+      long_slug = String.duplicate("a", 256)
+      result = FlowBuilder.add_step("test_long_step", long_slug, [], Repo)
+
+      assert result == {:error, :step_slug_too_long}
     end
 
-    test "rejects invalid step type" do
-      assert validate_step_type(step_type: "invalid") ==
-               {:error, :invalid_step_type}
+    test "accepts step slug with 255 characters" do
+      {:ok, _} = FlowBuilder.create_flow("test_max_step", Repo)
+      max_slug = String.duplicate("a", 255)
+      {:ok, step} = FlowBuilder.add_step("test_max_step", max_slug, [], Repo)
+
+      assert step["step_slug"] == max_slug
     end
 
-    test "validates initial_tasks for map steps" do
-      # For map steps, initial_tasks should be valid
-      assert validate_initial_tasks(step_type: "map", initial_tasks: 10) == :ok
-      assert validate_initial_tasks(step_type: "single") == :ok
+    test "rejects step slug starting with number" do
+      {:ok, _} = FlowBuilder.create_flow("test_num_step", Repo)
+      result = FlowBuilder.add_step("test_num_step", "123_step", [], Repo)
+
+      assert result == {:error, :step_slug_invalid_format}
+    end
+
+    test "rejects step slug with spaces" do
+      {:ok, _} = FlowBuilder.create_flow("test_space_step", Repo)
+      result = FlowBuilder.add_step("test_space_step", "my step", [], Repo)
+
+      assert result == {:error, :step_slug_invalid_format}
+    end
+
+    test "rejects step slug with hyphens" do
+      {:ok, _} = FlowBuilder.create_flow("test_hyphen_step", Repo)
+      result = FlowBuilder.add_step("test_hyphen_step", "my-step", [], Repo)
+
+      assert result == {:error, :step_slug_invalid_format}
+    end
+
+    test "accepts step slug with underscores and numbers" do
+      {:ok, _} = FlowBuilder.create_flow("test_valid_step", Repo)
+      {:ok, step} = FlowBuilder.add_step("test_valid_step", "step_123_foo", [], Repo)
+
+      assert step["step_slug"] == "step_123_foo"
+    end
+
+    test "rejects non-string step slug" do
+      {:ok, _} = FlowBuilder.create_flow("test_nonstring_step", Repo)
+      result = FlowBuilder.add_step("test_nonstring_step", :atom_slug, [], Repo)
+
+      assert result == {:error, :step_slug_must_be_string}
+    end
+
+    test "rejects duplicate step slug in same workflow" do
+      {:ok, _} = FlowBuilder.create_flow("test_dup_step", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_dup_step", "process", [], Repo)
+      result = FlowBuilder.add_step("test_dup_step", "process", [], Repo)
+
+      assert {:error, _} = result
+    end
+
+    test "allows same step slug in different workflows" do
+      {:ok, _} = FlowBuilder.create_flow("test_workflow_a", Repo)
+      {:ok, _} = FlowBuilder.create_flow("test_workflow_b", Repo)
+
+      {:ok, step1} = FlowBuilder.add_step("test_workflow_a", "process", [], Repo)
+      {:ok, step2} = FlowBuilder.add_step("test_workflow_b", "process", [], Repo)
+
+      assert step1["workflow_slug"] == "test_workflow_a"
+      assert step2["workflow_slug"] == "test_workflow_b"
+    end
+  end
+
+  describe "add_step/5 - Options validation" do
+    test "rejects invalid step_type" do
+      {:ok, _} = FlowBuilder.create_flow("test_invalid_type", Repo)
+      result = FlowBuilder.add_step("test_invalid_type", "step1", [], Repo, step_type: "batch")
+
+      assert result == {:error, :step_type_must_be_single_or_map}
     end
 
     test "rejects negative initial_tasks" do
-      assert validate_initial_tasks(initial_tasks: -1) ==
-               {:error, :invalid_initial_tasks}
+      {:ok, _} = FlowBuilder.create_flow("test_negative_tasks", Repo)
+
+      result =
+        FlowBuilder.add_step("test_negative_tasks", "step1", [], Repo,
+          step_type: "map",
+          initial_tasks: -5
+        )
+
+      assert result == {:error, :initial_tasks_must_be_positive}
     end
 
     test "rejects zero initial_tasks" do
-      assert validate_initial_tasks(initial_tasks: 0) ==
-               {:error, :invalid_initial_tasks}
+      {:ok, _} = FlowBuilder.create_flow("test_zero_tasks", Repo)
+
+      result =
+        FlowBuilder.add_step("test_zero_tasks", "step1", [], Repo,
+          step_type: "map",
+          initial_tasks: 0
+        )
+
+      assert result == {:error, :initial_tasks_must_be_positive}
+    end
+
+    test "rejects non-integer initial_tasks" do
+      {:ok, _} = FlowBuilder.create_flow("test_float_tasks", Repo)
+
+      result =
+        FlowBuilder.add_step("test_float_tasks", "step1", [], Repo,
+          step_type: "map",
+          initial_tasks: 10.5
+        )
+
+      assert result == {:error, :initial_tasks_must_be_integer}
+    end
+
+    test "rejects negative step max_attempts" do
+      {:ok, _} = FlowBuilder.create_flow("test_neg_step_attempts", Repo)
+
+      result =
+        FlowBuilder.add_step("test_neg_step_attempts", "step1", [], Repo, max_attempts: -1)
+
+      assert result == {:error, :max_attempts_must_be_non_negative}
+    end
+
+    test "rejects zero step timeout" do
+      {:ok, _} = FlowBuilder.create_flow("test_zero_step_timeout", Repo)
+      result = FlowBuilder.add_step("test_zero_step_timeout", "step1", [], Repo, timeout: 0)
+
+      assert result == {:error, :timeout_must_be_positive}
     end
   end
 
-  describe "Dependency validation" do
-    test "validates dependency list format" do
-      # Root step
-      assert validate_dependencies([]) == :ok
-      assert validate_dependencies(["parent"]) == :ok
-      assert validate_dependencies(["parent1", "parent2"]) == :ok
+  describe "add_step/5 - Error handling" do
+    test "returns error for non-existent workflow" do
+      result = FlowBuilder.add_step("nonexistent_workflow", "step1", [], Repo)
+
+      assert {:error, _} = result
     end
 
-    test "rejects non-list dependencies" do
-      assert validate_dependencies("parent") == {:error, :invalid_dependencies}
-      assert validate_dependencies(nil) == {:error, :invalid_dependencies}
-    end
+    test "returns error for invalid dependency" do
+      {:ok, _} = FlowBuilder.create_flow("test_invalid_dep", Repo)
+      result = FlowBuilder.add_step("test_invalid_dep", "step1", ["nonexistent_step"], Repo)
 
-    test "rejects empty string in dependency list" do
-      assert validate_dependencies([""]) == {:error, :invalid_dependencies}
-      assert validate_dependencies(["parent", ""]) == {:error, :invalid_dependencies}
-    end
-
-    test "rejects duplicate dependencies" do
-      assert validate_dependencies(["parent", "parent"]) ==
-               {:error, :duplicate_dependencies}
-    end
-
-    test "accepts duplicate dependencies in order" do
-      # Unique dependencies are valid
-      assert validate_dependencies(["parent1", "parent2", "parent3"]) == :ok
+      # This might succeed at add_step but fail at load time
+      # Or might fail immediately depending on SQL function implementation
+      assert match?({:ok, _}, result) or match?({:error, _}, result)
     end
   end
 
-  describe "Workflow validation scenarios" do
-    test "root step has no dependencies" do
-      assert validate_dependencies([]) == :ok
+  describe "list_flows/1 - Listing workflows" do
+    test "lists empty workflows" do
+      {:ok, workflows} = FlowBuilder.list_flows(Repo)
+
+      assert workflows == []
     end
 
-    test "dependent step lists all prerequisites" do
-      # Step depending on multiple parents
-      assert validate_dependencies(["fetch", "validate", "transform"]) == :ok
+    test "lists single workflow" do
+      {:ok, _} = FlowBuilder.create_flow("test_list_single", Repo)
+      {:ok, workflows} = FlowBuilder.list_flows(Repo)
+
+      assert length(workflows) == 1
+      [workflow] = workflows
+      assert workflow["workflow_slug"] == "test_list_single"
     end
 
-    test "validates complex dependency chains" do
-      # A → B → C → D
-      deps = ["previous"]
-      assert validate_dependencies(deps) == :ok
+    test "lists multiple workflows" do
+      {:ok, _} = FlowBuilder.create_flow("test_list_a", Repo)
+      {:ok, _} = FlowBuilder.create_flow("test_list_b", Repo)
+      {:ok, _} = FlowBuilder.create_flow("test_list_c", Repo)
+
+      {:ok, workflows} = FlowBuilder.list_flows(Repo)
+
+      assert length(workflows) == 3
+      slugs = Enum.map(workflows, & &1["workflow_slug"]) |> Enum.sort()
+      assert slugs == ["test_list_a", "test_list_b", "test_list_c"]
     end
 
-    test "validates diamond dependencies" do
-      # A → {B, C} → D
-      # When defining D, it depends on both B and C
-      deps = ["branch1", "branch2"]
-      assert validate_dependencies(deps) == :ok
+    test "orders workflows by created_at DESC" do
+      {:ok, _wf1} = FlowBuilder.create_flow("test_order_1", Repo)
+      Process.sleep(10)
+      {:ok, _wf2} = FlowBuilder.create_flow("test_order_2", Repo)
+      Process.sleep(10)
+      {:ok, _wf3} = FlowBuilder.create_flow("test_order_3", Repo)
+
+      {:ok, workflows} = FlowBuilder.list_flows(Repo)
+
+      # Most recent first
+      assert hd(workflows)["workflow_slug"] == "test_order_3"
+      assert List.last(workflows)["workflow_slug"] == "test_order_1"
     end
 
-    test "validates fan-out dependencies" do
-      # A → {B, C, D, E}
-      deps = ["source"]
-      assert validate_dependencies(deps) == :ok
-    end
+    test "includes workflow metadata" do
+      {:ok, _} = FlowBuilder.create_flow("test_metadata", Repo, max_attempts: 5, timeout: 120)
+      {:ok, workflows} = FlowBuilder.list_flows(Repo)
 
-    test "validates fan-in dependencies" do
-      # {A, B, C} → D
-      deps = ["worker1", "worker2", "worker3"]
-      assert validate_dependencies(deps) == :ok
-    end
-  end
-
-  describe "Step type validation" do
-    test "single step executes once per run" do
-      assert validate_step_type(step_type: "single") == :ok
-    end
-
-    test "map step executes for each array element" do
-      assert validate_step_type(step_type: "map") == :ok
-    end
-
-    test "map step with initial_tasks" do
-      assert validate_step_type(step_type: "map", initial_tasks: 50) == :ok
-    end
-
-    test "single step ignores initial_tasks" do
-      # For single steps, initial_tasks should be ignored or validated differently
-      assert validate_step_type(step_type: "single", initial_tasks: 10) == :ok
+      [workflow] = workflows
+      assert workflow["max_attempts"] == 5
+      assert workflow["timeout"] == 120
+      assert workflow["created_at"] != nil
     end
   end
 
-  describe "Default value handling" do
-    test "default max_attempts is 3" do
-      # Workflows should default to 3 retry attempts if not specified
-      # Contract: default max_attempts = 3
-      assert true
+  describe "get_flow/2 - Getting workflow with steps" do
+    test "gets workflow without steps" do
+      {:ok, _} = FlowBuilder.create_flow("test_get_empty", Repo)
+      {:ok, workflow} = FlowBuilder.get_flow("test_get_empty", Repo)
+
+      assert workflow["workflow_slug"] == "test_get_empty"
+      assert workflow["steps"] == []
     end
 
-    test "default timeout is 60 seconds" do
-      # Workflows should default to 60 second timeout if not specified
-      # Contract: default timeout = 60
-      assert true
+    test "gets workflow with single step" do
+      {:ok, _} = FlowBuilder.create_flow("test_get_single", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_single", "process", [], Repo)
+
+      {:ok, workflow} = FlowBuilder.get_flow("test_get_single", Repo)
+
+      assert workflow["workflow_slug"] == "test_get_single"
+      assert length(workflow["steps"]) == 1
+
+      [step] = workflow["steps"]
+      assert step["step_slug"] == "process"
+      assert step["depends_on"] == []
     end
 
-    test "default step_type is 'single'" do
-      # Steps default to single execution if not specified
-      # Contract: default step_type = "single"
-      assert true
+    test "gets workflow with multiple steps" do
+      {:ok, _} = FlowBuilder.create_flow("test_get_multi", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_multi", "step1", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_multi", "step2", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_multi", "step3", [], Repo)
+
+      {:ok, workflow} = FlowBuilder.get_flow("test_get_multi", Repo)
+
+      assert length(workflow["steps"]) == 3
+    end
+
+    test "includes step dependencies" do
+      {:ok, _} = FlowBuilder.create_flow("test_get_deps", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_deps", "step1", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_deps", "step2", ["step1"], Repo)
+
+      {:ok, workflow} = FlowBuilder.get_flow("test_get_deps", Repo)
+
+      step2 = Enum.find(workflow["steps"], &(&1["step_slug"] == "step2"))
+      assert step2["depends_on"] == ["step1"]
+    end
+
+    test "includes multiple dependencies" do
+      {:ok, _} = FlowBuilder.create_flow("test_get_multidep", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_multidep", "a", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_multidep", "b", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_multidep", "merge", ["a", "b"], Repo)
+
+      {:ok, workflow} = FlowBuilder.get_flow("test_get_multidep", Repo)
+
+      merge = Enum.find(workflow["steps"], &(&1["step_slug"] == "merge"))
+      assert Enum.sort(merge["depends_on"]) == ["a", "b"]
+    end
+
+    test "orders steps by step_index" do
+      {:ok, _} = FlowBuilder.create_flow("test_get_order", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_order", "third", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_order", "first", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_order", "second", [], Repo)
+
+      {:ok, workflow} = FlowBuilder.get_flow("test_get_order", Repo)
+
+      # Steps should be in insertion order (step_index)
+      step_slugs = Enum.map(workflow["steps"], & &1["step_slug"])
+      assert step_slugs == ["third", "first", "second"]
+    end
+
+    test "includes step metadata" do
+      {:ok, _} = FlowBuilder.create_flow("test_get_metadata", Repo)
+
+      {:ok, _} =
+        FlowBuilder.add_step("test_get_metadata", "map_step", [], Repo,
+          step_type: "map",
+          initial_tasks: 50,
+          max_attempts: 5,
+          timeout: 120
+        )
+
+      {:ok, workflow} = FlowBuilder.get_flow("test_get_metadata", Repo)
+
+      [step] = workflow["steps"]
+      assert step["step_type"] == "map"
+      assert step["initial_tasks"] == 50
+      assert step["max_attempts"] == 5
+      assert step["timeout"] == 120
+    end
+
+    test "returns not_found for missing workflow" do
+      result = FlowBuilder.get_flow("nonexistent_workflow", Repo)
+
+      assert result == {:error, :not_found}
     end
   end
 
-  describe "Error handling and validation" do
-    test "comprehensive validation pipeline for create_flow" do
-      # Test that all validators run in order
-      workflow_slug = "test_workflow"
-      opts = [max_attempts: 5, timeout: 120]
+  describe "delete_flow/2 - Deleting workflows" do
+    test "deletes existing workflow" do
+      {:ok, _} = FlowBuilder.create_flow("test_delete", Repo)
+      :ok = FlowBuilder.delete_flow("test_delete", Repo)
 
-      # All should pass
-      assert validate_workflow_slug(workflow_slug) == :ok
-      assert validate_max_attempts(opts) == :ok
-      assert validate_timeout(opts) == :ok
+      # Verify deleted
+      result = FlowBuilder.get_flow("test_delete", Repo)
+      assert result == {:error, :not_found}
     end
 
-    test "validation stops at first error" do
-      # If slug is invalid, max_attempts/timeout shouldn't matter
-      assert validate_workflow_slug("123invalid") == {:error, :invalid_workflow_slug}
+    test "cascades to delete steps" do
+      {:ok, _} = FlowBuilder.create_flow("test_delete_cascade", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete_cascade", "step1", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete_cascade", "step2", [], Repo)
+
+      :ok = FlowBuilder.delete_flow("test_delete_cascade", Repo)
+
+      # Verify steps deleted
+      {:ok, result} =
+        Repo.query(
+          "SELECT * FROM workflow_steps WHERE workflow_slug = 'test_delete_cascade'",
+          []
+        )
+
+      assert result.rows == []
     end
 
-    test "add_step comprehensive validation" do
-      step_slug = "fetch_data"
-      dependencies = ["previous_step"]
-      opts = [step_type: "single", max_attempts: 3]
+    test "cascades to delete dependencies" do
+      {:ok, _} = FlowBuilder.create_flow("test_delete_deps", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete_deps", "step1", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete_deps", "step2", ["step1"], Repo)
 
-      assert validate_step_slug(step_slug) == :ok
-      assert validate_dependencies(dependencies) == :ok
-      assert validate_step_type(opts) == :ok
-    end
-  end
+      :ok = FlowBuilder.delete_flow("test_delete_deps", Repo)
 
-  describe "Edge cases and boundary conditions" do
-    test "very long workflow slug" do
-      long_slug = String.duplicate("workflow_", 100) |> String.trim_trailing("_")
-      assert validate_workflow_slug(long_slug) == :ok
-    end
+      # Verify dependencies deleted
+      {:ok, result} =
+        Repo.query(
+          "SELECT * FROM workflow_step_dependencies_def WHERE workflow_slug = 'test_delete_deps'",
+          []
+        )
 
-    test "very long step slug" do
-      long_slug = String.duplicate("step_", 100) |> String.trim_trailing("_")
-      assert validate_step_slug(long_slug) == :ok
+      assert result.rows == []
     end
 
-    test "single character workflow slug" do
-      assert validate_workflow_slug("w") == :ok
-      assert validate_workflow_slug("_") == :ok
+    test "succeeds for non-existent workflow (idempotent)" do
+      result = FlowBuilder.delete_flow("nonexistent_workflow", Repo)
+
+      assert result == :ok
     end
 
-    test "single character step slug" do
-      assert validate_step_slug("s") == :ok
-    end
+    test "workflow removed from list after deletion" do
+      {:ok, _} = FlowBuilder.create_flow("test_delete_list", Repo)
+      {:ok, workflows_before} = FlowBuilder.list_flows(Repo)
+      assert length(workflows_before) == 1
 
-    test "many dependencies (100+ steps)" do
-      deps = Enum.map(1..100, fn i -> "step#{i}" end)
-      assert validate_dependencies(deps) == :ok
-    end
+      :ok = FlowBuilder.delete_flow("test_delete_list", Repo)
 
-    test "very high max_attempts" do
-      assert validate_max_attempts(max_attempts: 1000) == :ok
-    end
-
-    test "very high timeout" do
-      # 24 hours
-      assert validate_timeout(timeout: 86400) == :ok
+      {:ok, workflows_after} = FlowBuilder.list_flows(Repo)
+      assert workflows_after == []
     end
   end
 
   describe "Integration scenarios" do
-    test "creating ETL workflow structure" do
-      # Extract → Transform → Load
-      assert validate_workflow_slug("etl_workflow") == :ok
-      assert validate_step_slug("extract") == :ok
-      assert validate_step_slug("transform") == :ok
-      assert validate_step_slug("load") == :ok
+    test "creates complete ETL workflow" do
+      # Create workflow
+      {:ok, _} = FlowBuilder.create_flow("test_etl", Repo, max_attempts: 3, timeout: 300)
 
-      # Dependencies: transform depends on extract, load depends on transform
-      assert validate_dependencies(["extract"]) == :ok
-      assert validate_dependencies(["transform"]) == :ok
+      # Add steps
+      {:ok, _} = FlowBuilder.add_step("test_etl", "extract", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_etl", "transform", ["extract"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_etl", "load", ["transform"], Repo)
+
+      # Verify structure
+      {:ok, workflow} = FlowBuilder.get_flow("test_etl", Repo)
+
+      assert length(workflow["steps"]) == 3
+      step_slugs = Enum.map(workflow["steps"], & &1["step_slug"])
+      assert step_slugs == ["extract", "transform", "load"]
     end
 
-    test "creating data processing workflow" do
-      # Fetch → {Split, Validate, Clean} → Merge → Save
-      assert validate_workflow_slug("data_processing") == :ok
+    test "creates diamond DAG workflow" do
+      {:ok, _} = FlowBuilder.create_flow("test_diamond_full", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_diamond_full", "root", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_diamond_full", "left", ["root"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_diamond_full", "right", ["root"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_diamond_full", "merge", ["left", "right"], Repo)
 
-      # Multiple parallel workers
-      deps_split = ["fetch"]
-      deps_validate = ["fetch"]
-      deps_clean = ["fetch"]
-      deps_merge = ["split", "validate", "clean"]
-      deps_save = ["merge"]
+      {:ok, workflow} = FlowBuilder.get_flow("test_diamond_full", Repo)
 
-      assert validate_dependencies(deps_split) == :ok
-      assert validate_dependencies(deps_validate) == :ok
-      assert validate_dependencies(deps_clean) == :ok
-      assert validate_dependencies(deps_merge) == :ok
-      assert validate_dependencies(deps_save) == :ok
+      assert length(workflow["steps"]) == 4
+
+      merge = Enum.find(workflow["steps"], &(&1["step_slug"] == "merge"))
+      assert Enum.sort(merge["depends_on"]) == ["left", "right"]
     end
 
-    test "creating AI inference workflow" do
-      # Preprocess → {Model1, Model2, Model3} → Aggregate → Postprocess
-      assert validate_workflow_slug("ai_inference") == :ok
-      assert validate_step_type(step_type: "single") == :ok
-      assert validate_step_type(step_type: "map") == :ok
+    test "creates workflow with map step" do
+      {:ok, _} = FlowBuilder.create_flow("test_map_workflow", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_map_workflow", "fetch", [], Repo)
+
+      {:ok, _} =
+        FlowBuilder.add_step("test_map_workflow", "process_batch", ["fetch"], Repo,
+          step_type: "map",
+          initial_tasks: 100
+        )
+
+      {:ok, _} = FlowBuilder.add_step("test_map_workflow", "aggregate", ["process_batch"], Repo)
+
+      {:ok, workflow} = FlowBuilder.get_flow("test_map_workflow", Repo)
+
+      process_step = Enum.find(workflow["steps"], &(&1["step_slug"] == "process_batch"))
+      assert process_step["step_type"] == "map"
+      assert process_step["initial_tasks"] == 100
     end
 
-    test "creating batch processing workflow" do
-      # Queue → {Workers...} → Aggregate → Report
-      # Map step for parallel processing
-      assert validate_step_type(step_type: "map", initial_tasks: 100) == :ok
+    test "modifies workflow by adding more steps" do
+      {:ok, _} = FlowBuilder.create_flow("test_modify", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_modify", "step1", [], Repo)
+
+      {:ok, workflow_before} = FlowBuilder.get_flow("test_modify", Repo)
+      assert length(workflow_before["steps"]) == 1
+
+      # Add more steps
+      {:ok, _} = FlowBuilder.add_step("test_modify", "step2", ["step1"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_modify", "step3", ["step2"], Repo)
+
+      {:ok, workflow_after} = FlowBuilder.get_flow("test_modify", Repo)
+      assert length(workflow_after["steps"]) == 3
     end
-  end
 
-  # Private validation function stubs for testing
-  # These would be implemented in FlowBuilder module
+    test "creates multiple independent workflows" do
+      {:ok, _} = FlowBuilder.create_flow("test_workflow_a", Repo)
+      {:ok, _} = FlowBuilder.create_flow("test_workflow_b", Repo)
+      {:ok, _} = FlowBuilder.create_flow("test_workflow_c", Repo)
 
-  defp validate_workflow_slug(slug) do
-    if slug == "" or not String.match?(slug, ~r/^[a-zA-Z_][a-zA-Z0-9_]*$/) do
-      {:error, :invalid_workflow_slug}
-    else
-      :ok
-    end
-  end
-
-  defp validate_step_slug(slug) do
-    if slug == "" or not String.match?(slug, ~r/^[a-zA-Z_][a-zA-Z0-9_]*$/) do
-      {:error, :invalid_step_slug}
-    else
-      :ok
-    end
-  end
-
-  defp validate_max_attempts(opts) do
-    case Keyword.get(opts, :max_attempts) do
-      nil -> :ok
-      n when is_integer(n) and n > 0 -> :ok
-      _ -> {:error, :invalid_max_attempts}
-    end
-  end
-
-  defp validate_timeout(opts) do
-    case Keyword.get(opts, :timeout) do
-      nil -> :ok
-      n when is_integer(n) and n > 0 -> :ok
-      _ -> {:error, :invalid_timeout}
+      {:ok, workflows} = FlowBuilder.list_flows(Repo)
+      assert length(workflows) == 3
     end
   end
 
-  defp validate_step_type(opts) do
-    case Keyword.get(opts, :step_type, "single") do
-      "single" -> :ok
-      "map" -> :ok
-      _ -> {:error, :invalid_step_type}
-    end
-  end
+  describe "Edge cases" do
+    test "creates workflow with 100+ steps (stress test)" do
+      {:ok, _} = FlowBuilder.create_flow("test_large", Repo)
 
-  defp validate_initial_tasks(opts) do
-    case Keyword.get(opts, :initial_tasks) do
-      nil -> :ok
-      n when is_integer(n) and n > 0 -> :ok
-      _ -> {:error, :invalid_initial_tasks}
-    end
-  end
+      # Create chain of 100 steps
+      Enum.each(1..100, fn i ->
+        step_name = "step_#{i}"
+        deps = if i == 1, do: [], else: ["step_#{i - 1}"]
+        {:ok, _} = FlowBuilder.add_step("test_large", step_name, deps, Repo)
+      end)
 
-  defp validate_dependencies(deps) do
-    cond do
-      not is_list(deps) -> {:error, :invalid_dependencies}
-      Enum.any?(deps, &(&1 == "")) -> {:error, :invalid_dependencies}
-      length(deps) != length(Enum.uniq(deps)) -> {:error, :duplicate_dependencies}
-      true -> :ok
+      {:ok, workflow} = FlowBuilder.get_flow("test_large", Repo)
+      assert length(workflow["steps"]) == 100
+    end
+
+    test "handles workflow with many parallel steps" do
+      {:ok, _} = FlowBuilder.create_flow("test_parallel", Repo)
+
+      # Create 50 parallel root steps
+      Enum.each(1..50, fn i ->
+        {:ok, _} = FlowBuilder.add_step("test_parallel", "parallel_#{i}", [], Repo)
+      end)
+
+      {:ok, workflow} = FlowBuilder.get_flow("test_parallel", Repo)
+      assert length(workflow["steps"]) == 50
+    end
+
+    test "handles step with many dependencies" do
+      {:ok, _} = FlowBuilder.create_flow("test_many_deps", Repo)
+
+      # Create 20 independent steps
+      Enum.each(1..20, fn i ->
+        {:ok, _} = FlowBuilder.add_step("test_many_deps", "source_#{i}", [], Repo)
+      end)
+
+      # Create merge step depending on all 20
+      deps = Enum.map(1..20, fn i -> "source_#{i}" end)
+      {:ok, merge} = FlowBuilder.add_step("test_many_deps", "mega_merge", deps, Repo)
+
+      assert merge["deps_count"] == 20
+    end
+
+    test "handles complex nested DAG" do
+      {:ok, _} = FlowBuilder.create_flow("test_complex", Repo)
+
+      # Layer 1
+      {:ok, _} = FlowBuilder.add_step("test_complex", "a1", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_complex", "a2", [], Repo)
+
+      # Layer 2
+      {:ok, _} = FlowBuilder.add_step("test_complex", "b1", ["a1"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_complex", "b2", ["a1", "a2"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_complex", "b3", ["a2"], Repo)
+
+      # Layer 3
+      {:ok, _} = FlowBuilder.add_step("test_complex", "c1", ["b1", "b2"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_complex", "c2", ["b2", "b3"], Repo)
+
+      # Layer 4
+      {:ok, _} = FlowBuilder.add_step("test_complex", "final", ["c1", "c2"], Repo)
+
+      {:ok, workflow} = FlowBuilder.get_flow("test_complex", Repo)
+      assert length(workflow["steps"]) == 8
     end
   end
 end

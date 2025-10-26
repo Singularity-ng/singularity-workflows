@@ -51,3 +51,4 @@ ex_pgflow-*.tar
 .postgres_data/
 .postgres.log
 .direnv/
+.direnv/.direnv-version
