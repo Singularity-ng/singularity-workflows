@@ -39,11 +39,20 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
         RAISE EXCEPTION 'Invalid workflow_slug: %', arg_workflow_slug;
       END IF;
 
-      INSERT INTO workflows (workflow_slug, max_attempts, timeout)
-      VALUES (arg_workflow_slug, arg_max_attempts, arg_timeout)
-      ON CONFLICT (workflow_slug) DO UPDATE
-      SET max_attempts = EXCLUDED.max_attempts;
+      -- Check if workflow already exists
+      IF EXISTS (SELECT 1 FROM workflows WHERE workflow_slug = arg_workflow_slug) THEN
+        -- Update existing workflow
+        UPDATE workflows
+        SET max_attempts = arg_max_attempts,
+            timeout = arg_timeout
+        WHERE workflow_slug = arg_workflow_slug;
+      ELSE
+        -- Insert new workflow
+        INSERT INTO workflows (workflow_slug, max_attempts, timeout)
+        VALUES (arg_workflow_slug, arg_max_attempts, arg_timeout);
+      END IF;
 
+      -- Return the workflow record
       RETURN QUERY
       SELECT w.workflow_slug, w.max_attempts, w.timeout, w.created_at
       FROM workflows w
@@ -110,10 +119,17 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
       FROM workflow_steps ws
       WHERE ws.workflow_slug = arg_workflow_slug;
 
-      INSERT INTO workflow_steps (workflow_slug, step_slug, step_type, step_index, initial_tasks, max_attempts, timeout)
-      VALUES (arg_workflow_slug, arg_step_slug, arg_step_type, v_next_index, arg_initial_tasks, arg_max_attempts, arg_timeout)
-      ON CONFLICT (workflow_slug, step_slug) DO UPDATE
-      SET step_type = arg_step_type, initial_tasks = arg_initial_tasks, max_attempts = arg_max_attempts, timeout = arg_timeout;
+      -- Check if step already exists
+      IF EXISTS (SELECT 1 FROM workflow_steps WHERE workflow_slug = arg_workflow_slug AND step_slug = arg_step_slug) THEN
+        -- Update existing step
+        UPDATE workflow_steps
+        SET step_type = arg_step_type, initial_tasks = arg_initial_tasks, max_attempts = arg_max_attempts, timeout = arg_timeout
+        WHERE workflow_slug = arg_workflow_slug AND step_slug = arg_step_slug;
+      ELSE
+        -- Insert new step
+        INSERT INTO workflow_steps (workflow_slug, step_slug, step_type, step_index, initial_tasks, max_attempts, timeout)
+        VALUES (arg_workflow_slug, arg_step_slug, arg_step_type, v_next_index, arg_initial_tasks, arg_max_attempts, arg_timeout);
+      END IF;
 
       INSERT INTO step_dependencies (workflow_slug, dependent_slug, dependency_slug)
       SELECT arg_workflow_slug, arg_step_slug, dep
