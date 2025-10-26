@@ -73,7 +73,7 @@ defmodule Pgflow.CompleteTaskTest do
 
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', now(), now())",
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
           [binary_id, "parent", workflow_slug]
         )
 
@@ -190,7 +190,7 @@ defmodule Pgflow.CompleteTaskTest do
 
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', now(), now())",
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
           [binary_id, "p", workflow_slug]
         )
 
@@ -282,7 +282,7 @@ defmodule Pgflow.CompleteTaskTest do
 
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', now(), now())",
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
           [binary_id, "step1", workflow_slug]
         )
 
@@ -361,7 +361,7 @@ defmodule Pgflow.CompleteTaskTest do
 
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', now(), now())",
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
           [binary_id, "parent", workflow_slug]
         )
 
@@ -443,7 +443,7 @@ defmodule Pgflow.CompleteTaskTest do
 
         Postgrex.query!(
           conn,
-          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', now(), now())",
+          "INSERT INTO workflow_step_tasks (run_id, step_slug, workflow_slug, task_index, status, idempotency_key, inserted_at, updated_at) VALUES ($1, $2, $3, 0, 'started', compute_idempotency_key($3, $2, $1, 0), now(), now())",
           [binary_id, "only_step", workflow_slug]
         )
 

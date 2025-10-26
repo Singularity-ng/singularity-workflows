@@ -1,5 +1,6 @@
 defmodule Pgflow.StepStateTest do
-  use ExUnit.Case, async: true
+  # async: false - TestClock is shared state (Agent)
+  use ExUnit.Case, async: false
 
   alias Pgflow.StepState
 
@@ -9,6 +10,14 @@ defmodule Pgflow.StepStateTest do
   Focus on counter-based coordination logic - the heart of pgflow's DAG execution.
   Tests verify final state after operations, not implementation details.
   """
+
+  alias Pgflow.TestClock
+
+  setup do
+    # Reset clock for deterministic timestamps
+    TestClock.reset()
+    :ok
+  end
 
   describe "changeset/2 - valid data" do
     test "creates valid changeset with all required fields" do
@@ -215,7 +224,7 @@ defmodule Pgflow.StepStateTest do
 
       assert started_at != nil
       assert %DateTime{} = started_at
-      assert_in_delta DateTime.to_unix(started_at), DateTime.to_unix(DateTime.utc_now()), 2
+      assert_in_delta DateTime.to_unix(started_at), DateTime.to_unix(TestClock.now()), 2
     end
 
     test "works with single task step" do
@@ -290,7 +299,7 @@ defmodule Pgflow.StepStateTest do
 
       assert completed_at != nil
       assert %DateTime{} = completed_at
-      assert_in_delta DateTime.to_unix(completed_at), DateTime.to_unix(DateTime.utc_now()), 2
+      assert_in_delta DateTime.to_unix(completed_at), DateTime.to_unix(TestClock.now()), 2
     end
   end
 
@@ -336,7 +345,7 @@ defmodule Pgflow.StepStateTest do
 
       assert failed_at != nil
       assert %DateTime{} = failed_at
-      assert_in_delta DateTime.to_unix(failed_at), DateTime.to_unix(DateTime.utc_now()), 2
+      assert_in_delta DateTime.to_unix(failed_at), DateTime.to_unix(TestClock.now()), 2
     end
   end
 

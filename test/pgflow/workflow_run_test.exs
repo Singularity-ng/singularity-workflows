@@ -1,5 +1,6 @@
 defmodule Pgflow.WorkflowRunTest do
-  use ExUnit.Case, async: true
+  # async: false - TestClock is shared state (Agent)
+  use ExUnit.Case, async: false
 
   alias Pgflow.WorkflowRun
 
@@ -9,6 +10,14 @@ defmodule Pgflow.WorkflowRunTest do
   Tests focus on the final state of the struct/changeset after operations,
   not on implementation details or interactions.
   """
+
+  alias Pgflow.TestClock
+
+  setup do
+    # Reset clock for deterministic timestamps
+    TestClock.reset()
+    :ok
+  end
 
   describe "changeset/2 - valid data" do
     test "creates valid changeset with all required fields" do
@@ -170,7 +179,7 @@ defmodule Pgflow.WorkflowRunTest do
 
       completed_at = get_change(changeset, :completed_at)
       assert completed_at != nil
-      assert_in_delta DateTime.to_unix(completed_at), DateTime.to_unix(DateTime.utc_now()), 2
+      assert_in_delta DateTime.to_unix(completed_at), DateTime.to_unix(TestClock.now()), 2
     end
 
     test "sets completed_at timestamp" do
@@ -236,7 +245,7 @@ defmodule Pgflow.WorkflowRunTest do
 
       assert failed_at != nil
       assert %DateTime{} = failed_at
-      assert_in_delta DateTime.to_unix(failed_at), DateTime.to_unix(DateTime.utc_now()), 2
+      assert_in_delta DateTime.to_unix(failed_at), DateTime.to_unix(TestClock.now()), 2
     end
 
     test "preserves existing run data" do

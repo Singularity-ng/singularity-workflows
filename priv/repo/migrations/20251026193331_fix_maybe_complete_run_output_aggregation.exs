@@ -25,9 +25,9 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
       SET
         status = 'completed',
         completed_at = NOW(),
-        -- Aggregate outputs from leaf steps (steps with no dependents) into flat array
+        -- Aggregate outputs from leaf steps (steps with no dependents)
         output = (
-          SELECT jsonb_agg(output)
+          SELECT output
           FROM (
             SELECT DISTINCT
               leaf_state.step_slug,
@@ -49,6 +49,7 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
                   AND dep.depends_on_step = leaf_state.step_slug
               )
           ) leaf_outputs
+          LIMIT 1
         )
       WHERE workflow_runs.id = maybe_complete_run.p_run_id
         AND workflow_runs.remaining_steps = 0

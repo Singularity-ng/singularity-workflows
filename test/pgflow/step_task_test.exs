@@ -1,5 +1,6 @@
 defmodule Pgflow.StepTaskTest do
-  use ExUnit.Case, async: true
+  # async: false - TestClock is shared state (Agent)
+  use ExUnit.Case, async: false
 
   alias Pgflow.StepTask
 
@@ -9,6 +10,14 @@ defmodule Pgflow.StepTaskTest do
   Focuses on task lifecycle: queued → claimed → started → completed/failed → requeued
   Tests verify final state after operations, including retry logic.
   """
+
+  alias Pgflow.TestClock
+
+  setup do
+    # Reset clock for deterministic timestamps
+    TestClock.reset()
+    :ok
+  end
 
   describe "changeset/2 - valid data" do
     test "creates valid changeset with all required fields" do
@@ -229,7 +238,7 @@ defmodule Pgflow.StepTaskTest do
 
       assert claimed_at != nil
       assert %DateTime{} = claimed_at
-      assert_in_delta DateTime.to_unix(claimed_at), DateTime.to_unix(DateTime.utc_now()), 2
+      assert_in_delta DateTime.to_unix(claimed_at), DateTime.to_unix(TestClock.now()), 2
     end
 
     test "sets started_at timestamp" do
@@ -331,7 +340,7 @@ defmodule Pgflow.StepTaskTest do
 
       assert completed_at != nil
       assert %DateTime{} = completed_at
-      assert_in_delta DateTime.to_unix(completed_at), DateTime.to_unix(DateTime.utc_now()), 2
+      assert_in_delta DateTime.to_unix(completed_at), DateTime.to_unix(TestClock.now()), 2
     end
 
     test "preserves existing task data" do
@@ -392,7 +401,7 @@ defmodule Pgflow.StepTaskTest do
 
       assert failed_at != nil
       assert %DateTime{} = failed_at
-      assert_in_delta DateTime.to_unix(failed_at), DateTime.to_unix(DateTime.utc_now()), 2
+      assert_in_delta DateTime.to_unix(failed_at), DateTime.to_unix(TestClock.now()), 2
     end
   end
 

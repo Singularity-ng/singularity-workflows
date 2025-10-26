@@ -62,6 +62,7 @@ defmodule Pgflow.DAG.RunInitializer do
   defp create_run(definition, input, repo) do
     run_id = Ecto.UUID.generate()
     step_count = map_size(definition.steps)
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
 
     %WorkflowRun{}
     |> WorkflowRun.changeset(%{
@@ -70,7 +71,7 @@ defmodule Pgflow.DAG.RunInitializer do
       status: "started",
       input: input,
       remaining_steps: step_count,
-      started_at: DateTime.utc_now()
+      started_at: clock.now()
     })
     |> repo.insert()
   end
@@ -109,11 +110,13 @@ defmodule Pgflow.DAG.RunInitializer do
 
   defp create_workflow_record_if_needed(definition, repo, 0) do
     # Create workflow record for code-based workflow
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     workflow_record = %{
       workflow_slug: definition.slug,
       max_attempts: 3,
       timeout: 60,
-      created_at: DateTime.utc_now()
+      created_at: clock.now()
     }
 
     case repo.insert_all("workflows", [workflow_record]) do
@@ -125,6 +128,8 @@ defmodule Pgflow.DAG.RunInitializer do
   defp create_workflow_record_if_needed(_definition, _repo, _), do: :ok
 
   defp create_workflow_step_records(definition, repo) do
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     step_records =
       Enum.with_index(definition.steps, 1)
       |> Enum.map(fn {{step_name, _step_fn}, index} ->
@@ -136,7 +141,7 @@ defmodule Pgflow.DAG.RunInitializer do
           step_index: index,
           step_type: "single",  # Code-based workflows are always single steps
           deps_count: WorkflowDefinition.dependency_count(definition, step_name),
-          created_at: DateTime.utc_now()
+          created_at: clock.now()
         }
       end)
 
@@ -148,6 +153,8 @@ defmodule Pgflow.DAG.RunInitializer do
 
   # Step 2: Create workflow_step_states records
   defp create_step_states(definition, run_id, repo) do
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     step_states =
       Enum.map(definition.steps, fn {step_name, _step_fn} ->
         remaining_deps = WorkflowDefinition.dependency_count(definition, step_name)
@@ -160,8 +167,8 @@ defmodule Pgflow.DAG.RunInitializer do
           status: "created",
           remaining_deps: remaining_deps,
           initial_tasks: metadata.initial_tasks,
-          inserted_at: DateTime.utc_now(),
-          updated_at: DateTime.utc_now()
+          inserted_at: clock.now(),
+          updated_at: clock.now()
         }
       end)
 
@@ -176,6 +183,8 @@ defmodule Pgflow.DAG.RunInitializer do
 
   # Step 3: Create workflow_step_dependencies records
   defp create_dependencies(definition, run_id, repo) do
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     dependency_records =
       Enum.flat_map(definition.dependencies, fn {step_name, deps} ->
         Enum.map(deps, fn dep_name ->
@@ -183,7 +192,7 @@ defmodule Pgflow.DAG.RunInitializer do
             run_id: run_id,
             step_slug: to_string(step_name),
             depends_on_step: to_string(dep_name),
-            inserted_at: DateTime.utc_now()
+            inserted_at: clock.now()
           }
         end)
       end)

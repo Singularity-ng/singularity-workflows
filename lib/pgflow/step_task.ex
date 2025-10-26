@@ -128,6 +128,7 @@ defmodule Pgflow.StepTask do
           step_slug: String.t() | nil,
           task_index: integer() | nil,
           workflow_slug: String.t() | nil,
+          idempotency_key: String.t() | nil,
           status: String.t() | nil,
           input: map() | nil,
           output: map() | nil,
@@ -151,6 +152,7 @@ defmodule Pgflow.StepTask do
     field(:step_slug, :string)
     field(:task_index, :integer, default: 0)
     field(:workflow_slug, :string)
+    field(:idempotency_key, :string)
 
     field(:status, :string, default: "queued")
     field(:input, :map)
@@ -178,6 +180,23 @@ defmodule Pgflow.StepTask do
   end
 
   @doc """
+  Computes the idempotency key for a task.
+
+  The idempotency key is an MD5 hash of (workflow_slug, step_slug, run_id, task_index).
+  This ensures exactly-once execution semantics per logical task.
+
+  ## Examples
+
+      iex> compute_idempotency_key("my-wf", "step1", "123e4567-e89b-12d3-a456-426614174000", 0)
+      "5d41402abc4b2a76b9719d911017c592"
+  """
+  @spec compute_idempotency_key(String.t(), String.t(), Ecto.UUID.t(), integer()) :: String.t()
+  def compute_idempotency_key(workflow_slug, step_slug, run_id, task_index) do
+    composite_key = "#{workflow_slug}::#{step_slug}::#{run_id}::#{task_index}"
+    :crypto.hash(:md5, composite_key) |> Base.encode16(case: :lower)
+  end
+
+  @doc """
   Changeset for creating a step task.
   """
   @spec changeset(t(), map()) :: Ecto.Changeset.t()
@@ -188,6 +207,7 @@ defmodule Pgflow.StepTask do
       :step_slug,
       :task_index,
       :workflow_slug,
+      :idempotency_key,
       :status,
       :input,
       :output,
@@ -205,7 +225,32 @@ defmodule Pgflow.StepTask do
     |> validate_number(:task_index, greater_than_or_equal_to: 0)
     |> validate_number(:attempts_count, greater_than_or_equal_to: 0)
     |> validate_number(:max_attempts, greater_than: 0)
+    |> put_idempotency_key()
+    |> unique_constraint(:idempotency_key, name: :workflow_step_tasks_idempotency_key_idx)
     |> unique_constraint([:run_id, :step_slug, :task_index], name: :workflow_step_tasks_pkey)
+  end
+
+  # Private: Automatically compute and set idempotency_key if not provided
+  defp put_idempotency_key(changeset) do
+    case get_field(changeset, :idempotency_key) do
+      nil ->
+        # Compute idempotency key from required fields
+        workflow_slug = get_field(changeset, :workflow_slug)
+        step_slug = get_field(changeset, :step_slug)
+        run_id = get_field(changeset, :run_id)
+        task_index = get_field(changeset, :task_index) || 0
+
+        if workflow_slug && step_slug && run_id do
+          key = compute_idempotency_key(workflow_slug, step_slug, run_id, task_index)
+          put_change(changeset, :idempotency_key, key)
+        else
+          changeset
+        end
+
+      _key ->
+        # Idempotency key already set, keep it
+        changeset
+    end
   end
 
   @doc """
@@ -213,12 +258,14 @@ defmodule Pgflow.StepTask do
   """
   @spec claim(t(), String.t()) :: Ecto.Changeset.t()
   def claim(step_task, worker_id) do
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     step_task
     |> change(%{
       status: "started",
       claimed_by: worker_id,
-      claimed_at: DateTime.utc_now(),
-      started_at: DateTime.utc_now(),
+      claimed_at: clock.now(),
+      started_at: clock.now(),
       attempts_count: (step_task.attempts_count || 0) + 1
     })
   end
@@ -228,11 +275,13 @@ defmodule Pgflow.StepTask do
   """
   @spec mark_completed(t(), map()) :: Ecto.Changeset.t()
   def mark_completed(step_task, output) do
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     step_task
     |> change(%{
       status: "completed",
       output: output,
-      completed_at: DateTime.utc_now()
+      completed_at: clock.now()
     })
   end
 
@@ -241,11 +290,13 @@ defmodule Pgflow.StepTask do
   """
   @spec mark_failed(t(), String.t()) :: Ecto.Changeset.t()
   def mark_failed(step_task, error_message) do
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     step_task
     |> change(%{
       status: "failed",
       error_message: error_message,
-      failed_at: DateTime.utc_now()
+      failed_at: clock.now()
     })
   end
 

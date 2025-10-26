@@ -17,3 +17,6 @@ config :ex_pgflow, Pgflow.Repo,
 if url = System.get_env("DATABASE_URL") do
   config :ex_pgflow, Pgflow.Repo, url: url
 end
+
+# Use TestClock for deterministic timestamps in tests
+config :ex_pgflow, :clock, Pgflow.TestClock

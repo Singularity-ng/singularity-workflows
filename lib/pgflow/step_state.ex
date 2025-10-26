@@ -232,12 +232,14 @@ defmodule Pgflow.StepState do
   """
   @spec mark_started(t(), integer()) :: Ecto.Changeset.t()
   def mark_started(step_state, initial_tasks) do
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     step_state
     |> change(%{
       status: "started",
       initial_tasks: initial_tasks,
       remaining_tasks: initial_tasks,
-      started_at: DateTime.utc_now()
+      started_at: clock.now()
     })
   end
 
@@ -246,11 +248,13 @@ defmodule Pgflow.StepState do
   """
   @spec mark_completed(t()) :: Ecto.Changeset.t()
   def mark_completed(step_state) do
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     step_state
     |> change(%{
       status: "completed",
       remaining_tasks: 0,
-      completed_at: DateTime.utc_now()
+      completed_at: clock.now()
     })
   end
 
@@ -259,11 +263,13 @@ defmodule Pgflow.StepState do
   """
   @spec mark_failed(t(), String.t()) :: Ecto.Changeset.t()
   def mark_failed(step_state, error_message) do
+    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+
     step_state
     |> change(%{
       status: "failed",
       error_message: error_message,
-      failed_at: DateTime.utc_now()
+      failed_at: clock.now()
     })
   end
 
