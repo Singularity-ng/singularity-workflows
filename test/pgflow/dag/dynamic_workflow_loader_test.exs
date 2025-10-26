@@ -423,13 +423,13 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
       end
     end
 
-    test "handles invalid dependencies gracefully" do
-      # This would be caught by database constraints, but test the validation
+    test "database constraints prevent invalid dependencies" do
+      # Database constraints prevent invalid dependencies from being inserted
       {:ok, _} = FlowBuilder.create_flow("test_invalid_dep_validation", Repo)
       {:ok, _} = FlowBuilder.add_step("test_invalid_dep_validation", "step1", [], Repo)
 
-      # Manually insert invalid dependency (bypassing FlowBuilder validation)
-      Repo.query(
+      # Attempt to manually insert invalid dependency (should fail due to FK constraints)
+      result = Repo.query(
         """
         INSERT INTO workflow_step_dependencies_def (workflow_slug, step_slug, dep_slug)
         VALUES ('test_invalid_dep_validation', 'step1', 'nonexistent_step')
@@ -437,12 +437,15 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
         []
       )
 
+      # Should fail due to foreign key constraint
+      assert {:error, _} = result
+
       step_functions = %{step1: fn _ -> {:ok, %{}} end}
 
-      # Should detect invalid dependency during loading
+      # Load should succeed since no invalid dependencies were inserted
       result = DynamicWorkflowLoader.load("test_invalid_dep_validation", step_functions, Repo)
 
-      assert {:error, {:invalid_dependencies, _}} = result
+      assert {:ok, %Pgflow.DAG.WorkflowDefinition{}} = result
     end
   end
 
