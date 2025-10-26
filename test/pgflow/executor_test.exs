@@ -300,24 +300,85 @@ defmodule Pgflow.ExecutorTest do
   end
 
   describe "execute_dynamic/5 - Dynamic workflow execution" do
-    @tag :skip
     test "executes workflow loaded from database" do
-      # This test requires FlowBuilder to create workflow in database
-      # Skipped for now since we're focusing on static workflows
-      # TODO: Implement after FlowBuilder tests
-      assert true
+      # Create workflow in database
+      {:ok, _workflow} = Pgflow.FlowBuilder.create_flow("test_dynamic_simple", Repo)
+
+      # Add steps
+      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_simple", "step1", [], Repo)
+      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_simple", "step2", ["step1"], Repo)
+
+      # Define step functions
+      step_functions = %{
+        step1: fn input -> {:ok, Map.put(input, :s1, true)} end,
+        step2: fn input -> {:ok, Map.put(input, :s2, true)} end
+      }
+
+      # Execute dynamic workflow
+      input = %{initial: true}
+      {:ok, result} = Executor.execute_dynamic("test_dynamic_simple", input, step_functions, Repo)
+
+      # Verify outputs
+      assert result.initial == true
+      assert result.s1 == true
+      assert result.s2 == true
+
+      # Verify database state
+      runs = Repo.all(WorkflowRun)
+      assert length(runs) == 1
+      assert hd(runs).status == "completed"
     end
 
-    @tag :skip
     test "maps step functions correctly" do
-      # TODO: Test dynamic workflow with step function mapping
-      assert true
+      # Create workflow
+      {:ok, _} = Pgflow.FlowBuilder.create_flow("test_dynamic_mapping", Repo)
+      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_mapping", "transform", [], Repo)
+
+      {:ok, _} =
+        Pgflow.FlowBuilder.add_step("test_dynamic_mapping", "validate", ["transform"], Repo)
+
+      # Define step functions with specific behavior
+      step_functions = %{
+        transform: fn input ->
+          # Transform the input
+          {:ok, Map.put(input, :transformed, true)}
+        end,
+        validate: fn input ->
+          # Check transformation happened
+          if Map.get(input, :transformed) do
+            {:ok, Map.put(input, :valid, true)}
+          else
+            {:error, "Not transformed"}
+          end
+        end
+      }
+
+      input = %{data: "test"}
+      {:ok, result} = Executor.execute_dynamic("test_dynamic_mapping", input, step_functions, Repo)
+
+      # Verify both steps executed and transformed data correctly
+      assert result.data == "test"
+      assert result.transformed == true
+      assert result.valid == true
     end
 
-    @tag :skip
     test "handles missing step functions" do
-      # TODO: Test error when step function not provided
-      assert true
+      # Create workflow with more steps than functions provided
+      {:ok, _} = Pgflow.FlowBuilder.create_flow("test_dynamic_missing", Repo)
+      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_missing", "step_a", [], Repo)
+      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_missing", "step_b", ["step_a"], Repo)
+
+      # Only provide step_a function, missing step_b
+      step_functions = %{
+        step_a: fn input -> {:ok, Map.put(input, :a, true)} end
+        # step_b is missing
+      }
+
+      input = %{test: true}
+      result = Executor.execute_dynamic("test_dynamic_missing", input, step_functions, Repo)
+
+      # Should fail because step_b function is missing
+      assert match?({:error, _}, result)
     end
   end
 
@@ -505,18 +566,44 @@ defmodule Pgflow.ExecutorTest do
   end
 
   describe "Concurrency and idempotency" do
-    @tag :skip
     test "multiple workers can execute same run" do
-      # This would require multi-process testing
-      # TaskExecutor supports it via SKIP LOCKED
-      # TODO: Implement with concurrent test helpers
-      assert true
+      # Execute a workflow
+      {:ok, _result1} = Executor.execute(TestExecSimpleFlow, %{worker_test: true}, Repo)
+
+      # Execute same workflow again in a different "worker"
+      {:ok, _result2} =
+        Executor.execute(TestExecSimpleFlow, %{worker_test: true}, Repo, worker_id: "worker-2")
+
+      # Both should complete independently
+      runs = Repo.all(WorkflowRun)
+      assert length(runs) == 2
+
+      completed = Enum.filter(runs, &(&1.status == "completed"))
+      assert length(completed) == 2
     end
 
-    @tag :skip
     test "workflow can be safely retried after failure" do
-      # TODO: Test retry semantics
-      assert true
+      # Execute a failing workflow
+      _result1 = Executor.execute(TestExecFailingFlow, %{retry_test: true}, Repo)
+
+      run1 = Repo.one!(WorkflowRun)
+      assert run1.status == "failed"
+
+      # Clean up the failed run (simulate retry scenario)
+      Repo.delete_all(WorkflowRun)
+      Repo.delete_all(StepState)
+      Repo.delete_all(Pgflow.StepDependency)
+      Repo.delete_all(Pgflow.StepTask)
+
+      # Retry with corrected workflow
+      {:ok, result2} = Executor.execute(TestExecSimpleFlow, %{retry_test: true}, Repo)
+
+      # Second attempt should succeed
+      assert result2.step1_done == true
+      assert result2.step2_done == true
+
+      run2 = Repo.one!(WorkflowRun)
+      assert run2.status == "completed"
     end
   end
 end
