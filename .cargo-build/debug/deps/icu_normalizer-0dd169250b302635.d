@@ -1,0 +1,8 @@
+/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/deps/icu_normalizer-0dd169250b302635.d: /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/lib.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/properties.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/provider.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/uts46.rs
+
+/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/deps/libicu_normalizer-0dd169250b302635.rmeta: /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/lib.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/properties.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/provider.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/uts46.rs
+
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/lib.rs:
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/properties.rs:
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/provider.rs:
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/icu_normalizer-2.0.0/src/uts46.rs:

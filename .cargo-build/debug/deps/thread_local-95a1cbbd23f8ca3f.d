@@ -1,0 +1,8 @@
+/Users/mhugo/code/singularity-incubation/.cargo-build/debug/deps/thread_local-95a1cbbd23f8ca3f.d: /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/lib.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/cached.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/thread_id.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/unreachable.rs
+
+/Users/mhugo/code/singularity-incubation/.cargo-build/debug/deps/libthread_local-95a1cbbd23f8ca3f.rmeta: /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/lib.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/cached.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/thread_id.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/unreachable.rs
+
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/lib.rs:
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/cached.rs:
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/thread_id.rs:
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/thread_local-1.1.9/src/unreachable.rs:

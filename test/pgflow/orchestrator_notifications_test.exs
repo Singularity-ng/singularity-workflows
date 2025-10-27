@@ -1,6 +1,5 @@
 defmodule Pgflow.OrchestratorNotificationsTest do
   use ExUnit.Case, async: true
-  import Mox
 
   alias Pgflow.OrchestratorNotifications
 
@@ -21,7 +20,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
         "goal_123",
         :started,
         %{goal: "Build auth system"},
-        %Ecto.Repo{}
+        :mock_repo
       )
 
       assert message_id == "message_123"
@@ -36,7 +35,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
         "goal_123",
         :started,
         %{goal: "Build auth system"},
-        %Ecto.Repo{}
+        :mock_repo
       )
     end
   end
@@ -55,7 +54,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
         "task_456",
         :completed,
         %{result: %{success: true}},
-        %Ecto.Repo{}
+        :mock_repo
       )
 
       assert message_id == "message_456"
@@ -76,7 +75,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
         "workflow_789",
         :started,
         %{workflow_name: "test_workflow"},
-        %Ecto.Repo{}
+        :mock_repo
       )
 
       assert message_id == "message_789"
@@ -96,7 +95,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
       {:ok, message_id} = OrchestratorNotifications.broadcast_performance(
         "workflow_789",
         %{execution_time: 1500, success_rate: 0.95},
-        %Ecto.Repo{}
+        :mock_repo
       )
 
       assert message_id == "message_perf"
@@ -105,7 +104,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
 
   describe "listen/3" do
     test "starts event listener successfully" do
-      {:ok, pid} = OrchestratorNotifications.listen("test_workflow", %Ecto.Repo{}, 
+      {:ok, pid} = OrchestratorNotifications.listen("test_workflow", :mock_repo, 
         event_types: [:decomposition, :task])
 
       assert is_pid(pid)
@@ -113,7 +112,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
     end
 
     test "starts listener with all event types by default" do
-      {:ok, pid} = OrchestratorNotifications.listen("test_workflow", %Ecto.Repo{})
+      {:ok, pid} = OrchestratorNotifications.listen("test_workflow", :mock_repo)
 
       assert is_pid(pid)
       assert Process.alive?(pid)
@@ -122,9 +121,9 @@ defmodule Pgflow.OrchestratorNotificationsTest do
 
   describe "stop_listening/2" do
     test "stops event listener successfully" do
-      {:ok, pid} = OrchestratorNotifications.listen("test_workflow", %Ecto.Repo{})
+      {:ok, pid} = OrchestratorNotifications.listen("test_workflow", :mock_repo)
       
-      :ok = OrchestratorNotifications.stop_listening(pid, %Ecto.Repo{})
+      :ok = OrchestratorNotifications.stop_listening(pid, :mock_repo)
       
       # Process should be terminated
       refute Process.alive?(pid)
@@ -133,13 +132,13 @@ defmodule Pgflow.OrchestratorNotificationsTest do
 
   describe "get_recent_events/3" do
     test "returns recent events" do
-      {:ok, events} = OrchestratorNotifications.get_recent_events(:decomposition, 10, %Ecto.Repo{})
+      {:ok, events} = OrchestratorNotifications.get_recent_events(:decomposition, 10, :mock_repo)
       
       assert is_list(events)
     end
 
     test "returns all events when no event type specified" do
-      {:ok, events} = OrchestratorNotifications.get_recent_events(nil, 50, %Ecto.Repo{})
+      {:ok, events} = OrchestratorNotifications.get_recent_events(nil, 50, :mock_repo)
       
       assert is_list(events)
     end

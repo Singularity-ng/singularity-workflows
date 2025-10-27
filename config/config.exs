@@ -14,18 +14,9 @@ import Config
 config :ex_pgflow,
   ecto_repos: [Pgflow.Repo]
 
-# Configures the endpoint
-config :ex_pgflow, PgflowWeb.Endpoint,
-  url: [host: "localhost"],
-  secret_key_base: "your_secret_key_base_here",
-  render_errors: [view: PgflowWeb.ErrorView, accepts: ~w(json), layout: false],
-  pubsub_server: Pgflow.PubSub,
-  live_view: [signing_salt: "your_signing_salt_here"]
-
 # Configures Elixir's Logger
 config :logger,
-  level: :info,
-  backends: [:console]
+  level: :info
 
 # Use Jason for JSON parsing
 config :ex_pgflow, :json_library, Jason

@@ -209,7 +209,7 @@ defmodule Pgflow.Notifications do
   end
 
   # Private: Send message via PGMQ
-  defp send_pgmq_message(queue_name, message, repo) do
+  defp send_pgmq_message(_queue_name, _message, _repo) do
     # This would need to be implemented based on your PGMQ client
     # For now, return a mock response
     {:ok, "mock_message_#{System.unique_integer([:positive])}"}

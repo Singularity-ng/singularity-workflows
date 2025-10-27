@@ -1,6 +1,5 @@
 defmodule Pgflow.Orchestrator.ExecutorTest do
   use ExUnit.Case, async: true
-  import Mox
 
   alias Pgflow.Orchestrator.Executor
 

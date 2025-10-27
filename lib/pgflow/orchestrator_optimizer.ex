@@ -173,9 +173,9 @@ defmodule Pgflow.OrchestratorOptimizer do
       #   %{type: :retry, task: "task4", suggestion: "Add retry logic for better reliability"}
       # ]
   """
-  @spec get_recommendations(map(), Ecto.Repo.t(), keyword()) :: 
+  @spec get_recommendations(map(), Ecto.Repo.t(), keyword()) ::
     {:ok, list()} | {:error, any()}
-  def get_recommendations(workflow, repo, opts \\ []) do
+  def get_recommendations(workflow, repo, _opts \\ []) do
     Logger.info("Analyzing workflow for optimization recommendations: #{workflow.name}")
     
     try do

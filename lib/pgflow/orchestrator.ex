@@ -175,7 +175,7 @@ defmodule Pgflow.Orchestrator do
     end
     
     try do
-      case decomposer.(goal) do
+      case Task.await(Task.async(fn -> decomposer.(goal) end), timeout) do
         {:ok, tasks} when is_list(tasks) ->
           task_graph = build_task_graph(tasks, max_depth)
           Logger.info("HTDAG decomposition completed with #{length(tasks)} tasks")

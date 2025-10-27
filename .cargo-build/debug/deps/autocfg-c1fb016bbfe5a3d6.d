@@ -1,0 +1,10 @@
+/Users/mhugo/code/singularity-incubation/.cargo-build/debug/deps/autocfg-c1fb016bbfe5a3d6.d: /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs
+
+/Users/mhugo/code/singularity-incubation/.cargo-build/debug/deps/libautocfg-c1fb016bbfe5a3d6.rlib: /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs
+
+/Users/mhugo/code/singularity-incubation/.cargo-build/debug/deps/libautocfg-c1fb016bbfe5a3d6.rmeta: /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs /Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs
+
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/lib.rs:
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/error.rs:
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/rustc.rs:
+/Users/mhugo/.cache/singularity/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/autocfg-1.5.0/src/version.rs:

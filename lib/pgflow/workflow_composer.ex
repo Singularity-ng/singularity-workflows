@@ -166,7 +166,7 @@ defmodule Pgflow.WorkflowComposer do
   @spec compose_from_goal(any(), function(), map(), Ecto.Repo.t(), keyword()) :: 
     {:ok, any()} | {:error, any()}
   def compose_from_goal(goal, decomposer, step_functions, repo, opts \\ []) do
-    workflow_name = Keyword.get(opts, :workflow_name, generate_workflow_name(goal))
+    _workflow_name = Keyword.get(opts, :workflow_name, generate_workflow_name(goal))
     optimize = Keyword.get(opts, :optimize, Pgflow.Orchestrator.Config.feature_enabled?(:optimization))
     monitor = Keyword.get(opts, :monitor, Pgflow.Orchestrator.Config.feature_enabled?(:monitoring))
     
@@ -296,9 +296,8 @@ defmodule Pgflow.WorkflowComposer do
   - `{:error, reason}` - Failed to get stats
   """
   @spec get_composition_stats(Ecto.Repo.t(), keyword()) :: {:ok, map()} | {:error, any()}
-  def get_composition_stats(repo, opts \\ []) do
-    # This would query the database for composition statistics
-    # Implementation depends on how ex_pgflow stores workflow data
+  def get_composition_stats(_repo, _opts \\ []) do
+    # TODO: Implement database queries for composition statistics via _repo with _opts filters (currently returns stub data - awaiting full implementation)
     {:ok, %{
       total_workflows: 0,
       successful_compositions: 0,
@@ -318,7 +317,8 @@ defmodule Pgflow.WorkflowComposer do
     Pgflow.Orchestrator.create_workflow(task_graph, step_functions, opts)
   end
 
-  defp decompose_complex_goal(goal, decomposer, opts) do
+  defp decompose_complex_goal(goal, decomposer, _opts) do
+    # TODO: Use _opts for configuration (e.g., max_depth, max_parallel) if decomposer supports it (currently ignored - awaiting full implementation)
     # For complex goals, the decomposer should return multiple task graphs
     case decomposer.(goal) do
       {:ok, task_graphs} when is_list(task_graphs) ->
@@ -330,9 +330,8 @@ defmodule Pgflow.WorkflowComposer do
     end
   end
 
-  defp maybe_optimize_workflow(workflow, true, repo) do
-    # Optimize workflow based on historical performance data
-    # This could involve:
+  defp maybe_optimize_workflow(workflow, true, _repo) do
+    # TODO: Optimize workflow based on historical performance data using repo (currently returns unoptimized - awaiting full implementation)
     # - Reordering tasks for better parallelization
     # - Adding retry logic for frequently failing tasks
     # - Adjusting timeouts based on historical data

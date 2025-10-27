@@ -246,7 +246,7 @@ defmodule Pgflow.OrchestratorNotifications do
   - `{:error, reason}` - Stop failed
   """
   @spec stop_listening(pid(), Ecto.Repo.t()) :: :ok | {:error, any()}
-  def stop_listening(pid, repo) do
+  def stop_listening(pid, _repo) do
     Process.exit(pid, :normal)
     :ok
   end
@@ -265,11 +265,10 @@ defmodule Pgflow.OrchestratorNotifications do
   - `{:ok, events}` - List of recent events
   - `{:error, reason}` - Failed to retrieve events
   """
-  @spec get_recent_events(atom() | nil, integer(), Ecto.Repo.t()) :: 
+  @spec get_recent_events(atom() | nil, integer(), Ecto.Repo.t()) ::
     {:ok, list()} | {:error, any()}
-  def get_recent_events(event_type \\ nil, limit \\ 100, repo) do
-    # This would query the database for recent events
-    # Implementation depends on how ex_pgflow stores event data
+  def get_recent_events(_event_type \\ nil, _limit \\ 100, _repo) do
+    # TODO: Implement database queries for recent events via _repo (currently returns stub data - awaiting full implementation)
     {:ok, []}
   end
 

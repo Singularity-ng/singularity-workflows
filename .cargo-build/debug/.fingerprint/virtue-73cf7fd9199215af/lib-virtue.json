@@ -1,0 +1,1 @@
+{"rustc":14765156935514373914,"features":"[]","declared_features":"[\"proc-macro2\"]","target":11584285007766501563,"profile":12761542569208513944,"path":3424299103257107117,"deps":[],"local":[{"CheckDepInfo":{"dep_info":"debug/.fingerprint/virtue-73cf7fd9199215af/dep-lib-virtue","checksum":false}}],"rustflags":["-C","linker=gcc"],"config":2069994364910194474,"compile_kind":0}

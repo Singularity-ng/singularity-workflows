@@ -83,7 +83,7 @@ defmodule Pgflow.Orchestrator.Executor do
   """
   @spec execute_task(map(), map(), map(), Ecto.Repo.t(), keyword()) :: 
     {:ok, any()} | {:error, any()}
-  def execute_task(task_config, context, execution, repo, opts \\ []) do
+  def execute_task(task_config, context, execution, repo, _opts \\ []) do
     task_id = task_config.name
     task_name = task_config.description || to_string(task_id)
     timeout = Map.get(task_config, :timeout, 30_000)
@@ -220,8 +220,8 @@ defmodule Pgflow.Orchestrator.Executor do
 
   defp execute_with_monitoring(workflow, context, execution, repo, opts) do
     monitor = Keyword.get(opts, :monitor)
-    timeout = Keyword.get(opts, :timeout)
-    retry_failed_tasks = Keyword.get(opts, :retry_failed_tasks)
+    timeout = Keyword.get(opts, :timeout, 30_000)
+    _retry_failed_tasks = Keyword.get(opts, :retry_failed_tasks)
     
     # Start monitoring if enabled
     if monitor do
@@ -231,8 +231,8 @@ defmodule Pgflow.Orchestrator.Executor do
       }, repo)
     end
     
-    # Execute workflow using base executor
-    case Pgflow.Executor.execute(workflow, context, repo) do
+    # Execute workflow using base executor with timeout
+    case Task.await(Task.async(fn -> Pgflow.Executor.execute(workflow, context, repo) end), timeout) do
       {:ok, result} ->
         # Update execution status
         duration_ms = DateTime.diff(DateTime.utc_now(), execution.started_at, :millisecond)
@@ -355,9 +355,8 @@ defmodule Pgflow.Orchestrator.Executor do
     end
   end
 
-  defp get_task_executions(execution_id, repo) do
-    # This would query the database for task executions
-    # Implementation depends on the repository structure
+  defp get_task_executions(_execution_id, _repo) do
+    # TODO: Implement database queries for task executions via _repo (currently returns stub data - awaiting full implementation)
     {:ok, []}
   end
 
@@ -379,9 +378,8 @@ defmodule Pgflow.Orchestrator.Executor do
     end
   end
 
-  defp cancel_running_tasks(execution_id, repo) do
-    # Cancel all running tasks for this execution
-    # Implementation would depend on how tasks are managed
+  defp cancel_running_tasks(_execution_id, _repo) do
+    # TODO: Implement cancellation logic for running tasks via _repo (currently returns stub success - awaiting full implementation)
     :ok
   end
 

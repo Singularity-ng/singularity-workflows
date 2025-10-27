@@ -1,6 +1,5 @@
 defmodule Pgflow.WorkflowComposerTest do
   use ExUnit.Case, async: true
-  import Mox
 
   alias Pgflow.WorkflowComposer
 

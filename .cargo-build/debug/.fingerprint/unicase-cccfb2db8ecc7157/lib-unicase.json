@@ -1,0 +1,1 @@
+{"rustc":14765156935514373914,"features":"[]","declared_features":"[\"nightly\"]","target":10111812390214232954,"profile":6306765810409197951,"path":14903123598284980514,"deps":[],"local":[{"CheckDepInfo":{"dep_info":"debug/.fingerprint/unicase-cccfb2db8ecc7157/dep-lib-unicase","checksum":false}}],"rustflags":["-C","linker=gcc"],"config":2069994364910194474,"compile_kind":0}
