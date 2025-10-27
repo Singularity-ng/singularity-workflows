@@ -288,15 +288,20 @@ defmodule Pgflow.FlowBuilder do
   # Input validation functions
 
   defp validate_workflow_slug(slug) when is_binary(slug) do
+    slug_length = String.length(slug)
+
     cond do
-      String.length(slug) == 0 ->
+      slug_length == 0 ->
         {:error, :workflow_slug_cannot_be_empty}
 
-      String.length(slug) > 255 ->
+      slug_length > 128 ->
         {:error, :workflow_slug_too_long}
 
       not Regex.match?(~r/^[a-zA-Z_][a-zA-Z0-9_]*$/, slug) ->
         {:error, :workflow_slug_invalid_format}
+
+      slug == "run" ->
+        {:error, :workflow_slug_reserved}
 
       true ->
         :ok
@@ -306,15 +311,20 @@ defmodule Pgflow.FlowBuilder do
   defp validate_workflow_slug(_), do: {:error, :workflow_slug_must_be_string}
 
   defp validate_step_slug(slug) when is_binary(slug) do
+    slug_length = String.length(slug)
+
     cond do
-      String.length(slug) == 0 ->
+      slug_length == 0 ->
         {:error, :step_slug_cannot_be_empty}
 
-      String.length(slug) > 255 ->
+      slug_length > 128 ->
         {:error, :step_slug_too_long}
 
       not Regex.match?(~r/^[a-zA-Z_][a-zA-Z0-9_]*$/, slug) ->
         {:error, :step_slug_invalid_format}
+
+      slug == "run" ->
+        {:error, :step_slug_reserved}
 
       true ->
         :ok

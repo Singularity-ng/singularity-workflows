@@ -102,8 +102,8 @@ defmodule Pgflow.FlowBuilderTest do
       assert result == {:error, :workflow_slug_too_long}
     end
 
-    test "accepts workflow slug with 255 characters" do
-      max_slug = String.duplicate("a", 255)
+    test "accepts workflow slug with 128 characters" do
+      max_slug = String.duplicate("a", 128)
       {:ok, workflow} = FlowBuilder.create_flow(max_slug, Repo)
 
       assert workflow["workflow_slug"] == max_slug
@@ -460,9 +460,9 @@ defmodule Pgflow.FlowBuilderTest do
       assert result == {:error, :step_slug_too_long}
     end
 
-    test "accepts step slug with 255 characters" do
+    test "accepts step slug with 128 characters" do
       {:ok, _} = FlowBuilder.create_flow("test_max_step", Repo)
-      max_slug = String.duplicate("a", 255)
+      max_slug = String.duplicate("a", 128)
       {:ok, step} = FlowBuilder.add_step("test_max_step", max_slug, [], Repo)
 
       assert step["step_slug"] == max_slug

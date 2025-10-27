@@ -139,9 +139,15 @@ defmodule Pgflow.FlowOperations do
   end
 
   defp is_valid_slug(slug) when is_binary(slug) do
-    String.length(slug) > 0 and
-      String.length(slug) <= 255 and
-      Regex.match?(~r/^[a-zA-Z_][a-zA-Z0-9_]*$/, slug)
+    slug_length = String.length(slug)
+
+    cond do
+      slug_length == 0 -> false
+      slug_length > 128 -> false
+      not Regex.match?(~r/^[a-zA-Z_][a-zA-Z0-9_]*$/, slug) -> false
+      slug in ["run"] -> false  # Reserved word
+      true -> true
+    end
   end
 
   defp is_valid_slug(_), do: false
