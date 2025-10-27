@@ -94,25 +94,8 @@ defmodule Pgflow.FlowBuilder do
       max_attempts = Keyword.get(opts, :max_attempts, 3)
       timeout = Keyword.get(opts, :timeout, 60)
 
-      case repo.query(
-             """
-             SELECT * FROM pgflow.create_flow($1::text, $2::integer, $3::integer)
-             """,
-             [workflow_slug, max_attempts, timeout]
-           ) do
-        {:ok, %{columns: columns, rows: [row]}} ->
-          workflow = Enum.zip(columns, row) |> Map.new()
-          {:ok, workflow}
-
-        {:ok, %{rows: []}} ->
-          {:error, :workflow_creation_failed}
-
-        {:error, %Postgrex.Error{} = error} ->
-          {:error, parse_postgres_error(error)}
-
-        {:error, reason} ->
-          {:error, reason}
-      end
+      # Use Elixir implementation instead of PostgreSQL function to bypass PG17 parser bug
+      Pgflow.FlowOperations.create_flow(workflow_slug, max_attempts, timeout)
     else
       {:error, _reason} = error -> error
     end
@@ -171,36 +154,16 @@ defmodule Pgflow.FlowBuilder do
       max_attempts = Keyword.get(opts, :max_attempts)
       timeout = Keyword.get(opts, :timeout)
 
-      case repo.query(
-             """
-             SELECT * FROM pgflow.add_step(
-               $1::text, $2::text, $3::text[], $4::text,
-               $5::integer, $6::integer, $7::integer
-             )
-             """,
-             [
-               workflow_slug,
-               step_slug,
-               depends_on,
-               step_type,
-               initial_tasks,
-               max_attempts,
-               timeout
-             ]
-           ) do
-        {:ok, %{columns: columns, rows: [row]}} ->
-          step = Enum.zip(columns, row) |> Map.new()
-          {:ok, step}
-
-        {:ok, %{rows: []}} ->
-          {:error, :step_creation_failed}
-
-        {:error, %Postgrex.Error{} = error} ->
-          {:error, parse_postgres_error(error)}
-
-        {:error, reason} ->
-          {:error, reason}
-      end
+      # Use Elixir implementation instead of PostgreSQL function to bypass PG17 parser bug
+      Pgflow.FlowOperations.add_step(
+        workflow_slug,
+        step_slug,
+        depends_on,
+        step_type,
+        initial_tasks,
+        max_attempts,
+        timeout
+      )
     else
       {:error, _reason} = error -> error
     end

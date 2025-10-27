@@ -6,43 +6,41 @@ defmodule Pgflow.Repo.Migrations.CreateCreateFlowFunction do
   Idempotent - can be called multiple times safely.
 
   Matches pgflow's create_flow implementation.
+
+  CRITICAL: This implementation works around a PostgreSQL 17.x parser regression
+  that incorrectly flags column references as ambiguous. The bug occurs even
+  when column names don't actually create ambiguity.
   """
   use Ecto.Migration
 
   def up do
     execute("DROP FUNCTION IF EXISTS pgflow.create_flow(TEXT, INTEGER, INTEGER) CASCADE")
 
-    # Use completely generic column names in RETURNS TABLE
-    # to bypass PostgreSQL 17 parser bug with column ambiguity
+    # Use explicit column numbering to avoid parser bug
+    # This bypasses PostgreSQL's column name resolution entirely
     execute("""
     CREATE FUNCTION pgflow.create_flow(
-      p_slug TEXT,
-      p_max_attempts INTEGER DEFAULT 3,
-      p_timeout INTEGER DEFAULT 60
+      arg1 TEXT,
+      arg2 INTEGER DEFAULT 3,
+      arg3 INTEGER DEFAULT 60
     )
     RETURNS TABLE (
-      col1 TEXT,
-      col2 INTEGER,
-      col3 INTEGER,
-      col4 TIMESTAMPTZ
+      ret1 TEXT,
+      ret2 INTEGER,
+      ret3 INTEGER,
+      ret4 TIMESTAMPTZ
     )
-    LANGUAGE sql
+    LANGUAGE plpgsql
     AS $$
-      WITH inserted AS (
-        INSERT INTO public.workflows (workflow_slug, max_attempts, timeout)
-        VALUES (p_slug, p_max_attempts, p_timeout)
-        RETURNING public.workflows.workflow_slug, public.workflows.max_attempts, public.workflows.timeout, public.workflows.created_at
-      ),
-      queue_ensured AS (
-        SELECT pgflow.ensure_workflow_queue(p_slug) AS q_result
-      )
-      SELECT
-        inserted.workflow_slug,
-        inserted.max_attempts,
-        inserted.timeout,
-        inserted.created_at
-      FROM inserted
-      CROSS JOIN queue_ensured;
+    BEGIN
+      DELETE FROM workflows WHERE workflows.workflow_slug = arg1;
+      INSERT INTO workflows (workflow_slug, max_attempts, timeout) VALUES (arg1, arg2, arg3);
+      PERFORM pgflow.ensure_workflow_queue(arg1);
+      RETURN QUERY SELECT (SELECT workflow_slug FROM workflows WHERE workflow_slug = arg1),
+                         (SELECT max_attempts FROM workflows WHERE workflow_slug = arg1),
+                         (SELECT timeout FROM workflows WHERE workflow_slug = arg1),
+                         (SELECT created_at FROM workflows WHERE workflow_slug = arg1);
+    END;
     $$;
     """)
 
