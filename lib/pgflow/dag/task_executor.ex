@@ -327,22 +327,30 @@ defmodule Pgflow.DAG.TaskExecutor do
               )
               |> Enum.to_list()
 
-            # Check for failures
+            # Check for execution or worker failures (not task function failures, which are handled)
             failed =
               Enum.filter(results, fn
-                {:ok, {:error, _}} -> true
-                {:exit, _} -> true
+                {:ok, {:error, _}} -> true  # Task execution or DB call failed
+                {:exit, _} -> true           # Worker process exited
                 _ -> false
               end)
 
             if failed != [] do
               Logger.warning(
-                "TaskExecutor: #{length(failed)}/#{length(tasks)} tasks failed in batch",
-                workflow_slug: workflow_slug
+                "TaskExecutor: #{length(failed)}/#{length(tasks)} task executions failed in batch",
+                workflow_slug: workflow_slug,
+                failed_count: length(failed)
               )
+              # Return error only if significant portion of batch failed (>50%)
+              # This allows for occasional worker failures without cascading retry loops
+              if length(failed) * 2 > length(tasks) do
+                {:error, {:batch_failure, length(failed), length(tasks)}}
+              else
+                {:ok, :tasks_executed, length(tasks)}
+              end
+            else
+              {:ok, :tasks_executed, length(tasks)}
             end
-
-            {:ok, :tasks_executed, length(tasks)}
 
           {:error, reason} ->
             Logger.error("TaskExecutor: Failed to start tasks",
