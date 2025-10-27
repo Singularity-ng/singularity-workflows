@@ -437,20 +437,25 @@ defmodule Pgflow.DAG.TaskExecutor do
 
   # Check run status to determine if execution is complete
   defp check_run_status(run_id, repo) do
-    run = repo.get!(WorkflowRun, run_id)
+    case repo.get(WorkflowRun, run_id) do
+      nil ->
+        Logger.error("TaskExecutor: Run not found", run_id: run_id)
+        {:error, {:run_not_found, run_id}}
 
-    case run.status do
-      "completed" ->
-        Logger.info("TaskExecutor: Run completed", run_id: run_id)
-        {:ok, run.output || %{}}
+      run ->
+        case run.status do
+          "completed" ->
+            Logger.info("TaskExecutor: Run completed", run_id: run_id)
+            {:ok, run.output || %{}}
 
-      "failed" ->
-        Logger.error("TaskExecutor: Run failed", run_id: run_id, error: run.error_message)
-        {:error, {:run_failed, run.error_message}}
+          "failed" ->
+            Logger.error("TaskExecutor: Run failed", run_id: run_id, error: run.error_message)
+            {:error, {:run_failed, run.error_message}}
 
-      "started" ->
-        # Still in progress
-        {:ok, :in_progress}
+          "started" ->
+            # Still in progress
+            {:ok, :in_progress}
+        end
     end
   end
 end
