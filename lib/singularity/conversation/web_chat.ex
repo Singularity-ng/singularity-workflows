@@ -1,9 +1,9 @@
-defmodule Singularity.Conversation.GoogleChat do
+defmodule Singularity.Conversation.WebChat do
   @moduledoc """
-  GoogleChat - Web-based chat interface for Observer Phoenix app
+  WebChat - Web-based chat interface for Observer Phoenix app
 
   Provides web-based chat functionality that can be integrated into the
-  Observer Phoenix web interface. This replaces the external GoogleChat
+  Observer Phoenix web interface. This replaces the external WebChat
   dependency with a local web chat implementation.
 
   ## Usage
@@ -11,9 +11,9 @@ defmodule Singularity.Conversation.GoogleChat do
   The Observer Phoenix app can use this module to provide chat functionality:
 
       # In Observer LiveView
-      GoogleChat.notify("System status update")
-      GoogleChat.ask_approval("Deploy to production?")
-      GoogleChat.ask_question("What should we prioritize next?")
+      WebChat.notify("System status update")
+      WebChat.ask_approval("Deploy to production?")
+      WebChat.ask_question("What should we prioritize next?")
 
   ## Integration with Observer
 
@@ -28,15 +28,15 @@ defmodule Singularity.Conversation.GoogleChat do
 
   ## Examples
 
-      GoogleChat.notify("System is running normally")
-      GoogleChat.notify("⚠️ High CPU usage detected")
+      WebChat.notify("System is running normally")
+      WebChat.notify("⚠️ High CPU usage detected")
   """
   @spec notify(String.t()) :: :ok
   def notify(message) do
-    Logger.info("[GoogleChat] #{message}")
+    Logger.info("[WebChat] #{message}")
     
     # TODO: Send to Observer Phoenix LiveView via PubSub
-    # Phoenix.PubSub.broadcast(Singularity.PubSub, "google_chat", {:notify, message})
+    # Phoenix.PubSub.broadcast(Singularity.PubSub, "web_chat", {:notify, message})
     
     :ok
   end
@@ -46,15 +46,15 @@ defmodule Singularity.Conversation.GoogleChat do
 
   ## Examples
 
-      GoogleChat.ask_approval("Deploy to production?")
-      GoogleChat.ask_approval("Delete old logs?")
+      WebChat.ask_approval("Deploy to production?")
+      WebChat.ask_approval("Delete old logs?")
   """
   @spec ask_approval(String.t()) :: :ok
   def ask_approval(question) do
-    Logger.info("[GoogleChat] Approval needed: #{question}")
+    Logger.info("[WebChat] Approval needed: #{question}")
     
     # TODO: Send to Observer Phoenix LiveView via PubSub
-    # Phoenix.PubSub.broadcast(Singularity.PubSub, "google_chat", {:ask_approval, question})
+    # Phoenix.PubSub.broadcast(Singularity.PubSub, "web_chat", {:ask_approval, question})
     
     :ok
   end
@@ -64,15 +64,15 @@ defmodule Singularity.Conversation.GoogleChat do
 
   ## Examples
 
-      GoogleChat.ask_question("What should we prioritize next?")
-      GoogleChat.ask_question("Which model should we use?")
+      WebChat.ask_question("What should we prioritize next?")
+      WebChat.ask_question("Which model should we use?")
   """
   @spec ask_question(String.t()) :: :ok
   def ask_question(question) do
-    Logger.info("[GoogleChat] Question: #{question}")
+    Logger.info("[WebChat] Question: #{question}")
     
     # TODO: Send to Observer Phoenix LiveView via PubSub
-    # Phoenix.PubSub.broadcast(Singularity.PubSub, "google_chat", {:ask_question, question})
+    # Phoenix.PubSub.broadcast(Singularity.PubSub, "web_chat", {:ask_question, question})
     
     :ok
   end
@@ -82,15 +82,15 @@ defmodule Singularity.Conversation.GoogleChat do
 
   ## Examples
 
-      GoogleChat.daily_summary(%{tasks_completed: 15, errors: 2})
+      WebChat.daily_summary(%{tasks_completed: 15, errors: 2})
   """
   @spec daily_summary(map()) :: :ok
   def daily_summary(summary) do
     message = "📊 Daily Summary: #{inspect(summary)}"
-    Logger.info("[GoogleChat] #{message}")
+    Logger.info("[WebChat] #{message}")
     
     # TODO: Send to Observer Phoenix LiveView via PubSub
-    # Phoenix.PubSub.broadcast(Singularity.PubSub, "google_chat", {:daily_summary, summary})
+    # Phoenix.PubSub.broadcast(Singularity.PubSub, "web_chat", {:daily_summary, summary})
     
     :ok
   end
@@ -100,15 +100,15 @@ defmodule Singularity.Conversation.GoogleChat do
 
   ## Examples
 
-      GoogleChat.deployment_notification(%{version: "1.2.3", status: "success"})
+      WebChat.deployment_notification(%{version: "1.2.3", status: "success"})
   """
   @spec deployment_notification(map()) :: :ok
   def deployment_notification(deployment) do
     message = "🚀 Deployment: #{inspect(deployment)}"
-    Logger.info("[GoogleChat] #{message}")
+    Logger.info("[WebChat] #{message}")
     
     # TODO: Send to Observer Phoenix LiveView via PubSub
-    # Phoenix.PubSub.broadcast(Singularity.PubSub, "google_chat", {:deployment, deployment})
+    # Phoenix.PubSub.broadcast(Singularity.PubSub, "web_chat", {:deployment, deployment})
     
     :ok
   end
@@ -118,15 +118,15 @@ defmodule Singularity.Conversation.GoogleChat do
 
   ## Examples
 
-      GoogleChat.policy_change(%{policy: "security", action: "updated"})
+      WebChat.policy_change(%{policy: "security", action: "updated"})
   """
   @spec policy_change(map()) :: :ok
   def policy_change(policy) do
     message = "📋 Policy Change: #{inspect(policy)}"
-    Logger.info("[GoogleChat] #{message}")
+    Logger.info("[WebChat] #{message}")
     
     # TODO: Send to Observer Phoenix LiveView via PubSub
-    # Phoenix.PubSub.broadcast(Singularity.PubSub, "google_chat", {:policy_change, policy})
+    # Phoenix.PubSub.broadcast(Singularity.PubSub, "web_chat", {:policy_change, policy})
     
     :ok
   end

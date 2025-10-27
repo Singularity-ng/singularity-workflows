@@ -194,7 +194,7 @@ defmodule Pgflow.FlowBuilder do
       1
   """
   @spec list_flows(module()) :: {:ok, [map()]} | {:error, term()}
-  def list_flows(repo) do
+  def list_flows(_repo) do
     case repo.query("SELECT * FROM workflows ORDER BY created_at DESC", []) do
       {:ok, %{columns: columns, rows: rows}} ->
         workflows = Enum.map(rows, fn row -> Enum.zip(columns, row) |> Map.new() end)
