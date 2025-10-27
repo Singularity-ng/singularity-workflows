@@ -121,6 +121,18 @@ defmodule Pgflow.DAG.TaskExecutor do
   end
 
   # Main execution loop: poll pgmq → claim → execute → repeat
+  @spec execute_loop(
+          Ecto.UUID.t(),
+          String.t(),
+          WorkflowDefinition.t(),
+          module(),
+          String.t(),
+          integer(),
+          integer() | :infinity,
+          integer(),
+          integer(),
+          integer()
+        ) :: {:ok, map()} | {:ok, :in_progress} | {:error, term()}
   defp execute_loop(
          run_id,
          workflow_slug,
@@ -205,6 +217,15 @@ defmodule Pgflow.DAG.TaskExecutor do
   end
 
   # Poll pgmq for messages and execute tasks (matches pgflow architecture)
+  @spec poll_and_execute_batch(
+          String.t(),
+          WorkflowDefinition.t(),
+          module(),
+          String.t(),
+          integer(),
+          integer(),
+          integer()
+        ) :: {:ok, :no_messages} | {:ok, :tasks_executed, integer()} | {:error, term()}
   defp poll_and_execute_batch(
          workflow_slug,
          definition,
@@ -328,6 +349,8 @@ defmodule Pgflow.DAG.TaskExecutor do
   #
   # Exception handling: Any exception (throw, error, exit) is caught and converted to
   # {:error, {:exception, {kind, error}}} tuple for logging and recovery.
+  @spec execute_task_from_map(map(), WorkflowDefinition.t(), module()) ::
+          {:ok, :task_executed} | {:error, term()}
   defp execute_task_from_map(task_map, definition, repo) do
     run_id = task_map["run_id"]
     step_slug = task_map["step_slug"]
@@ -390,6 +413,8 @@ defmodule Pgflow.DAG.TaskExecutor do
   # updates, and may trigger execution of dependent steps if this task's step is now complete.
   #
   # Returns {:ok, :task_executed} on success, or {:error, reason} if the database call fails.
+  @spec complete_task_success(Ecto.UUID.t(), String.t(), integer(), map(), module()) ::
+          {:ok, :task_executed} | {:error, term()}
   defp complete_task_success(run_id, step_slug, task_index, output, repo) do
     # Call PostgreSQL complete_task function
     result =
@@ -426,6 +451,8 @@ defmodule Pgflow.DAG.TaskExecutor do
   # depending on the failure policy configured for the step.
   #
   # Returns {:ok, :task_executed} on success, or {:error, reason} if the database call fails.
+  @spec complete_task_failure(Ecto.UUID.t(), String.t(), integer(), term(), module()) ::
+          {:ok, :task_executed} | {:error, term()}
   defp complete_task_failure(run_id, step_slug, task_index, reason, repo) do
     error_message = inspect(reason)
 
@@ -459,6 +486,8 @@ defmodule Pgflow.DAG.TaskExecutor do
   end
 
   # Check run status to determine if execution is complete
+  @spec check_run_status(Ecto.UUID.t(), module()) ::
+          {:ok, map()} | {:ok, :in_progress} | {:error, term()}
   defp check_run_status(run_id, repo) do
     case repo.get(WorkflowRun, run_id) do
       nil ->
