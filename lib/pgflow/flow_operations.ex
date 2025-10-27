@@ -38,13 +38,15 @@ defmodule Pgflow.FlowOperations do
 
       {:ok, %{rows: []}} ->
         # Workflow doesn't exist, insert it
+        clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+        created_at = clock.now()
         case Repo.query(
           """
-          INSERT INTO workflows (workflow_slug, max_attempts, timeout)
-          VALUES ($1::text, $2::integer, $3::integer)
+          INSERT INTO workflows (workflow_slug, max_attempts, timeout, created_at)
+          VALUES ($1::text, $2::integer, $3::integer, $4::timestamptz)
           RETURNING workflow_slug, max_attempts, timeout, created_at
           """,
-          [workflow_slug, max_attempts, timeout]
+          [workflow_slug, max_attempts, timeout, created_at]
         ) do
           {:ok, %{columns: columns, rows: [row]}} ->
             workflow = Enum.zip(columns, row) |> Map.new()
@@ -104,6 +106,7 @@ defmodule Pgflow.FlowOperations do
   ) do
     with :ok <- validate_step_inputs(workflow_slug, step_slug, step_type, depends_on),
          :ok <- validate_workflow_exists(workflow_slug),
+         :ok <- validate_step_not_duplicate(workflow_slug, step_slug),
          {:ok, next_index} <- get_next_step_index(workflow_slug),
          {:ok, _} <- insert_step(workflow_slug, step_slug, step_type, next_index, initial_tasks, max_attempts, timeout),
          {:ok, _} <- insert_dependencies(workflow_slug, step_slug, depends_on),
@@ -160,6 +163,14 @@ defmodule Pgflow.FlowOperations do
     end
   end
 
+  defp validate_step_not_duplicate(workflow_slug, step_slug) do
+    case Repo.query("SELECT 1 FROM workflow_steps WHERE workflow_slug = $1::text AND step_slug = $2::text", [workflow_slug, step_slug]) do
+      {:ok, %{rows: []}} -> :ok
+      {:ok, %{rows: [_|_]}} -> {:error, {:duplicate_step_slug, step_slug}}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp get_next_step_index(workflow_slug) do
     case Repo.query(
       "SELECT COALESCE(MAX(step_index) + 1, 0) as next_index FROM workflow_steps WHERE workflow_slug = $1::text",
@@ -176,20 +187,25 @@ defmodule Pgflow.FlowOperations do
   defp insert_step(workflow_slug, step_slug, step_type, step_index, initial_tasks, max_attempts, timeout) do
     deps_count = 0  # Will be updated when dependencies are inserted
 
-    Repo.query(
-      """
-      DELETE FROM workflow_steps
-      WHERE workflow_slug = $1::text AND step_slug = $2::text
-      """,
-      [workflow_slug, step_slug]
-    )
+    # Get workflow defaults if step options not provided
+    {final_max_attempts, final_timeout} =
+      if max_attempts || timeout do
+        {max_attempts, timeout}
+      else
+        case fetch_workflow_defaults(workflow_slug) do
+          {:ok, wf_max_attempts, wf_timeout} ->
+            {wf_max_attempts, wf_timeout}
+          :error ->
+            {max_attempts, timeout}
+        end
+      end
 
     case Repo.query(
       """
       INSERT INTO workflow_steps (workflow_slug, step_slug, step_type, step_index, deps_count, initial_tasks, max_attempts, timeout)
       VALUES ($1::text, $2::text, $3::text, $4::integer, $5::integer, $6::integer, $7::integer, $8::integer)
       """,
-      [workflow_slug, step_slug, step_type, step_index, deps_count, initial_tasks, max_attempts, timeout]
+      [workflow_slug, step_slug, step_type, step_index, deps_count, initial_tasks, final_max_attempts, final_timeout]
     ) do
       {:ok, _} -> {:ok, :inserted}
       {:error, %Postgrex.Error{postgres: %{constraint: constraint}} = error} ->
@@ -198,6 +214,18 @@ defmodule Pgflow.FlowOperations do
       {:error, reason} ->
         Logger.error("Failed to insert step: #{inspect(reason)}")
         {:error, reason}
+    end
+  end
+
+  defp fetch_workflow_defaults(workflow_slug) do
+    case Repo.query(
+      "SELECT max_attempts, timeout FROM workflows WHERE workflow_slug = $1::text",
+      [workflow_slug]
+    ) do
+      {:ok, %{columns: ["max_attempts", "timeout"], rows: [[max_attempts, timeout]]}} ->
+        {:ok, max_attempts, timeout}
+      _ ->
+        :error
     end
   end
 

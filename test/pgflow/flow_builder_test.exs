@@ -29,6 +29,9 @@ defmodule Pgflow.FlowBuilderTest do
     # Set up sandbox for this test
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(Pgflow.Repo)
 
+    # Reset test clock for deterministic timestamps
+    Pgflow.TestClock.reset()
+
     # Clean up any existing test workflows
     Repo.query("DELETE FROM workflows WHERE workflow_slug LIKE 'test_%'", [])
     :ok
@@ -289,7 +292,7 @@ defmodule Pgflow.FlowBuilderTest do
 
       assert length(result.rows) == 1
       [row] = result.rows
-      [_workflow, _step, dep_slug] = row
+      [_workflow, dep_slug, _step, _created_at] = row
       assert dep_slug == "step1"
     end
 

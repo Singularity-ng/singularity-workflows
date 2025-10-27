@@ -195,7 +195,7 @@ defmodule Pgflow.FlowBuilder do
   """
   @spec list_flows(module()) :: {:ok, [map()]} | {:error, term()}
   def list_flows(repo) do
-    case repo.query("SELECT * FROM workflows ORDER BY created_at DESC") do
+    case repo.query("SELECT * FROM workflows ORDER BY created_at DESC", []) do
       {:ok, %{columns: columns, rows: rows}} ->
         workflows = Enum.map(rows, fn row -> Enum.zip(columns, row) |> Map.new() end)
         {:ok, workflows}
@@ -277,8 +277,11 @@ defmodule Pgflow.FlowBuilder do
   """
   @spec delete_flow(String.t(), module()) :: :ok | {:error, term()}
   def delete_flow(workflow_slug, repo) do
-    case repo.query("DELETE FROM workflows WHERE workflow_slug = $1::text", [workflow_slug]) do
-      {:ok, _} -> :ok
+    with {:ok, _} <- repo.query("DELETE FROM workflow_step_dependencies_def WHERE workflow_slug = $1::text", [workflow_slug]),
+         {:ok, _} <- repo.query("DELETE FROM workflow_steps WHERE workflow_slug = $1::text", [workflow_slug]),
+         {:ok, _} <- repo.query("DELETE FROM workflows WHERE workflow_slug = $1::text", [workflow_slug]) do
+      :ok
+    else
       {:error, reason} -> {:error, reason}
     end
   end
