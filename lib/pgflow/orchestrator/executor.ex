@@ -10,7 +10,7 @@ defmodule Pgflow.Orchestrator.Executor do
   """
 
   require Logger
-  alias Pgflow.Orchestrator.{Repository, Notifications}
+  alias Pgflow.Orchestrator.Repository
 
   @doc """
   Execute an HTDAG workflow with enhanced monitoring.

@@ -367,7 +367,7 @@ defmodule Pgflow.Orchestrator do
     end)
     
     if length(valid_tasks) != length(tasks) do
-      Logger.warn("Some tasks have invalid dependencies and were filtered out")
+      Logger.warning("Some tasks have invalid dependencies and were filtered out")
     end
     
     # Calculate task depths

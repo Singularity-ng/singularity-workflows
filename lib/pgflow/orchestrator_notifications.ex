@@ -290,7 +290,7 @@ defmodule Pgflow.OrchestratorNotifications do
         :ok
         
       other ->
-        Logger.warn("Unexpected message in HTDAG listener: #{inspect(other)}")
+        Logger.warning("Unexpected message in HTDAG listener: #{inspect(other)}")
         listen_loop(workflow_name, event_types, timeout, repo)
     after
       timeout ->
@@ -299,7 +299,7 @@ defmodule Pgflow.OrchestratorNotifications do
     end
   end
 
-  defp handle_notification(channel, message_id, workflow_name, event_types, repo) do
+  defp handle_notification(channel, message_id, _workflow_name, event_types, _repo) do
     # Handle incoming notifications
     # Parse channel to determine event type
     case channel do
