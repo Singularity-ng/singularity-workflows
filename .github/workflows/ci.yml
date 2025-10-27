@@ -63,8 +63,8 @@ jobs:
 
     services:
       postgres:
-        # Use custom image if available, otherwise official pgmq image
-        image: ${{ needs.build-image.outputs.image || 'ghcr.io/pgmq/pg18-pgmq:latest' }}
+        # Official pgmq Docker image from Tembo (PostgreSQL 15 + pgmq extension)
+        image: tembo/pgmq:latest
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
