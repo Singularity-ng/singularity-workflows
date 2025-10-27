@@ -75,6 +75,57 @@ defmodule Pgflow.Orchestrator do
   goal_decomposition, hierarchical_tasks, task_dag, workflow_orchestration, htdag,
   autonomous_decomposition, task_dependencies, pgflow_orchestration, goal_execution,
   workflow_composition, goal_driven_execution, task_graph_creation, decomposer_pattern
+
+  ### Decision Tree (Which Function to Use?)
+
+  ```
+  Do you have a goal to execute?
+  ├─ YES: Single goal, simple execution
+  │  └─ Use `execute_goal/5` (one-shot: decompose + create + execute)
+  │
+  ├─ NO, you have a pre-existing task graph
+  │  ├─ Want to create a workflow from it?
+  │  │  └─ Use `create_workflow/3` → execute with Executor
+  │  │
+  │  └─ Just want to decompose a goal first?
+  │     └─ Use `decompose_goal/3` → manually create workflow
+  │
+  └─ Maybe you want fine-grained control?
+     ├─ Use `decompose_goal/3` + `create_workflow/3` separately
+     └─ Or use WorkflowComposer for high-level convenience
+  ```
+
+  ### Data Flow Diagram
+
+  ```
+  Goal Input
+      │
+      ↓
+  decompose_goal(goal, decomposer)
+      │ (validates dependencies, calculates depths)
+      ↓
+  Task Graph
+      │ (tasks with dependencies & depth info)
+      ↓
+  create_workflow(task_graph, step_functions)
+      │ (converts to ex_pgflow steps)
+      ↓
+  Workflow Object
+      │ (name, steps, max_parallel, task_graph)
+      ↓
+  [Orchestrator.execute_goal] OR [User calls Executor.execute]
+      │
+      ├─ Broadcast decomposition events (if notifications enabled)
+      ├─ Execute workflow via Executor
+      ├─ Track performance metrics
+      └─ Store learning patterns for OrchestratorOptimizer
+      │
+      ↓
+  Workflow Result
+      │ (success/failure, task results, metrics)
+      ↓
+  Returned to Caller
+  ```
   """
 
   require Logger

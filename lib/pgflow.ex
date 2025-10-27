@@ -36,6 +36,45 @@ defmodule Pgflow do
 
   **Both approaches use the same execution engine!**
 
+  ## HTDAG Integration
+
+  Pgflow includes `Pgflow.HTDAG` for goal-driven workflow creation:
+
+      # Define a decomposer function
+      defmodule MyApp.GoalDecomposer do
+        def decompose(goal) do
+          # Your custom decomposition logic
+          tasks = [
+            %{id: "task1", description: "Analyze requirements", depends_on: []},
+            %{id: "task2", description: "Design architecture", depends_on: ["task1"]},
+            %{id: "task3", description: "Implement solution", depends_on: ["task2"]}
+          ]
+          {:ok, tasks}
+        end
+      end
+
+      # Compose and execute workflow from goal
+      {:ok, result} = Pgflow.WorkflowComposer.compose_from_goal(
+        "Build user authentication system",
+        &MyApp.GoalDecomposer.decompose/1,
+        step_functions,
+        MyApp.Repo
+      )
+
+  ## Real-time Notifications
+
+  Pgflow includes `Pgflow.Notifications` for real-time message delivery:
+
+      # Send message with real-time notification
+      {:ok, message_id} = Pgflow.Notifications.send_with_notify(
+        "chat_messages",
+        %{type: "notification", content: "Hello!"},
+        MyApp.Repo
+      )
+
+      # Listen for real-time updates
+      {:ok, pid} = Pgflow.Notifications.listen("chat_messages", MyApp.Repo)
+
   ## Architecture
 
   ex_pgflow uses the same architecture as pgflow (TypeScript):

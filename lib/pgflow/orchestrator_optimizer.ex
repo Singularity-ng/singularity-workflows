@@ -49,6 +49,33 @@ defmodule Pgflow.OrchestratorOptimizer do
   optimization, performance_tuning, learning_algorithms, pattern_analysis,
   workflow_optimization, execution_metrics, parallelization, resource_allocation,
   adaptive_strategies, pattern_learning
+
+  ### Decision Tree (Which Optimization Level to Use?)
+
+  ```
+  How much optimization do you need?
+  ├─ I want conservative, safe optimizations
+  │  └─ Use `:basic` level
+  │     └─ Adjusts timeouts, adds retry logic, basic reordering
+  │
+  ├─ I have good historical data and want smart optimizations
+  │  └─ Use `:advanced` level
+  │     └─ Dynamic parallelization, intelligent retries, resource allocation
+  │
+  └─ I have extensive data and want aggressive optimization
+     └─ Use `:aggressive` level
+        └─ Complete restructuring, advanced parallelization, ML-based optimization
+
+  Additional considerations:
+  ├─ Want to preserve original workflow structure?
+  │  └─ Set `preserve_structure: true` (recommended for safety)
+  │
+  ├─ Have resource constraints?
+  │  └─ Set `max_parallel: <number>` (default: 10)
+  │
+  └─ Know timeout patterns from history?
+     └─ Set `timeout_threshold: <milliseconds>`
+  ```
   """
 
   require Logger

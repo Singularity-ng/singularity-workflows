@@ -65,6 +65,63 @@ defmodule Pgflow.WorkflowComposer do
   workflow_composition, goal_driven_api, high_level_api, workflow_generation,
   composition_api, facade_pattern, orchestration_coordination, workflow_execution,
   unified_entry_point, goal_to_workflow
+
+  ### Decision Tree (Which Composition Function to Use?)
+
+  ```
+  What do you want to compose?
+  ├─ YES: I have a goal string/description
+  │  ├─ Is it a simple goal?
+  │  │  └─ Use `compose_from_goal/5` (simplest, all-in-one)
+  │  │
+  │  └─ Is it a very complex goal with multiple sub-goals?
+  │     └─ Use `compose_multiple_workflows/5` (breaks into multiple workflows)
+  │
+  ├─ NO: I already have a task graph
+  │  └─ Use `compose_from_task_graph/4` (skip decomposition)
+  │
+  └─ Additional options
+     ├─ Want real-time monitoring?
+     │  └─ Pass `monitor: true` in opts
+     │
+     ├─ Want workflow optimization?
+     │  └─ Pass `optimize: true` in opts
+     │
+     └─ Want statistics/history?
+        └─ Use `get_composition_stats/2`
+  ```
+
+  ### Data Flow Diagram
+
+  ```
+  User Goal Input
+      │
+      ├─ compose_from_goal/5
+      │  │
+      │  ├─ decompose_goal(goal, decomposer)
+      │  │  │ (Orchestrator → GoalDecomposer function)
+      │  │  └─ Task Graph + Dependencies
+      │  │
+      │  ├─ create_workflow(task_graph, step_functions)
+      │  │  │ (Orchestrator → ex_pgflow format)
+      │  │  └─ Workflow + Steps
+      │  │
+      │  ├─ maybe_optimize_workflow(workflow, optimize flag)
+      │  │  │ (OrchestratorOptimizer if enabled)
+      │  │  └─ Optimized Workflow
+      │  │
+      │  └─ execute_workflow(workflow, monitor flag)
+      │     │ (Executor.execute_workflow with/without monitoring)
+      │     │ (Broadcasts events if notifications enabled)
+      │     └─ Workflow Result
+      │
+      ├─ compose_from_task_graph/4
+      │  └─ [Skip decomposition] → create_workflow → execute_workflow
+      │
+      └─ compose_multiple_workflows/5
+         └─ decompose_complex_goal (returns list of task_graphs)
+            └─ Parallel execution of multiple workflows
+  ```
   """
 
   require Logger
