@@ -13,8 +13,10 @@ defmodule Pgflow.Repo.Migrations.CreateAddStepFunction do
   use Ecto.Migration
 
   def up do
+    execute("DROP FUNCTION IF EXISTS pgflow.add_step(TEXT, TEXT, TEXT[], TEXT, INTEGER, INTEGER, INTEGER) CASCADE")
+
     execute("""
-    CREATE OR REPLACE FUNCTION pgflow.add_step(
+    CREATE FUNCTION pgflow.add_step(
       p_workflow_slug TEXT,
       p_step_slug TEXT,
       p_depends_on TEXT[] DEFAULT '{}',

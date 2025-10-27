@@ -10,8 +10,10 @@ defmodule Pgflow.Repo.Migrations.CreateCreateFlowFunction do
   use Ecto.Migration
 
   def up do
+    execute("DROP FUNCTION IF EXISTS pgflow.create_flow(TEXT, INTEGER, INTEGER) CASCADE")
+
     execute("""
-    CREATE OR REPLACE FUNCTION pgflow.create_flow(
+    CREATE FUNCTION pgflow.create_flow(
       p_workflow_slug TEXT,
       p_max_attempts INTEGER DEFAULT 3,
       p_timeout INTEGER DEFAULT 60
@@ -31,11 +33,12 @@ defmodule Pgflow.Repo.Migrations.CreateCreateFlowFunction do
         RAISE EXCEPTION 'Invalid workflow_slug: %', p_workflow_slug;
       END IF;
 
-      -- Create or update workflow record
+      -- Delete existing if present to avoid conflicts
+      DELETE FROM workflows WHERE workflow_slug = p_workflow_slug;
+
+      -- Create workflow record
       INSERT INTO workflows (workflow_slug, max_attempts, timeout)
-      VALUES (p_workflow_slug, p_max_attempts, p_timeout)
-      ON CONFLICT (workflow_slug) DO UPDATE
-      SET workflow_slug = workflows.workflow_slug; -- Dummy update for RETURNING
+      VALUES (p_workflow_slug, p_max_attempts, p_timeout);
 
       -- Ensure pgmq queue exists
       PERFORM pgflow.ensure_workflow_queue(p_workflow_slug);
