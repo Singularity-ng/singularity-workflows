@@ -76,10 +76,16 @@ defmodule ExPgflow.MixProject do
       {:ecto_sql, "~> 3.10"},
       # Allow newer Postgrex drivers (0.21+). Keep upper bound < 2.0.0
       {:postgrex, ">= 0.19.0 and < 2.0.0"},
+      # Phoenix for Observer web interface
+      {:phoenix, "~> 1.7.0"},
+      {:phoenix_live_view, "~> 0.20.0"},
+      {:phoenix_html, "~> 4.0"},
+      {:phoenix_pubsub, "~> 2.1"},
+      {:plug_cowboy, "~> 2.6"},
       # Provide CA root bundle used by HTTP clients / excoveralls poster
       # ExCoveralls references `CAStore.file_path/0` when present; add castore
-      # as a test-only dep to avoid the undefined function warning.
-      {:castore, "~> 1.0", only: :test},
+      # without :only restriction because Phoenix requires it in all environments
+      {:castore, "~> 1.0"},
       {:jason, "~> 1.4"},
       {:ex_doc, "~> 0.31", only: :dev},
       {:credo, "~> 1.7", only: [:dev, :test]},
