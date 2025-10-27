@@ -163,7 +163,9 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
       {:ok, _} = FlowBuilder.add_step("test_multi_roots", "fetch_a", [], Repo)
       {:ok, _} = FlowBuilder.add_step("test_multi_roots", "fetch_b", [], Repo)
       {:ok, _} = FlowBuilder.add_step("test_multi_roots", "fetch_c", [], Repo)
-      {:ok, _} = FlowBuilder.add_step("test_multi_roots", "merge", ["fetch_a", "fetch_b", "fetch_c"], Repo)
+
+      {:ok, _} =
+        FlowBuilder.add_step("test_multi_roots", "merge", ["fetch_a", "fetch_b", "fetch_c"], Repo)
 
       step_functions = %{
         fetch_a: fn _ -> {:ok, %{a: 1}} end,
@@ -366,7 +368,8 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
         child: fn input -> {:ok, input} end
       }
 
-      {:ok, definition} = DynamicWorkflowLoader.load("test_root_identification", step_functions, Repo)
+      {:ok, definition} =
+        DynamicWorkflowLoader.load("test_root_identification", step_functions, Repo)
 
       assert Enum.sort(definition.root_steps) == [:root1, :root2]
     end
@@ -429,13 +432,14 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
       {:ok, _} = FlowBuilder.add_step("test_invalid_dep_validation", "step1", [], Repo)
 
       # Attempt to manually insert invalid dependency (should fail due to FK constraints)
-      result = Repo.query(
-        """
-        INSERT INTO workflow_step_dependencies_def (workflow_slug, step_slug, dep_slug)
-        VALUES ('test_invalid_dep_validation', 'step1', 'nonexistent_step')
-        """,
-        []
-      )
+      result =
+        Repo.query(
+          """
+          INSERT INTO workflow_step_dependencies_def (workflow_slug, step_slug, dep_slug)
+          VALUES ('test_invalid_dep_validation', 'step1', 'nonexistent_step')
+          """,
+          []
+        )
 
       # Should fail due to foreign key constraint
       assert {:error, _} = result
@@ -522,7 +526,13 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
         {:ok, _} = FlowBuilder.add_step("test_parallel_processing", step_slug, ["start"], Repo)
       end)
 
-      {:ok, _} = FlowBuilder.add_step("test_parallel_processing", "gather", Enum.map(1..10, &"worker_#{&1}"), Repo)
+      {:ok, _} =
+        FlowBuilder.add_step(
+          "test_parallel_processing",
+          "gather",
+          Enum.map(1..10, &"worker_#{&1}"),
+          Repo
+        )
 
       # Create step functions
       step_functions =
@@ -536,7 +546,8 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
           end)
         )
 
-      {:ok, definition} = DynamicWorkflowLoader.load("test_parallel_processing", step_functions, Repo)
+      {:ok, definition} =
+        DynamicWorkflowLoader.load("test_parallel_processing", step_functions, Repo)
 
       assert definition.root_steps == [:start]
       assert length(definition.dependencies[:gather]) == 10
@@ -567,8 +578,15 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
     end
 
     test "loads workflow with timeouts and retries" do
-      {:ok, _} = FlowBuilder.create_flow("test_timeouts_retries", Repo, max_attempts: 5, timeout: 300)
-      {:ok, _} = FlowBuilder.add_step("test_timeouts_retries", "step1", [], Repo, max_attempts: 10, timeout: 600)
+      {:ok, _} =
+        FlowBuilder.create_flow("test_timeouts_retries", Repo, max_attempts: 5, timeout: 300)
+
+      {:ok, _} =
+        FlowBuilder.add_step("test_timeouts_retries", "step1", [], Repo,
+          max_attempts: 10,
+          timeout: 600
+        )
+
       {:ok, _} = FlowBuilder.add_step("test_timeouts_retries", "step2", ["step1"], Repo)
 
       step_functions = %{
@@ -616,8 +634,12 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
       # Simulate AI generating a workflow
       {:ok, _} = FlowBuilder.create_flow("ai_generated_workflow", Repo)
       {:ok, _} = FlowBuilder.add_step("ai_generated_workflow", "analyze_input", [], Repo)
-      {:ok, _} = FlowBuilder.add_step("ai_generated_workflow", "process_data", ["analyze_input"], Repo)
-      {:ok, _} = FlowBuilder.add_step("ai_generated_workflow", "generate_output", ["process_data"], Repo)
+
+      {:ok, _} =
+        FlowBuilder.add_step("ai_generated_workflow", "process_data", ["analyze_input"], Repo)
+
+      {:ok, _} =
+        FlowBuilder.add_step("ai_generated_workflow", "generate_output", ["process_data"], Repo)
 
       step_functions = %{
         analyze_input: fn _ -> {:ok, %{analyzed: true}} end,

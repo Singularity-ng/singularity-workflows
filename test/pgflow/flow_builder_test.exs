@@ -642,15 +642,25 @@ defmodule Pgflow.FlowBuilderTest do
       {:ok, workflows} = FlowBuilder.list_flows(Repo)
 
       # Filter to only the workflows we just created
-      my_workflows = Enum.filter(workflows, fn w -> String.starts_with?(w["workflow_slug"], "test_order_") end)
+      my_workflows =
+        Enum.filter(workflows, fn w -> String.starts_with?(w["workflow_slug"], "test_order_") end)
+
       my_workflows = Enum.sort_by(my_workflows, fn w -> w["workflow_slug"] end)
 
       # Verify ordering: most recent (test_order_3) should come first
       assert length(my_workflows) >= 3
       # Get the ones in our test order
-      {test_order_3, rest} = List.pop_at(my_workflows, Enum.find_index(my_workflows, fn w -> w["workflow_slug"] == "test_order_3" end))
-      {test_order_2, rest} = List.pop_at(rest, Enum.find_index(rest, fn w -> w["workflow_slug"] == "test_order_2" end))
-      {test_order_1, _rest} = List.pop_at(rest, Enum.find_index(rest, fn w -> w["workflow_slug"] == "test_order_1" end))
+      {test_order_3, rest} =
+        List.pop_at(
+          my_workflows,
+          Enum.find_index(my_workflows, fn w -> w["workflow_slug"] == "test_order_3" end)
+        )
+
+      {test_order_2, rest} =
+        List.pop_at(rest, Enum.find_index(rest, fn w -> w["workflow_slug"] == "test_order_2" end))
+
+      {test_order_1, _rest} =
+        List.pop_at(rest, Enum.find_index(rest, fn w -> w["workflow_slug"] == "test_order_1" end))
 
       # Verify timestamps are in ascending order (since list is DESC, first should have latest timestamp)
       assert NaiveDateTime.compare(test_order_3["created_at"], test_order_2["created_at"]) == :gt
@@ -1074,7 +1084,11 @@ defmodule Pgflow.FlowBuilderTest do
       {:ok, _} = FlowBuilder.create_flow("test_map_multi_dep", Repo)
       {:ok, _} = FlowBuilder.add_step("test_map_multi_dep", "step1", [], Repo)
       {:ok, _} = FlowBuilder.add_step("test_map_multi_dep", "step2", [], Repo)
-      result = FlowBuilder.add_step("test_map_multi_dep", "map_step", ["step1", "step2"], Repo, step_type: "map")
+
+      result =
+        FlowBuilder.add_step("test_map_multi_dep", "map_step", ["step1", "step2"], Repo,
+          step_type: "map"
+        )
 
       assert match?({:error, {:map_step_constraint_violation, _}}, result)
     end
@@ -1082,7 +1096,9 @@ defmodule Pgflow.FlowBuilderTest do
     test "allows map step with single dependency" do
       {:ok, _} = FlowBuilder.create_flow("test_map_single_dep", Repo)
       {:ok, _} = FlowBuilder.add_step("test_map_single_dep", "step1", [], Repo)
-      {:ok, map_step} = FlowBuilder.add_step("test_map_single_dep", "map_step", ["step1"], Repo, step_type: "map")
+
+      {:ok, map_step} =
+        FlowBuilder.add_step("test_map_single_dep", "map_step", ["step1"], Repo, step_type: "map")
 
       assert map_step["step_type"] == "map"
       assert map_step["deps_count"] == 1
@@ -1090,7 +1106,9 @@ defmodule Pgflow.FlowBuilderTest do
 
     test "allows map step without dependencies" do
       {:ok, _} = FlowBuilder.create_flow("test_map_no_dep", Repo)
-      {:ok, map_step} = FlowBuilder.add_step("test_map_no_dep", "map_step", [], Repo, step_type: "map")
+
+      {:ok, map_step} =
+        FlowBuilder.add_step("test_map_no_dep", "map_step", [], Repo, step_type: "map")
 
       assert map_step["step_type"] == "map"
       assert map_step["deps_count"] == 0
@@ -1110,11 +1128,18 @@ defmodule Pgflow.FlowBuilderTest do
       assert length(result.rows) == 0
 
       # Verify steps are deleted
-      {:ok, result} = Repo.query("SELECT * FROM workflow_steps WHERE workflow_slug = 'test_delete'", [])
+      {:ok, result} =
+        Repo.query("SELECT * FROM workflow_steps WHERE workflow_slug = 'test_delete'", [])
+
       assert length(result.rows) == 0
 
       # Verify dependencies are deleted
-      {:ok, result} = Repo.query("SELECT * FROM workflow_step_dependencies_def WHERE workflow_slug = 'test_delete'", [])
+      {:ok, result} =
+        Repo.query(
+          "SELECT * FROM workflow_step_dependencies_def WHERE workflow_slug = 'test_delete'",
+          []
+        )
+
       assert length(result.rows) == 0
     end
 
@@ -1128,7 +1153,9 @@ defmodule Pgflow.FlowBuilderTest do
       :ok = FlowBuilder.delete_flow("test_delete_complex", Repo)
 
       # Verify all data is gone
-      {:ok, result} = Repo.query("SELECT * FROM workflows WHERE workflow_slug = 'test_delete_complex'", [])
+      {:ok, result} =
+        Repo.query("SELECT * FROM workflows WHERE workflow_slug = 'test_delete_complex'", [])
+
       assert length(result.rows) == 0
     end
 
@@ -1166,7 +1193,9 @@ defmodule Pgflow.FlowBuilderTest do
 
     test "accepts very large initial_tasks" do
       {:ok, _} = FlowBuilder.create_flow("test_large_tasks", Repo)
-      {:ok, step} = FlowBuilder.add_step("test_large_tasks", "step1", [], Repo, initial_tasks: 1_000_000)
+
+      {:ok, step} =
+        FlowBuilder.add_step("test_large_tasks", "step1", [], Repo, initial_tasks: 1_000_000)
 
       assert step["initial_tasks"] == 1_000_000
     end
@@ -1284,7 +1313,9 @@ defmodule Pgflow.FlowBuilderTest do
       {:ok, _} = FlowBuilder.create_flow("test_update_opts", Repo)
 
       # Add step with custom options
-      {:ok, step1} = FlowBuilder.add_step("test_update_opts", "custom", [], Repo, max_attempts: 5, timeout: 120)
+      {:ok, step1} =
+        FlowBuilder.add_step("test_update_opts", "custom", [], Repo, max_attempts: 5, timeout: 120)
+
       assert step1["max_attempts"] == 5
       assert step1["timeout"] == 120
 
@@ -1368,11 +1399,21 @@ defmodule Pgflow.FlowBuilderTest do
       {:ok, _} = FlowBuilder.create_flow("test_recover_4", Repo)
 
       # Try invalid initial_tasks
-      result1 = FlowBuilder.add_step("test_recover_4", "map_step", [], Repo, step_type: "map", initial_tasks: -1)
+      result1 =
+        FlowBuilder.add_step("test_recover_4", "map_step", [], Repo,
+          step_type: "map",
+          initial_tasks: -1
+        )
+
       assert match?({:error, :initial_tasks_must_be_positive}, result1)
 
       # Add with valid initial_tasks succeeds
-      result2 = FlowBuilder.add_step("test_recover_4", "map_step", [], Repo, step_type: "map", initial_tasks: 10)
+      result2 =
+        FlowBuilder.add_step("test_recover_4", "map_step", [], Repo,
+          step_type: "map",
+          initial_tasks: 10
+        )
+
       assert match?({:ok, _}, result2)
     end
 
@@ -1401,7 +1442,9 @@ defmodule Pgflow.FlowBuilderTest do
       assert result == :ok
 
       # Verify completely deleted
-      {:ok, result} = Repo.query("SELECT COUNT(*) FROM workflows WHERE workflow_slug = 'test_recover_6'", [])
+      {:ok, result} =
+        Repo.query("SELECT COUNT(*) FROM workflows WHERE workflow_slug = 'test_recover_6'", [])
+
       assert result.rows == [[0]]
     end
   end

@@ -98,7 +98,7 @@ defmodule Pgflow.DAG.TaskExecutorTest do
       assert run.status == "completed"
 
       # Verify step state shows task completion
-      step_state = Repo.one!(from s in StepState, where: s.run_id == ^run.id)
+      step_state = Repo.one!(from(s in StepState, where: s.run_id == ^run.id))
       assert step_state.status == "completed"
       assert step_state.remaining_tasks == 0
     end
@@ -141,7 +141,8 @@ defmodule Pgflow.DAG.TaskExecutorTest do
       input = %{test: true}
       worker_id = "custom-worker-123"
 
-      {:ok, _result} = Executor.execute(TestTaskExecSimpleWorkflow, input, Repo, worker_id: worker_id)
+      {:ok, _result} =
+        Executor.execute(TestTaskExecSimpleWorkflow, input, Repo, worker_id: worker_id)
 
       run = Repo.one!(WorkflowRun)
       assert run.status == "completed"
@@ -203,7 +204,8 @@ defmodule Pgflow.DAG.TaskExecutorTest do
       input = %{test: true}
       worker_id = "test-worker-456"
 
-      {:ok, _result} = Executor.execute(TestTaskExecSimpleWorkflow, input, Repo, worker_id: worker_id)
+      {:ok, _result} =
+        Executor.execute(TestTaskExecSimpleWorkflow, input, Repo, worker_id: worker_id)
 
       run = Repo.one!(WorkflowRun)
       assert run.status == "completed"
@@ -283,7 +285,8 @@ defmodule Pgflow.DAG.TaskExecutorTest do
       elapsed = end_time - start_time
 
       # Execution should complete in reasonable time
-      assert elapsed < 5_000  # Less than 5 seconds
+      # Less than 5 seconds
+      assert elapsed < 5_000
     end
 
     test "handles step function exceptions" do
@@ -360,7 +363,7 @@ defmodule Pgflow.DAG.TaskExecutorTest do
 
       # Verify both step states completed
       run = Repo.one!(WorkflowRun)
-      step_states = Repo.all(from s in StepState, where: s.run_id == ^run.id)
+      step_states = Repo.all(from(s in StepState, where: s.run_id == ^run.id))
       assert length(step_states) == 2
 
       completed = Enum.filter(step_states, &(&1.status == "completed"))
@@ -409,7 +412,7 @@ defmodule Pgflow.DAG.TaskExecutorTest do
       assert match?({:error, _}, result)
 
       run = Repo.one!(WorkflowRun)
-      step_states = Repo.all(from s in StepState, where: s.run_id == ^run.id)
+      step_states = Repo.all(from(s in StepState, where: s.run_id == ^run.id))
 
       # First step should fail
       fail_step = Enum.find(step_states, &(&1.step_slug == "fail_first"))
@@ -417,6 +420,7 @@ defmodule Pgflow.DAG.TaskExecutorTest do
 
       # Second step should not complete
       never_step = Enum.find(step_states, &(&1.step_slug == "never_runs"))
+
       if never_step do
         assert never_step.status != "completed"
       end
@@ -631,7 +635,7 @@ defmodule Pgflow.DAG.TaskExecutorTest do
       run = Repo.one!(WorkflowRun)
       assert run.status == "completed"
 
-      step_states = Repo.all(from s in StepState, where: s.run_id == ^run.id)
+      step_states = Repo.all(from(s in StepState, where: s.run_id == ^run.id))
       assert length(step_states) == 2
 
       completed = Enum.filter(step_states, &(&1.status == "completed"))
@@ -694,7 +698,7 @@ defmodule Pgflow.DAG.TaskExecutorTest do
       {:ok, _result} = Executor.execute(TestTaskExecSimpleWorkflow, %{}, Repo)
 
       run = Repo.one!(WorkflowRun)
-      step_states = Repo.all(from s in StepState, where: s.run_id == ^run.id)
+      step_states = Repo.all(from(s in StepState, where: s.run_id == ^run.id))
 
       assert length(step_states) == 1
 

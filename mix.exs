@@ -5,7 +5,9 @@
 ## setting ALLOW_SYSTEM_ELIXIR=1 (not recommended).
 
 case System.find_executable("elixir") do
-  nil -> :ok
+  nil ->
+    :ok
+
   elixir_path ->
     in_nix = String.contains?(elixir_path, "/nix/store/")
     ci = System.get_env("CI")
@@ -13,7 +15,11 @@ case System.find_executable("elixir") do
 
     unless in_nix or ci == "true" or allow == "1" do
       IO.puts("\nERROR: Detected elixir at: #{elixir_path}\n")
-      IO.puts("This project requires running Elixir from the Nix dev-shell (nix develop / direnv allow).\n")
+
+      IO.puts(
+        "This project requires running Elixir from the Nix dev-shell (nix develop / direnv allow).\n"
+      )
+
       IO.puts("Please start a nix dev-shell or set ALLOW_SYSTEM_ELIXIR=1 to bypass this check.\n")
       System.halt(1)
     end

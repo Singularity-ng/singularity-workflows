@@ -21,13 +21,15 @@ defmodule Pgflow.IdempotencyTest do
   # Helper function to create a test workflow and run
   defp create_test_run(workflow_slug \\ "test-workflow") do
     # Create workflow first (insert directly to workflows table)
-    {:ok, _} = Repo.query(
-      "INSERT INTO workflows (workflow_slug, timeout, max_attempts, created_at) VALUES ($1, $2, $3, NOW()) ON CONFLICT DO NOTHING",
-      [workflow_slug, 60, 3]
-    )
+    {:ok, _} =
+      Repo.query(
+        "INSERT INTO workflows (workflow_slug, timeout, max_attempts, created_at) VALUES ($1, $2, $3, NOW()) ON CONFLICT DO NOTHING",
+        [workflow_slug, 60, 3]
+      )
 
     # Create run
     run_id = Ecto.UUID.generate()
+
     run_attrs = %{
       id: run_id,
       workflow_slug: workflow_slug,
@@ -36,13 +38,17 @@ defmodule Pgflow.IdempotencyTest do
       input: %{},
       started_at: DateTime.utc_now()
     }
+
     Repo.insert!(%Pgflow.WorkflowRun{} |> Pgflow.WorkflowRun.changeset(run_attrs))
   end
 
   describe "StepTask.compute_idempotency_key/4" do
     test "generates consistent MD5 hash" do
-      key1 = StepTask.compute_idempotency_key("wf1", "step1", "123e4567-e89b-12d3-a456-426614174000", 0)
-      key2 = StepTask.compute_idempotency_key("wf1", "step1", "123e4567-e89b-12d3-a456-426614174000", 0)
+      key1 =
+        StepTask.compute_idempotency_key("wf1", "step1", "123e4567-e89b-12d3-a456-426614174000", 0)
+
+      key2 =
+        StepTask.compute_idempotency_key("wf1", "step1", "123e4567-e89b-12d3-a456-426614174000", 0)
 
       # Same inputs produce same key
       assert key1 == key2
@@ -55,9 +61,12 @@ defmodule Pgflow.IdempotencyTest do
       run_id = "123e4567-e89b-12d3-a456-426614174000"
 
       key1 = StepTask.compute_idempotency_key("wf1", "step1", run_id, 0)
-      key2 = StepTask.compute_idempotency_key("wf2", "step1", run_id, 0)  # Different workflow
-      key3 = StepTask.compute_idempotency_key("wf1", "step2", run_id, 0)  # Different step
-      key4 = StepTask.compute_idempotency_key("wf1", "step1", run_id, 1)  # Different task_index
+      # Different workflow
+      key2 = StepTask.compute_idempotency_key("wf2", "step1", run_id, 0)
+      # Different step
+      key3 = StepTask.compute_idempotency_key("wf1", "step2", run_id, 0)
+      # Different task_index
+      key4 = StepTask.compute_idempotency_key("wf1", "step1", run_id, 1)
 
       # All keys should be different
       assert key1 != key2
@@ -67,8 +76,11 @@ defmodule Pgflow.IdempotencyTest do
     end
 
     test "handles different run_ids" do
-      key1 = StepTask.compute_idempotency_key("wf1", "step1", "123e4567-e89b-12d3-a456-426614174000", 0)
-      key2 = StepTask.compute_idempotency_key("wf1", "step1", "223e4567-e89b-12d3-a456-426614174000", 0)
+      key1 =
+        StepTask.compute_idempotency_key("wf1", "step1", "123e4567-e89b-12d3-a456-426614174000", 0)
+
+      key2 =
+        StepTask.compute_idempotency_key("wf1", "step1", "223e4567-e89b-12d3-a456-426614174000", 0)
 
       assert key1 != key2
     end
@@ -76,9 +88,10 @@ defmodule Pgflow.IdempotencyTest do
     test "handles different task indices" do
       run_id = "123e4567-e89b-12d3-a456-426614174000"
 
-      keys = Enum.map(0..9, fn i ->
-        StepTask.compute_idempotency_key("wf1", "step1", run_id, i)
-      end)
+      keys =
+        Enum.map(0..9, fn i ->
+          StepTask.compute_idempotency_key("wf1", "step1", run_id, i)
+        end)
 
       # All keys should be unique
       assert length(Enum.uniq(keys)) == 10
@@ -89,13 +102,14 @@ defmodule Pgflow.IdempotencyTest do
     test "automatically computes idempotency_key if not provided" do
       run_id = Ecto.UUID.generate()
 
-      changeset = StepTask.changeset(%StepTask{}, %{
-        run_id: run_id,
-        step_slug: "test_step",
-        task_index: 0,
-        workflow_slug: "test_workflow",
-        status: "queued"
-      })
+      changeset =
+        StepTask.changeset(%StepTask{}, %{
+          run_id: run_id,
+          step_slug: "test_step",
+          task_index: 0,
+          workflow_slug: "test_workflow",
+          status: "queued"
+        })
 
       assert changeset.valid?
       idempotency_key = Ecto.Changeset.get_field(changeset, :idempotency_key)
@@ -107,14 +121,15 @@ defmodule Pgflow.IdempotencyTest do
       run_id = Ecto.UUID.generate()
       custom_key = "custom1234567890abcdef1234567890"
 
-      changeset = StepTask.changeset(%StepTask{}, %{
-        run_id: run_id,
-        step_slug: "test_step",
-        task_index: 0,
-        workflow_slug: "test_workflow",
-        idempotency_key: custom_key,
-        status: "queued"
-      })
+      changeset =
+        StepTask.changeset(%StepTask{}, %{
+          run_id: run_id,
+          step_slug: "test_step",
+          task_index: 0,
+          workflow_slug: "test_workflow",
+          idempotency_key: custom_key,
+          status: "queued"
+        })
 
       assert changeset.valid?
       assert Ecto.Changeset.get_field(changeset, :idempotency_key) == custom_key
@@ -128,13 +143,14 @@ defmodule Pgflow.IdempotencyTest do
 
       expected_key = StepTask.compute_idempotency_key(workflow_slug, step_slug, run_id, task_index)
 
-      changeset = StepTask.changeset(%StepTask{}, %{
-        run_id: run_id,
-        step_slug: step_slug,
-        task_index: task_index,
-        workflow_slug: workflow_slug,
-        status: "queued"
-      })
+      changeset =
+        StepTask.changeset(%StepTask{}, %{
+          run_id: run_id,
+          step_slug: step_slug,
+          task_index: task_index,
+          workflow_slug: workflow_slug,
+          status: "queued"
+        })
 
       assert Ecto.Changeset.get_field(changeset, :idempotency_key) == expected_key
     end
@@ -149,29 +165,32 @@ defmodule Pgflow.IdempotencyTest do
         status: "started",
         remaining_steps: 1
       }
+
       run = Repo.insert!(%Pgflow.WorkflowRun{} |> Pgflow.WorkflowRun.changeset(run_attrs))
 
       # Insert first task
-      task1 = %StepTask{}
-      |> StepTask.changeset(%{
-        run_id: run.id,
-        step_slug: "step1",
-        task_index: 0,
-        workflow_slug: "test-workflow",
-        status: "queued"
-      })
-      |> Repo.insert!()
+      task1 =
+        %StepTask{}
+        |> StepTask.changeset(%{
+          run_id: run.id,
+          step_slug: "step1",
+          task_index: 0,
+          workflow_slug: "test-workflow",
+          status: "queued"
+        })
+        |> Repo.insert!()
 
       assert task1.idempotency_key != nil
 
       # Try to insert duplicate task (same workflow, step, run_id, task_index)
-      task2_changeset = StepTask.changeset(%StepTask{}, %{
-        run_id: run.id,
-        step_slug: "step1",
-        task_index: 0,
-        workflow_slug: "test-workflow",
-        status: "queued"
-      })
+      task2_changeset =
+        StepTask.changeset(%StepTask{}, %{
+          run_id: run.id,
+          step_slug: "step1",
+          task_index: 0,
+          workflow_slug: "test-workflow",
+          status: "queued"
+        })
 
       # Should fail with unique constraint violation (either primary key or idempotency_key)
       # Note: Primary key constraint (run_id, step_slug, task_index) is checked before idempotency_key
@@ -187,29 +206,33 @@ defmodule Pgflow.IdempotencyTest do
         status: "started",
         remaining_steps: 1
       }
+
       run = Repo.insert!(%Pgflow.WorkflowRun{} |> Pgflow.WorkflowRun.changeset(run_attrs))
 
       # Insert first task
-      task1 = %StepTask{}
-      |> StepTask.changeset(%{
-        run_id: run.id,
-        step_slug: "step1",
-        task_index: 0,
-        workflow_slug: "test-workflow",
-        status: "queued"
-      })
-      |> Repo.insert!()
+      task1 =
+        %StepTask{}
+        |> StepTask.changeset(%{
+          run_id: run.id,
+          step_slug: "step1",
+          task_index: 0,
+          workflow_slug: "test-workflow",
+          status: "queued"
+        })
+        |> Repo.insert!()
 
       # Insert second task with different task_index
-      task2 = %StepTask{}
-      |> StepTask.changeset(%{
-        run_id: run.id,
-        step_slug: "step1",
-        task_index: 1,  # Different index
-        workflow_slug: "test-workflow",
-        status: "queued"
-      })
-      |> Repo.insert!()
+      task2 =
+        %StepTask{}
+        |> StepTask.changeset(%{
+          run_id: run.id,
+          step_slug: "step1",
+          # Different index
+          task_index: 1,
+          workflow_slug: "test-workflow",
+          status: "queued"
+        })
+        |> Repo.insert!()
 
       # Both should succeed
       assert task1.idempotency_key != task2.idempotency_key
@@ -226,14 +249,16 @@ defmodule Pgflow.IdempotencyTest do
       task_index = 5
 
       # Compute key using Elixir function
-      elixir_key = StepTask.compute_idempotency_key(workflow_slug, step_slug, run_id_string, task_index)
+      elixir_key =
+        StepTask.compute_idempotency_key(workflow_slug, step_slug, run_id_string, task_index)
 
       # Compute key using SQL function (needs binary UUID)
       # Use public schema prefix to ensure function is found
-      {:ok, result} = Repo.query(
-        "SELECT public.compute_idempotency_key($1, $2, $3, $4)",
-        [workflow_slug, step_slug, run_id_binary, task_index]
-      )
+      {:ok, result} =
+        Repo.query(
+          "SELECT public.compute_idempotency_key($1, $2, $3, $4)",
+          [workflow_slug, step_slug, run_id_binary, task_index]
+        )
 
       sql_key = result.rows |> hd() |> hd()
 
@@ -257,12 +282,14 @@ defmodule Pgflow.IdempotencyTest do
     end
 
     test "handles special characters in workflow/step slugs" do
-      key = StepTask.compute_idempotency_key(
-        "workflow_with_underscores",
-        "step-with-dashes",
-        Ecto.UUID.generate(),
-        0
-      )
+      key =
+        StepTask.compute_idempotency_key(
+          "workflow_with_underscores",
+          "step-with-dashes",
+          Ecto.UUID.generate(),
+          0
+        )
+
       assert String.length(key) == 32
       assert key =~ ~r/^[0-9a-f]{32}$/
     end
@@ -272,12 +299,13 @@ defmodule Pgflow.IdempotencyTest do
     @tag :schema_check
     test "idempotency_key column exists in database" do
       # Query database schema
-      result = Repo.query!("""
-        SELECT column_name, data_type, is_nullable
-        FROM information_schema.columns
-        WHERE table_name = 'workflow_step_tasks'
-          AND column_name = 'idempotency_key'
-      """)
+      result =
+        Repo.query!("""
+          SELECT column_name, data_type, is_nullable
+          FROM information_schema.columns
+          WHERE table_name = 'workflow_step_tasks'
+            AND column_name = 'idempotency_key'
+        """)
 
       assert length(result.rows) == 1
       [column_name, data_type, is_nullable] = hd(result.rows)
@@ -289,12 +317,13 @@ defmodule Pgflow.IdempotencyTest do
 
     @tag :schema_check
     test "unique index exists on idempotency_key" do
-      result = Repo.query!("""
-        SELECT indexname, indexdef
-        FROM pg_indexes
-        WHERE tablename = 'workflow_step_tasks'
-          AND indexname = 'workflow_step_tasks_idempotency_key_idx'
-      """)
+      result =
+        Repo.query!("""
+          SELECT indexname, indexdef
+          FROM pg_indexes
+          WHERE tablename = 'workflow_step_tasks'
+            AND indexname = 'workflow_step_tasks_idempotency_key_idx'
+        """)
 
       assert length(result.rows) == 1
       [index_name, index_def] = hd(result.rows)
@@ -304,5 +333,4 @@ defmodule Pgflow.IdempotencyTest do
       assert index_def =~ "idempotency_key"
     end
   end
-
 end

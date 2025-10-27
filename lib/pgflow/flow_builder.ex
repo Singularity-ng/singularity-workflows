@@ -277,9 +277,14 @@ defmodule Pgflow.FlowBuilder do
   """
   @spec delete_flow(String.t(), module()) :: :ok | {:error, term()}
   def delete_flow(workflow_slug, repo) do
-    with {:ok, _} <- repo.query("DELETE FROM workflow_step_dependencies_def WHERE workflow_slug = $1::text", [workflow_slug]),
-         {:ok, _} <- repo.query("DELETE FROM workflow_steps WHERE workflow_slug = $1::text", [workflow_slug]),
-         {:ok, _} <- repo.query("DELETE FROM workflows WHERE workflow_slug = $1::text", [workflow_slug]) do
+    with {:ok, _} <-
+           repo.query("DELETE FROM workflow_step_dependencies_def WHERE workflow_slug = $1::text", [
+             workflow_slug
+           ]),
+         {:ok, _} <-
+           repo.query("DELETE FROM workflow_steps WHERE workflow_slug = $1::text", [workflow_slug]),
+         {:ok, _} <-
+           repo.query("DELETE FROM workflows WHERE workflow_slug = $1::text", [workflow_slug]) do
       :ok
     else
       {:error, reason} -> {:error, reason}

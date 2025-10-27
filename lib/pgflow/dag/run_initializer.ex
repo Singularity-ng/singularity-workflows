@@ -82,9 +82,10 @@ defmodule Pgflow.DAG.RunInitializer do
     # Check if workflow_steps already exist for this workflow
     existing_count =
       repo.one(
-        from ws in "workflow_steps",
-        where: ws.workflow_slug == ^definition.slug,
-        select: count(ws.workflow_slug)
+        from(ws in "workflow_steps",
+          where: ws.workflow_slug == ^definition.slug,
+          select: count(ws.workflow_slug)
+        )
       )
 
     if existing_count > 0 do
@@ -94,9 +95,10 @@ defmodule Pgflow.DAG.RunInitializer do
       # Check if workflow record exists, create if not (for code-based workflows)
       workflow_exists =
         repo.one(
-          from w in "workflows",
-          where: w.workflow_slug == ^definition.slug,
-          select: count(w.workflow_slug)
+          from(w in "workflows",
+            where: w.workflow_slug == ^definition.slug,
+            select: count(w.workflow_slug)
+          )
         )
 
       with :ok <- create_workflow_record_if_needed(definition, repo, workflow_exists),
@@ -139,7 +141,8 @@ defmodule Pgflow.DAG.RunInitializer do
           workflow_slug: definition.slug,
           step_slug: to_string(step_name),
           step_index: index,
-          step_type: "single",  # Code-based workflows are always single steps
+          # Code-based workflows are always single steps
+          step_type: "single",
           deps_count: WorkflowDefinition.dependency_count(definition, step_name),
           created_at: clock.now()
         }
