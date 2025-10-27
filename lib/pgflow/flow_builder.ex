@@ -371,16 +371,4 @@ defmodule Pgflow.FlowBuilder do
       _other -> {:error, :timeout_must_be_integer}
     end
   end
-
-  defp parse_postgres_error(%Postgrex.Error{postgres: %{message: message}}) do
-    cond do
-      String.contains?(message, "Invalid workflow_slug") -> :invalid_workflow_slug
-      String.contains?(message, "Invalid step_slug") -> :invalid_step_slug
-      String.contains?(message, "does not exist") -> :workflow_not_found
-      String.contains?(message, "Map step") -> :map_step_constraint_violation
-      true -> message
-    end
-  end
-
-  defp parse_postgres_error(_error), do: :database_error
 end
