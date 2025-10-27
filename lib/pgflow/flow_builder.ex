@@ -87,8 +87,8 @@ defmodule Pgflow.FlowBuilder do
         timeout: 120
       )
   """
-  @spec create_flow(String.t(), module(), keyword()) :: {:ok, map()} | {:error, term()}
-  def create_flow(workflow_slug, repo, opts \\ []) do
+  @spec create_flow(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
+  def create_flow(workflow_slug, opts \\ []) do
     # Validate inputs
     with :ok <- validate_workflow_slug(workflow_slug),
          :ok <- validate_max_attempts(opts),
@@ -126,24 +126,24 @@ defmodule Pgflow.FlowBuilder do
   ## Examples
 
       # Root step (no dependencies)
-      {:ok, _} = FlowBuilder.add_step("my_workflow", "fetch", [], MyApp.Repo)
+      {:ok, _} = FlowBuilder.add_step("my_workflow", "fetch", [])
 
       # Dependent step
-      {:ok, _} = FlowBuilder.add_step("my_workflow", "process", ["fetch"], MyApp.Repo)
+      {:ok, _} = FlowBuilder.add_step("my_workflow", "process", ["fetch"])
 
       # Map step with 50 parallel tasks
-      {:ok, _} = FlowBuilder.add_step("my_workflow", "process_batch", ["fetch"], MyApp.Repo,
+      {:ok, _} = FlowBuilder.add_step("my_workflow", "process_batch", ["fetch"],
         step_type: "map",
         initial_tasks: 50,
         max_attempts: 5
       )
 
       # Multiple dependencies
-      {:ok, _} = FlowBuilder.add_step("my_workflow", "merge", ["process_a", "process_b"], MyApp.Repo)
+      {:ok, _} = FlowBuilder.add_step("my_workflow", "merge", ["process_a", "process_b"])
   """
-  @spec add_step(String.t(), String.t(), [String.t()], module(), keyword()) ::
+  @spec add_step(String.t(), String.t(), [String.t()], keyword()) ::
           {:ok, map()} | {:error, term()}
-  def add_step(workflow_slug, step_slug, depends_on, repo, opts \\ []) do
+  def add_step(workflow_slug, step_slug, depends_on, opts \\ []) do
     # Validate inputs
     with :ok <- validate_workflow_slug(workflow_slug),
          :ok <- validate_step_slug(step_slug),
@@ -196,8 +196,8 @@ defmodule Pgflow.FlowBuilder do
       1
   """
   @spec list_flows(module()) :: {:ok, [map()]} | {:error, term()}
-  def list_flows(_repo) do
-    case _repo.query("SELECT * FROM workflows ORDER BY created_at DESC", []) do
+  def list_flows(repo) do
+    case repo.query("SELECT * FROM workflows ORDER BY created_at DESC", []) do
       {:ok, %{columns: columns, rows: rows}} ->
         workflows = Enum.map(rows, fn row -> Enum.zip(columns, row) |> Map.new() end)
         {:ok, workflows}
@@ -227,7 +227,7 @@ defmodule Pgflow.FlowBuilder do
       # }
   """
   @spec get_flow(String.t(), module()) :: {:ok, map()} | {:error, :not_found | term()}
-  def get_flow(workflow_slug, _repo) do
+  def get_flow(workflow_slug, repo) do
     workflow_query = """
     SELECT * FROM workflows WHERE workflow_slug = $1::text
     """
@@ -247,9 +247,9 @@ defmodule Pgflow.FlowBuilder do
     """
 
     with {:ok, %{rows: [workflow_row], columns: workflow_columns}} <-
-           _repo.query(workflow_query, [workflow_slug]),
+           repo.query(workflow_query, [workflow_slug]),
          {:ok, %{rows: step_rows, columns: step_columns}} <-
-           _repo.query(steps_query, [workflow_slug]) do
+           repo.query(steps_query, [workflow_slug]) do
       workflow = Enum.zip(workflow_columns, workflow_row) |> Map.new()
       steps = Enum.map(step_rows, fn row -> Enum.zip(step_columns, row) |> Map.new() end)
 
@@ -278,15 +278,15 @@ defmodule Pgflow.FlowBuilder do
       :ok = FlowBuilder.delete_flow("old_workflow", MyApp.Repo)
   """
   @spec delete_flow(String.t(), module()) :: :ok | {:error, term()}
-  def delete_flow(workflow_slug, _repo) do
+  def delete_flow(workflow_slug, repo) do
     with {:ok, _} <-
-           _repo.query("DELETE FROM workflow_step_dependencies_def WHERE workflow_slug = $1::text", [
+           repo.query("DELETE FROM workflow_step_dependencies_def WHERE workflow_slug = $1::text", [
              workflow_slug
            ]),
          {:ok, _} <-
-           _repo.query("DELETE FROM workflow_steps WHERE workflow_slug = $1::text", [workflow_slug]),
+           repo.query("DELETE FROM workflow_steps WHERE workflow_slug = $1::text", [workflow_slug]),
          {:ok, _} <-
-           _repo.query("DELETE FROM workflows WHERE workflow_slug = $1::text", [workflow_slug]) do
+           repo.query("DELETE FROM workflows WHERE workflow_slug = $1::text", [workflow_slug]) do
       :ok
     else
       {:error, reason} -> {:error, reason}
