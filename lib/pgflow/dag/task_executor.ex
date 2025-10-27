@@ -317,6 +317,17 @@ defmodule Pgflow.DAG.TaskExecutor do
   end
 
   # Execute a single task from map (after start_tasks() call)
+  #
+  # Retrieves the step function from the workflow definition and executes it with a 30-second
+  # timeout using Task.async/yield pattern. Catches any exceptions and converts them to error
+  # tuples for consistent error handling. Upon completion (success or failure), calls
+  # complete_task_success/5 or complete_task_failure/5 to update the database state.
+  #
+  # Timeout handling: If a task exceeds 30 seconds, Task.shutdown(:brutal_kill) is called
+  # to terminate it and an error tuple is returned.
+  #
+  # Exception handling: Any exception (throw, error, exit) is caught and converted to
+  # {:error, {:exception, {kind, error}}} tuple for logging and recovery.
   defp execute_task_from_map(task_map, definition, repo) do
     run_id = task_map["run_id"]
     step_slug = task_map["step_slug"]
@@ -373,6 +384,12 @@ defmodule Pgflow.DAG.TaskExecutor do
   end
 
   # Complete task successfully (using pgflow complete_task function)
+  #
+  # Calls the PostgreSQL complete_task stored function to mark the task as successfully
+  # executed and store the output. This function handles dependency counters, task queue
+  # updates, and may trigger execution of dependent steps if this task's step is now complete.
+  #
+  # Returns {:ok, :task_executed} on success, or {:error, reason} if the database call fails.
   defp complete_task_success(run_id, step_slug, task_index, output, repo) do
     # Call PostgreSQL complete_task function
     result =
@@ -403,6 +420,12 @@ defmodule Pgflow.DAG.TaskExecutor do
   end
 
   # Complete task with failure (using pgflow fail_task function)
+  #
+  # Calls the PostgreSQL fail_task stored function to mark a task as failed with an error
+  # message. This function may increment retry counters or mark the step/workflow as failed
+  # depending on the failure policy configured for the step.
+  #
+  # Returns {:ok, :task_executed} on success, or {:error, reason} if the database call fails.
   defp complete_task_failure(run_id, step_slug, task_index, reason, repo) do
     error_message = inspect(reason)
 
