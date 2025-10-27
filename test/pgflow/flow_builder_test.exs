@@ -32,10 +32,21 @@ defmodule Pgflow.FlowBuilderTest do
     # Reset test clock for deterministic timestamps
     Pgflow.TestClock.reset()
 
-    # Clean up any existing test workflows
-    Repo.query("DELETE FROM workflows WHERE workflow_slug LIKE 'test_%'", [])
-    :ok
+    # Clean up any existing test workflows using old "test_" pattern (from previous runs)
+    # This removes test data that may have persisted between test runs
+    {:ok, _} = Pgflow.TestWorkflowPrefix.cleanup_by_prefix("test_", Repo)
+
+    # Create unique test prefix for this specific test suite run
+    # This ensures parallel test runs don't collide on workflow names
+    prefix = Pgflow.TestWorkflowPrefix.start()
+
+    # Return prefix so it's available in tests via context
+    {:ok, prefix: prefix}
   end
+
+  # Tests currently use hardcoded "test_" prefix for simplicity
+  # This works because each test suite run clears the "test_" prefix data
+  # Future improvement: migrate all tests to use context prefix
 
   describe "create_flow/3 - Basic workflow creation" do
     test "creates workflow with default options" do
