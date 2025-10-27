@@ -274,28 +274,43 @@ defmodule Pgflow.FlowOperations do
     # Validate all dependencies exist
     case validate_dependencies_exist(workflow_slug, depends_on) do
       :ok ->
-        # Insert dependencies, ignoring duplicates
-        depends_on
-        |> Enum.each(fn dep_slug ->
-          Repo.query(
-            """
-            INSERT INTO workflow_step_dependencies_def (workflow_slug, dep_slug, step_slug)
-            VALUES ($1::text, $2::text, $3::text)
-            ON CONFLICT DO NOTHING
-            """,
-            [workflow_slug, dep_slug, step_slug]
-          )
-        end)
+        # Insert dependencies with error collection
+        insert_result =
+          depends_on
+          |> Enum.reduce_while(:ok, fn dep_slug, :ok ->
+            case Repo.query(
+              """
+              INSERT INTO workflow_step_dependencies_def (workflow_slug, dep_slug, step_slug)
+              VALUES ($1::text, $2::text, $3::text)
+              ON CONFLICT DO NOTHING
+              """,
+              [workflow_slug, dep_slug, step_slug]
+            ) do
+              {:ok, _} -> {:cont, :ok}
+              {:error, reason} -> {:halt, {:error, reason}}
+            end
+          end)
 
-        # Update deps_count on the step
-        Repo.query(
-          """
-          UPDATE workflow_steps
-          SET deps_count = $1::integer
-          WHERE workflow_slug = $2::text AND step_slug = $3::text
-          """,
-          [length(depends_on), workflow_slug, step_slug]
-        )
+        case insert_result do
+          :ok ->
+            # Update deps_count on the step after all inserts succeed
+            Repo.query(
+              """
+              UPDATE workflow_steps
+              SET deps_count = $1::integer
+              WHERE workflow_slug = $2::text AND step_slug = $3::text
+              """,
+              [length(depends_on), workflow_slug, step_slug]
+            )
+
+          error ->
+            Logger.error("Failed to insert dependencies for step",
+              workflow_slug: workflow_slug,
+              step_slug: step_slug,
+              error: inspect(error)
+            )
+            error
+        end
 
       error ->
         error

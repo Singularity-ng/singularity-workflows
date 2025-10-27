@@ -255,6 +255,9 @@ defmodule Pgflow.DAG.TaskExecutor do
          task_timeout_ms
        ) do
     # Phase 1: Poll pgmq for messages
+    # Add safety margin timeout (max_poll_seconds + 5 sec grace period) to prevent infinite waiting
+    poll_timeout_ms = (max_poll_seconds + 5) * 1000
+
     messages_result =
       repo.query(
         """
@@ -267,7 +270,8 @@ defmodule Pgflow.DAG.TaskExecutor do
           poll_interval_ms => $5::integer
         )
         """,
-        [workflow_slug, 30, batch_size, max_poll_seconds, poll_interval_ms]
+        [workflow_slug, 30, batch_size, max_poll_seconds, poll_interval_ms],
+        timeout: poll_timeout_ms
       )
 
     case messages_result do
@@ -285,6 +289,7 @@ defmodule Pgflow.DAG.TaskExecutor do
         )
 
         # Phase 2: Call start_tasks() to claim tasks
+        # Set timeout to 10 seconds to prevent row-level locking hangs
         tasks_result =
           repo.query(
             """
@@ -295,7 +300,8 @@ defmodule Pgflow.DAG.TaskExecutor do
               p_worker_id => $3::text
             )
             """,
-            [workflow_slug, msg_ids, worker_id]
+            [workflow_slug, msg_ids, worker_id],
+            timeout: 10_000
           )
 
         case tasks_result do
@@ -437,10 +443,12 @@ defmodule Pgflow.DAG.TaskExecutor do
           {:ok, :task_executed} | {:error, term()}
   defp complete_task_success(run_id, step_slug, task_index, output, repo) do
     # Call PostgreSQL complete_task function
+    # Set timeout to 15 seconds to prevent transaction deadlock hangs
     result =
       repo.query(
         "SELECT complete_task($1::uuid, $2::text, $3::integer, $4::jsonb)",
-        [run_id, step_slug, task_index, output]
+        [run_id, step_slug, task_index, output],
+        timeout: 15_000
       )
 
     case result do
@@ -477,10 +485,12 @@ defmodule Pgflow.DAG.TaskExecutor do
     error_message = inspect(reason)
 
     # Call PostgreSQL fail_task function
+    # Set timeout to 15 seconds to prevent transaction deadlock hangs
     result =
       repo.query(
         "SELECT pgflow.fail_task($1::uuid, $2::text, $3::integer, $4::text)",
-        [run_id, step_slug, task_index, error_message]
+        [run_id, step_slug, task_index, error_message],
+        timeout: 15_000
       )
 
     case result do
