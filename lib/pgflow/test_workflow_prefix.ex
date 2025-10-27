@@ -73,8 +73,9 @@ defmodule Pgflow.TestWorkflowPrefix do
                "DELETE FROM workflows WHERE workflow_slug = ANY($1::text[])",
                [workflow_slugs]
              ) do
-        Logger.info("Cleaned up #{length(workflow_slugs)} test workflows with prefix: #{prefix}")
-        {:ok, length(workflow_slugs)}
+        deleted_count = result.num_rows
+        Logger.info("Cleaned up #{deleted_count} test workflows with prefix: #{prefix}")
+        {:ok, deleted_count}
       else
         {:error, reason} ->
           Logger.error("Failed to cleanup test workflows with prefix #{prefix}: #{inspect(reason)}")

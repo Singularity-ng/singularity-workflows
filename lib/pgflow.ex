@@ -1,9 +1,11 @@
 defmodule Pgflow do
   @moduledoc """
-  Elixir implementation of pgflow's database-driven DAG (Directed Acyclic Graph) execution.
+  Pgflow - Complete workflow orchestration for Elixir.
 
-  Matches pgflow's proven architecture using PostgreSQL + pgmq extension for
-  workflow coordination with 100% feature parity.
+  A unified package providing complete workflow orchestration capabilities,
+  combining PGMQ-based message queuing, HTDAG goal decomposition, workflow execution,
+  and real-time notifications. Converts high-level goals into executable task graphs
+  with automatic dependency resolution and parallel execution.
 
   ## Dynamic vs Static Workflows
 
@@ -136,6 +138,84 @@ defmodule Pgflow do
 
   See `Pgflow.Executor` for execution options and `Pgflow.DAG.WorkflowDefinition`
   for workflow syntax details.
+
+  ## Real-time Notifications
+
+  ex_pgflow includes `Pgflow.Notifications` for real-time workflow events with comprehensive logging:
+
+      # Send workflow event with NOTIFY
+      {:ok, message_id} = Pgflow.Notifications.send_with_notify(
+        "workflow_events", 
+        %{type: "task_completed", task_id: "123"}, 
+        MyApp.Repo
+      )
+
+      # Listen for real-time workflow events
+      {:ok, pid} = Pgflow.Notifications.listen("workflow_events", MyApp.Repo)
+      
+      # All NOTIFY events are automatically logged with structured data:
+      # - Queue names, message IDs, timing, message types
+      # - Success/error logging with context
+      # - Performance metrics and debugging information
+
+  ### Notification Types
+
+  | Event Type | Description | Payload |
+  |------------|-------------|---------|
+  | `workflow_started` | Workflow execution begins | `{workflow_id, input}` |
+  | `task_started` | Individual task starts | `{task_id, workflow_id, step_name}` |
+  | `task_completed` | Task finishes successfully | `{task_id, result, duration_ms}` |
+  | `task_failed` | Task fails with error | `{task_id, error, retry_count}` |
+  | `workflow_completed` | Entire workflow finishes | `{workflow_id, final_result}` |
+  | `workflow_failed` | Workflow fails | `{workflow_id, error, failed_task}` |
+
+  ### Integration Examples
+
+      # Observer Web UI integration
+      {:ok, _} = Pgflow.Notifications.send_with_notify("observer_approvals", %{
+        type: "approval_created",
+        approval_id: "app_123",
+        title: "Deploy to Production"
+      }, MyApp.Repo)
+
+      # CentralCloud pattern learning
+      {:ok, _} = Pgflow.Notifications.send_with_notify("centralcloud_patterns", %{
+        type: "pattern_learned",
+        pattern_type: "microservice_architecture",
+        confidence_score: 0.95
+      }, MyApp.Repo)
+
+      # Genesis autonomous learning
+      {:ok, _} = Pgflow.Notifications.send_with_notify("genesis_learning", %{
+        type: "rule_evolved",
+        rule_type: "optimization",
+        improvement: 0.12
+      }, MyApp.Repo)
+
+  ## Orchestrator Integration
+
+  ex_pgflow includes `Pgflow.Orchestrator` for goal-driven workflow creation:
+
+      # Define a decomposer function
+      defmodule MyApp.GoalDecomposer do
+        def decompose(goal) do
+          # Your custom decomposition logic
+          tasks = [
+            %{id: "task1", description: "Analyze requirements", depends_on: []},
+            %{id: "task2", description: "Design architecture", depends_on: ["task1"]},
+            %{id: "task3", description: "Implement solution", depends_on: ["task2"]}
+          ]
+          {:ok, tasks}
+        end
+      end
+
+      # Compose and execute workflow from goal
+      {:ok, result} = Pgflow.WorkflowComposer.compose_from_goal(
+        "Build user authentication system",
+        &MyApp.GoalDecomposer.decompose/1,
+        step_functions,
+        MyApp.Repo
+      )
   """
 
   @doc """
