@@ -12,20 +12,43 @@ defmodule Pgflow.OrchestratorOptimizer do
   - **Resource Allocation**: Optimize resource usage and task distribution
   - **Learning**: Learn from execution patterns to improve future workflows
   - **Adaptive Strategies**: Adapt optimization strategies based on workload
-  
+
   ## Usage
-  
+
       # Optimize a workflow based on historical data
       {:ok, optimized_workflow} = Pgflow.OrchestratorOptimizer.optimize_workflow(
         workflow,
         MyApp.Repo
       )
-      
+
       # Get optimization recommendations
       {:ok, recommendations} = Pgflow.OrchestratorOptimizer.get_recommendations(
         workflow,
         MyApp.Repo
       )
+
+  ## AI Navigation Metadata
+
+  ### Module Identity
+  - **Type**: Optimization Engine (enhancer)
+  - **Purpose**: Learn from execution patterns to optimize future workflows
+  - **Works with**: Pgflow.Orchestrator, Pgflow.OrchestratorNotifications
+
+  ### Call Graph
+  - `optimize_workflow/3` → analyze metrics, apply optimizations, store patterns
+  - `get_recommendations/3` → Repository queries, pattern matching
+  - **Integrates**: Repository, OrchestratorNotifications, Config
+
+  ### Anti-Patterns
+  - ❌ DO NOT optimize workflows without sufficient historical data
+  - ❌ DO NOT break task dependencies during optimization
+  - ✅ DO preserve workflow semantics during optimization
+  - ✅ DO track optimization impact for learning feedback
+
+  ### Search Keywords
+  optimization, performance_tuning, learning_algorithms, pattern_analysis,
+  workflow_optimization, execution_metrics, parallelization, resource_allocation,
+  adaptive_strategies, pattern_learning
   """
 
   require Logger

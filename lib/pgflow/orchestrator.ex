@@ -38,14 +38,43 @@ defmodule Pgflow.Orchestrator do
       )
   
   ## Architecture
-  
+
   HTDAG integrates with ex_pgflow's existing components:
-  
+
   - **Goal Decomposition**: Custom decomposer functions
   - **Task Graph**: Hierarchical task structure with dependencies
   - **Workflow Generation**: Uses FlowBuilder for dynamic workflow creation
   - **Execution**: Uses Executor for workflow execution
   - **Notifications**: Uses Notifications for real-time events
+
+  ## AI Navigation Metadata
+
+  ### Module Identity
+  - **Type**: Orchestration Engine (core infrastructure)
+  - **Purpose**: Transform goals → task DAGs → executable workflows
+  - **Disambiguates from**:
+    - `Pgflow.Executor` (low-level task execution)
+    - `Pgflow.WorkflowComposer` (high-level API wrapper)
+    - `Pgflow.FlowBuilder` (raw workflow creation)
+
+  ### Call Graph
+  - `decompose_goal/3` → `build_task_graph`, `convert_tasks_to_steps`
+  - `create_workflow/3` → `FlowBuilder.create_workflow`, `convert_tasks_to_steps`
+  - `execute_goal/5` → `decompose_goal`, `create_workflow`, `Executor.execute_workflow`
+  - **Integrates**: Executor, FlowBuilder, Notifications, Config, Repository
+
+  ### Anti-Patterns (Duplicate Prevention)
+  - ❌ DO NOT create another "Orchestrator" module - this is the single source of truth
+  - ❌ DO NOT call `Executor.execute_workflow` directly from user code - use `Orchestrator.execute_goal`
+  - ❌ DO NOT hard-code task definitions - use decomposer pattern from `ExampleDecomposer`
+  - ❌ DO NOT ignore task dependencies - always validate in `build_task_graph`
+  - ✅ DO use `execute_goal` for all goal-driven workflows
+  - ✅ DO pass custom decomposer functions for domain-specific logic
+
+  ### Search Keywords
+  goal_decomposition, hierarchical_tasks, task_dag, workflow_orchestration, htdag,
+  autonomous_decomposition, task_dependencies, pgflow_orchestration, goal_execution,
+  workflow_composition, goal_driven_execution, task_graph_creation, decomposer_pattern
   """
 
   require Logger

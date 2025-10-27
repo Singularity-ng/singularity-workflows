@@ -41,6 +41,30 @@ defmodule Pgflow.WorkflowComposer do
   3. **Workflow Generation**: Creates optimized ex_pgflow workflows
   4. **Execution**: Runs workflows with real-time monitoring
   5. **Optimization**: Learns from execution to improve future workflows
+
+  ## AI Navigation Metadata
+
+  ### Module Identity
+  - **Type**: High-Level API (facade)
+  - **Purpose**: Unified entry point for goal-driven workflow composition
+  - **Wraps**: Pgflow.Orchestrator, Pgflow.OrchestratorOptimizer
+
+  ### Call Graph
+  - `compose_from_goal/5` → Orchestrator.decompose_goal, create_workflow, execute
+  - `compose_from_task_graph/4` → Orchestrator.create_workflow, execute
+  - `compose_multiple_workflows/5` → parallel composition and execution
+  - **Integrates**: Orchestrator, OrchestratorOptimizer, Executor, OrchestratorNotifications
+
+  ### Anti-Patterns
+  - ❌ DO NOT bypass WorkflowComposer to call Orchestrator directly from user code
+  - ❌ DO NOT compose workflows without step_functions - they're required
+  - ✅ DO use compose_from_goal for simple goal-driven workflows
+  - ✅ DO pass monitoring/optimization flags for production workflows
+
+  ### Search Keywords
+  workflow_composition, goal_driven_api, high_level_api, workflow_generation,
+  composition_api, facade_pattern, orchestration_coordination, workflow_execution,
+  unified_entry_point, goal_to_workflow
   """
 
   require Logger

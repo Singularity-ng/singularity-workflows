@@ -1,13 +1,38 @@
 defmodule Pgflow.Orchestrator.Config do
   @moduledoc """
   Configuration management for HTDAG functionality.
-  
+
   Provides centralized configuration for HTDAG features including:
   - Default decomposer settings
   - Execution timeouts and limits
   - Optimization parameters
   - Notification settings
   - Performance thresholds
+
+  ## AI Navigation Metadata
+
+  ### Module Identity
+  - **Type**: Configuration Manager (infrastructure)
+  - **Purpose**: Single source of truth for orchestrator settings
+  - **Provides**: Composable config for all orchestrator modules
+
+  ### Call Graph
+  - `get/2` → Application.get_env(config values)
+  - `get_decomposer_config/2` → Returns typed decomposer config
+  - `get_execution_config/1` → Returns execution settings
+  - `feature_enabled?/2` → Feature flag checking
+  - **Used by**: Orchestrator, OrchestratorNotifications, OrchestratorOptimizer, WorkflowComposer
+
+  ### Anti-Patterns
+  - ❌ DO NOT hard-code settings - use Config.get/2
+  - ❌ DO NOT override config per-call - set in config files
+  - ✅ DO use Config.get with defaults for backward compatibility
+  - ✅ DO validate config on startup via validate_config/1
+
+  ### Search Keywords
+  configuration, config_management, settings, feature_flags, orchestrator_config,
+  execution_settings, timeout_management, decomposer_config, performance_thresholds,
+  runtime_configuration
   """
 
   @doc """

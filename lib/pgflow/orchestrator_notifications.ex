@@ -36,6 +36,31 @@ defmodule Pgflow.OrchestratorNotifications do
   - `workflow:completed` - Workflow execution finished
   - `workflow:failed` - Workflow execution failed
   - `performance:metrics` - Performance metrics update
+
+  ## AI Navigation Metadata
+
+  ### Module Identity
+  - **Type**: Notification Engine (supporting infrastructure)
+  - **Purpose**: Real-time event broadcasting for orchestrator workflows
+  - **Complements**: Pgflow.Orchestrator, Pgflow.OrchestratorOptimizer
+
+  ### Call Graph
+  - `listen/2` → `Pgflow.Notifications` (base notifications)
+  - `broadcast_decomposition_event/4` → Pgflow.Notifications
+  - `broadcast_task_event/4` → Pgflow.Notifications
+  - `broadcast_workflow_event/4` → Pgflow.Notifications
+  - **Integrates**: Notifications, Repository, OrchestratorOptimizer
+
+  ### Anti-Patterns
+  - ❌ DO NOT broadcast raw event data without structure - use event_type pattern
+  - ❌ DO NOT block on notifications - use async broadcasting
+  - ✅ DO publish all orchestrator lifecycle events
+  - ✅ DO include workflow_id in all event data for traceability
+
+  ### Search Keywords
+  notifications, event_broadcasting, orchestrator_events, pgmq_notifications,
+  real_time_monitoring, decomposition_events, task_tracking, workflow_monitoring,
+  performance_metrics, event_driven_execution
   """
 
   require Logger
