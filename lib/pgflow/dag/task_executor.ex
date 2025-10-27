@@ -101,12 +101,13 @@ defmodule Pgflow.DAG.TaskExecutor do
 
     start_time = System.monotonic_time(:millisecond)
 
-    Logger.info("TaskExecutor: Starting execution loop with pgmq",
+    Logger.info("Starting execution loop",
       run_id: run_id,
       worker_id: worker_id,
       batch_size: batch_size,
       workflow_slug: definition.slug,
-      task_timeout_ms: task_timeout_ms
+      task_timeout_ms: task_timeout_ms,
+      coordination: "pgmq"
     )
 
     execute_loop(
@@ -155,7 +156,11 @@ defmodule Pgflow.DAG.TaskExecutor do
 
     cond do
       timeout != :infinity and elapsed > timeout ->
-        Logger.warning("TaskExecutor: Timeout exceeded", run_id: run_id, elapsed_ms: elapsed)
+        Logger.warning("Timeout exceeded",
+          run_id: run_id,
+          elapsed_ms: elapsed,
+          timeout_ms: timeout
+        )
         check_run_status(run_id, repo)
 
       true ->
@@ -171,7 +176,10 @@ defmodule Pgflow.DAG.TaskExecutor do
              ) do
           {:ok, :tasks_executed, count} ->
             # Tasks completed, poll for next batch immediately
-            Logger.debug("TaskExecutor: Executed #{count} tasks", run_id: run_id)
+            Logger.debug("Executed batch of tasks",
+              run_id: run_id,
+              task_count: count
+            )
 
             execute_loop(
               run_id,
@@ -215,7 +223,7 @@ defmodule Pgflow.DAG.TaskExecutor do
             end
 
           {:error, reason} ->
-            Logger.error("TaskExecutor: Task execution failed",
+            Logger.error("Task execution failed",
               run_id: run_id,
               reason: inspect(reason)
             )
@@ -271,9 +279,9 @@ defmodule Pgflow.DAG.TaskExecutor do
         # Extract message IDs
         msg_ids = Enum.map(message_rows, fn [msg_id | _rest] -> msg_id end)
 
-        Logger.debug("TaskExecutor: Polled #{length(msg_ids)} messages from pgmq",
+        Logger.debug("Polled messages from queue",
           workflow_slug: workflow_slug,
-          msg_ids: msg_ids
+          msg_count: length(msg_ids)
         )
 
         # Phase 2: Call start_tasks() to claim tasks
@@ -298,8 +306,9 @@ defmodule Pgflow.DAG.TaskExecutor do
                 Enum.zip(columns, row) |> Map.new()
               end)
 
-            Logger.debug("TaskExecutor: Claimed #{length(tasks)} tasks",
-              workflow_slug: workflow_slug
+            Logger.debug("Claimed tasks for execution",
+              workflow_slug: workflow_slug,
+              task_count: length(tasks)
             )
 
             # Phase 3: Execute tasks concurrently
@@ -436,7 +445,7 @@ defmodule Pgflow.DAG.TaskExecutor do
 
     case result do
       {:ok, _} ->
-        Logger.debug("TaskExecutor: Task completed successfully",
+        Logger.debug("Task completed successfully",
           run_id: run_id,
           step_slug: step_slug,
           task_index: task_index
@@ -445,7 +454,7 @@ defmodule Pgflow.DAG.TaskExecutor do
         {:ok, :task_executed}
 
       {:error, reason} ->
-        Logger.error("TaskExecutor: Failed to complete task",
+        Logger.error("Failed to complete task",
           run_id: run_id,
           step_slug: step_slug,
           reason: inspect(reason)
@@ -476,7 +485,7 @@ defmodule Pgflow.DAG.TaskExecutor do
 
     case result do
       {:ok, _} ->
-        Logger.warning("TaskExecutor: Task failed",
+        Logger.warning("Task failed",
           run_id: run_id,
           step_slug: step_slug,
           task_index: task_index,
@@ -486,7 +495,7 @@ defmodule Pgflow.DAG.TaskExecutor do
         {:ok, :task_executed}
 
       {:error, db_reason} ->
-        Logger.error("TaskExecutor: Failed to mark task as failed",
+        Logger.error("Failed to mark task as failed",
           run_id: run_id,
           step_slug: step_slug,
           reason: inspect(db_reason)
@@ -502,17 +511,17 @@ defmodule Pgflow.DAG.TaskExecutor do
   defp check_run_status(run_id, repo) do
     case repo.get(WorkflowRun, run_id) do
       nil ->
-        Logger.error("TaskExecutor: Run not found", run_id: run_id)
+        Logger.error("Run not found", run_id: run_id)
         {:error, {:run_not_found, run_id}}
 
       run ->
         case run.status do
           "completed" ->
-            Logger.info("TaskExecutor: Run completed", run_id: run_id)
+            Logger.info("Run completed", run_id: run_id)
             {:ok, run.output || %{}}
 
           "failed" ->
-            Logger.error("TaskExecutor: Run failed", run_id: run_id, error: run.error_message)
+            Logger.error("Run failed", run_id: run_id, error: run.error_message)
             {:error, {:run_failed, run.error_message}}
 
           "started" ->
