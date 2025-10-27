@@ -13,8 +13,9 @@ jobs:
 
     services:
       postgres:
-        # Use postgres:15 and install pgmq extension via apt in database setup step
-        image: postgres:15-alpine
+        # Use tembo/pgmq image which includes pgmq extension pre-installed
+        # pgmq is REQUIRED for task coordination and queue management
+        image: tembo/pgmq:latest
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -46,19 +47,14 @@ jobs:
     - name: Install dependencies
       run: mix deps.get
 
-    - name: Install pgmq extension in test database
+    - name: Wait for PostgreSQL and create test database
       run: |
-        # Wait for PostgreSQL to be ready with extended timeout for container startup
-        timeout 30 bash -c 'until pg_isready -h localhost -p 5432 -U postgres; do echo "Waiting for postgres..."; sleep 1; done' || true
-        sleep 2  # Extra safety margin
+        # Wait for PostgreSQL to be ready
+        timeout 30 bash -c 'until pg_isready -h localhost -p 5432 -U postgres; do echo "Waiting for postgres..."; sleep 1; done'
+        sleep 1
 
         # Create test database
         PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE ex_pgflow_test;" 2>/dev/null || echo "Database may already exist"
-
-        # Try to install pgmq extension from official source
-        # Note: pgmq may not be available in Alpine Linux without compilation
-        # Gracefully skip if not available - tests will use schema fallback
-        PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -d ex_pgflow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;" 2>/dev/null || echo "pgmq extension not available, tests will use schema fallback"
 
     - name: Run migrations
       run: |
