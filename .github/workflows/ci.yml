@@ -13,9 +13,9 @@ jobs:
 
     services:
       postgres:
-        # Use tembo/pgmq image which includes pgmq extension pre-installed
+        # Use official pgmq image with PostgreSQL 18 and pgmq pre-installed
         # pgmq is REQUIRED for task coordination and queue management
-        image: tembo/pgmq:latest
+        image: ghcr.io/pgmq/pg18-pgmq:latest
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
