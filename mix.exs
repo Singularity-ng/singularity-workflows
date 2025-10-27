@@ -31,7 +31,7 @@ defmodule ExPgflow.MixProject do
   def project do
     [
       app: :ex_pgflow,
-      version: "1.0.1",
+      version: "1.0.2",
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
