@@ -969,4 +969,226 @@ defmodule Pgflow.FlowBuilderTest do
       assert length(workflow["steps"]) == 8
     end
   end
+
+  describe "error cases - add_step/5" do
+    test "rejects empty step slug" do
+      {:ok, _} = FlowBuilder.create_flow("test_empty_step_slug", Repo)
+      result = FlowBuilder.add_step("test_empty_step_slug", "", [], Repo)
+
+      assert result == {:error, :step_slug_cannot_be_empty}
+    end
+
+    test "rejects step slug over 128 characters" do
+      {:ok, _} = FlowBuilder.create_flow("test_long_step_slug", Repo)
+      long_slug = String.duplicate("a", 129)
+      result = FlowBuilder.add_step("test_long_step_slug", long_slug, [], Repo)
+
+      assert result == {:error, :step_slug_too_long}
+    end
+
+    test "rejects step slug starting with number" do
+      {:ok, _} = FlowBuilder.create_flow("test_step_starts_num", Repo)
+      result = FlowBuilder.add_step("test_step_starts_num", "123_step", [], Repo)
+
+      assert result == {:error, :step_slug_invalid_format}
+    end
+
+    test "rejects step slug with special characters" do
+      {:ok, _} = FlowBuilder.create_flow("test_step_special", Repo)
+      result = FlowBuilder.add_step("test_step_special", "step@test", [], Repo)
+
+      assert result == {:error, :step_slug_invalid_format}
+    end
+
+    test "rejects step slug that is reserved word 'run'" do
+      {:ok, _} = FlowBuilder.create_flow("test_reserved_step", Repo)
+      result = FlowBuilder.add_step("test_reserved_step", "run", [], Repo)
+
+      assert result == {:error, :step_slug_reserved}
+    end
+
+    test "rejects non-string step slug" do
+      {:ok, _} = FlowBuilder.create_flow("test_step_type", Repo)
+      result = FlowBuilder.add_step("test_step_type", 12345, [], Repo)
+
+      assert result == {:error, :step_slug_must_be_string}
+    end
+
+    test "rejects invalid step type" do
+      {:ok, _} = FlowBuilder.create_flow("test_invalid_type", Repo)
+      result = FlowBuilder.add_step("test_invalid_type", "step1", [], Repo, step_type: "invalid")
+
+      assert result == {:error, :step_type_must_be_single_or_map}
+    end
+
+    test "rejects non-positive initial_tasks" do
+      {:ok, _} = FlowBuilder.create_flow("test_bad_initial_tasks", Repo)
+      result = FlowBuilder.add_step("test_bad_initial_tasks", "step1", [], Repo, initial_tasks: 0)
+
+      assert result == {:error, :initial_tasks_must_be_positive}
+    end
+
+    test "rejects negative initial_tasks" do
+      {:ok, _} = FlowBuilder.create_flow("test_negative_tasks", Repo)
+      result = FlowBuilder.add_step("test_negative_tasks", "step1", [], Repo, initial_tasks: -5)
+
+      assert result == {:error, :initial_tasks_must_be_positive}
+    end
+
+    test "rejects non-integer initial_tasks" do
+      {:ok, _} = FlowBuilder.create_flow("test_float_tasks", Repo)
+      result = FlowBuilder.add_step("test_float_tasks", "step1", [], Repo, initial_tasks: 3.5)
+
+      assert result == {:error, :initial_tasks_must_be_integer}
+    end
+
+    test "rejects missing workflow" do
+      result = FlowBuilder.add_step("missing_workflow", "step1", [], Repo)
+
+      assert result == {:error, {:workflow_not_found, "missing_workflow"}}
+    end
+
+    test "rejects duplicate step in same workflow" do
+      {:ok, _} = FlowBuilder.create_flow("test_dup_step", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_dup_step", "duplicate", [], Repo)
+      result = FlowBuilder.add_step("test_dup_step", "duplicate", [], Repo)
+
+      assert result == {:error, {:duplicate_step_slug, "duplicate"}}
+    end
+
+    test "rejects dependency on non-existent step" do
+      {:ok, _} = FlowBuilder.create_flow("test_missing_dep", Repo)
+      result = FlowBuilder.add_step("test_missing_dep", "step2", ["missing_step"], Repo)
+
+      assert result == {:error, {:missing_dependencies, ["missing_step"]}}
+    end
+
+    test "rejects missing workflow in dependency check" do
+      result = FlowBuilder.add_step("missing_wf", "step1", ["some_step"], Repo)
+
+      # Will fail on workflow validation before dependency validation
+      assert match?({:error, _}, result)
+    end
+
+    test "rejects map step with multiple dependencies" do
+      {:ok, _} = FlowBuilder.create_flow("test_map_multi_dep", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_map_multi_dep", "step1", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_map_multi_dep", "step2", [], Repo)
+      result = FlowBuilder.add_step("test_map_multi_dep", "map_step", ["step1", "step2"], Repo, step_type: "map")
+
+      assert match?({:error, {:map_step_constraint_violation, _}}, result)
+    end
+
+    test "allows map step with single dependency" do
+      {:ok, _} = FlowBuilder.create_flow("test_map_single_dep", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_map_single_dep", "step1", [], Repo)
+      {:ok, map_step} = FlowBuilder.add_step("test_map_single_dep", "map_step", ["step1"], Repo, step_type: "map")
+
+      assert map_step["step_type"] == "map"
+      assert map_step["deps_count"] == 1
+    end
+
+    test "allows map step without dependencies" do
+      {:ok, _} = FlowBuilder.create_flow("test_map_no_dep", Repo)
+      {:ok, map_step} = FlowBuilder.add_step("test_map_no_dep", "map_step", [], Repo, step_type: "map")
+
+      assert map_step["step_type"] == "map"
+      assert map_step["deps_count"] == 0
+    end
+  end
+
+  describe "error cases - delete_flow/2" do
+    test "deletes workflow and all related data" do
+      {:ok, _} = FlowBuilder.create_flow("test_delete", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete", "step1", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete", "step2", ["step1"], Repo)
+
+      :ok = FlowBuilder.delete_flow("test_delete", Repo)
+
+      # Verify workflow is deleted
+      {:ok, result} = Repo.query("SELECT * FROM workflows WHERE workflow_slug = 'test_delete'", [])
+      assert length(result.rows) == 0
+
+      # Verify steps are deleted
+      {:ok, result} = Repo.query("SELECT * FROM workflow_steps WHERE workflow_slug = 'test_delete'", [])
+      assert length(result.rows) == 0
+
+      # Verify dependencies are deleted
+      {:ok, result} = Repo.query("SELECT * FROM workflow_step_dependencies_def WHERE workflow_slug = 'test_delete'", [])
+      assert length(result.rows) == 0
+    end
+
+    test "deletes workflow with complex dependencies" do
+      {:ok, _} = FlowBuilder.create_flow("test_delete_complex", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete_complex", "a", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete_complex", "b", ["a"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete_complex", "c", ["a"], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete_complex", "d", ["b", "c"], Repo)
+
+      :ok = FlowBuilder.delete_flow("test_delete_complex", Repo)
+
+      # Verify all data is gone
+      {:ok, result} = Repo.query("SELECT * FROM workflows WHERE workflow_slug = 'test_delete_complex'", [])
+      assert length(result.rows) == 0
+    end
+
+    test "delete is idempotent (deleting non-existent workflow succeeds)" do
+      result = FlowBuilder.delete_flow("never_created", Repo)
+
+      # Should succeed (no rows to delete)
+      assert result == :ok
+    end
+  end
+
+  describe "edge cases" do
+    test "create_flow is idempotent for reserved word checks" do
+      # "run" is reserved, should always fail
+      result1 = FlowBuilder.create_flow("run", Repo)
+      result2 = FlowBuilder.create_flow("run", Repo)
+
+      assert result1 == {:error, :workflow_slug_reserved}
+      assert result2 == {:error, :workflow_slug_reserved}
+    end
+
+    test "step with underscore-only slug is valid" do
+      {:ok, _} = FlowBuilder.create_flow("test_underscore", Repo)
+      {:ok, step} = FlowBuilder.add_step("test_underscore", "_", [], Repo)
+
+      assert step["step_slug"] == "_"
+    end
+
+    test "workflow slug exactly 128 characters works" do
+      max_slug = String.duplicate("a", 128)
+      {:ok, workflow} = FlowBuilder.create_flow(max_slug, Repo)
+
+      assert workflow["workflow_slug"] == max_slug
+    end
+
+    test "accepts very large initial_tasks" do
+      {:ok, _} = FlowBuilder.create_flow("test_large_tasks", Repo)
+      {:ok, step} = FlowBuilder.add_step("test_large_tasks", "step1", [], Repo, initial_tasks: 1_000_000)
+
+      assert step["initial_tasks"] == 1_000_000
+    end
+
+    test "step max_attempts overrides workflow default" do
+      {:ok, _} = FlowBuilder.create_flow("test_override", Repo, max_attempts: 3)
+      {:ok, step} = FlowBuilder.add_step("test_override", "step1", [], Repo, max_attempts: 10)
+
+      assert step["max_attempts"] == 10
+    end
+
+    test "step timeout overrides workflow default" do
+      {:ok, _} = FlowBuilder.create_flow("test_timeout_override", Repo, timeout: 60)
+      {:ok, step} = FlowBuilder.add_step("test_timeout_override", "step1", [], Repo, timeout: 300)
+
+      assert step["timeout"] == 300
+    end
+
+    test "get_flow returns 404 for non-existent workflow" do
+      result = FlowBuilder.get_flow("never_created", Repo)
+
+      assert result == {:error, :not_found}
+    end
+  end
 end
