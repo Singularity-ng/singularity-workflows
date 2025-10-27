@@ -15,7 +15,7 @@ jobs:
       postgres:
         # Use official pgmq image with PostgreSQL 18 and pgmq pre-installed
         # pgmq is REQUIRED for task coordination and queue management
-        image: ghcr.io/pgmq/pg18-pgmq:latest
+        image: ghcr.io/pgmq/pg18-pgmq:v1.7.0
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
