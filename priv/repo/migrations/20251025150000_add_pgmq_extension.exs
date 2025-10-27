@@ -7,20 +7,28 @@ defmodule Pgflow.Repo.Migrations.AddPgmqExtension do
     # Note: Gracefully handles systems where pgmq is not installed
     # (e.g., postgres:15-alpine in CI). The extension is optional for tests
     # since Elixir code can fall back to schema-based message queueing.
-    try do
-      execute("CREATE EXTENSION IF NOT EXISTS pgmq")
-    rescue
-      # Extension not available on this PostgreSQL installation
-      # This is OK for testing - pgmq is not required for functionality
-      _ -> :ok
-    end
+    #
+    # Use raw SQL with BEGIN/EXCEPTION to handle missing extension at DB level
+    execute("""
+    DO $$
+    BEGIN
+      CREATE EXTENSION IF NOT EXISTS pgmq;
+    EXCEPTION WHEN OTHERS THEN
+      -- Extension not available on this PostgreSQL installation
+      -- This is expected and OK - pgmq is optional
+      NULL;
+    END $$;
+    """)
   end
 
   def down do
-    try do
-      execute("DROP EXTENSION IF EXISTS pgmq CASCADE")
-    rescue
-      _ -> :ok
-    end
+    execute("""
+    DO $$
+    BEGIN
+      DROP EXTENSION IF EXISTS pgmq CASCADE;
+    EXCEPTION WHEN OTHERS THEN
+      NULL;
+    END $$;
+    """)
   end
 end
