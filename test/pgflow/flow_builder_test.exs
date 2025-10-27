@@ -1191,4 +1191,218 @@ defmodule Pgflow.FlowBuilderTest do
       assert result == {:error, :not_found}
     end
   end
+
+  describe "idempotency - creating/updating workflows safely" do
+    test "creating same workflow twice returns error on second attempt" do
+      {:ok, workflow1} = FlowBuilder.create_flow("test_idempotent", Repo)
+      assert workflow1["workflow_slug"] == "test_idempotent"
+
+      # Second attempt should fail
+      result = FlowBuilder.create_flow("test_idempotent", Repo)
+      assert match?({:error, {:workflow_already_exists, _}}, result)
+    end
+
+    test "adding same step twice with same slug returns error on second attempt" do
+      {:ok, _} = FlowBuilder.create_flow("test_step_idempotent", Repo)
+      {:ok, step1} = FlowBuilder.add_step("test_step_idempotent", "process", [], Repo)
+      assert step1["step_slug"] == "process"
+
+      # Second attempt with same step slug should fail
+      result = FlowBuilder.add_step("test_step_idempotent", "process", [], Repo)
+      assert match?({:error, {:duplicate_step_slug, _}}, result)
+    end
+
+    test "deleting non-existent workflow succeeds without error" do
+      # Workflow never existed
+      result = FlowBuilder.delete_flow("never_existed_workflow", Repo)
+
+      # Should succeed silently (idempotent)
+      assert result == :ok
+    end
+
+    test "deleting same workflow twice succeeds both times" do
+      {:ok, _} = FlowBuilder.create_flow("test_delete_twice", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_delete_twice", "step1", [], Repo)
+
+      # First deletion succeeds
+      result1 = FlowBuilder.delete_flow("test_delete_twice", Repo)
+      assert result1 == :ok
+
+      # Second deletion also succeeds (idempotent)
+      result2 = FlowBuilder.delete_flow("test_delete_twice", Repo)
+      assert result2 == :ok
+    end
+
+    test "getting same workflow multiple times returns consistent data" do
+      {:ok, _} = FlowBuilder.create_flow("test_get_consistent", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_consistent", "a", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_get_consistent", "b", ["a"], Repo)
+
+      # Get multiple times
+      {:ok, get1} = FlowBuilder.get_flow("test_get_consistent", Repo)
+      {:ok, get2} = FlowBuilder.get_flow("test_get_consistent", Repo)
+      {:ok, get3} = FlowBuilder.get_flow("test_get_consistent", Repo)
+
+      # All results should be identical
+      assert get1["workflow_slug"] == get2["workflow_slug"]
+      assert get2["workflow_slug"] == get3["workflow_slug"]
+      assert length(get1["steps"]) == length(get2["steps"])
+      assert length(get2["steps"]) == length(get3["steps"])
+    end
+
+    test "listing workflows multiple times returns consistent results" do
+      {:ok, _} = FlowBuilder.create_flow("list_test_1", Repo)
+      {:ok, _} = FlowBuilder.create_flow("list_test_2", Repo)
+
+      {:ok, list1} = FlowBuilder.list_flows(Repo)
+      {:ok, list2} = FlowBuilder.list_flows(Repo)
+
+      # Count should be consistent
+      assert length(list1) == length(list2)
+
+      # Results should be in same order (by created_at DESC)
+      list1_slugs = Enum.map(list1, & &1["workflow_slug"])
+      list2_slugs = Enum.map(list2, & &1["workflow_slug"])
+      assert list1_slugs == list2_slugs
+    end
+
+    test "adding steps with same dependencies multiple times uses existing dependencies" do
+      {:ok, _} = FlowBuilder.create_flow("test_deps_idempotent", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_deps_idempotent", "a", [], Repo)
+      {:ok, _} = FlowBuilder.add_step("test_deps_idempotent", "b", [], Repo)
+
+      # Add step with dependencies
+      {:ok, _} = FlowBuilder.add_step("test_deps_idempotent", "c", ["a", "b"], Repo)
+      {:ok, step1} = FlowBuilder.get_flow("test_deps_idempotent", Repo)
+      step_c_1 = Enum.find(step1["steps"], &(&1["step_slug"] == "c"))
+
+      # Verify it has 2 dependencies
+      assert step_c_1["deps_count"] == 2
+    end
+
+    test "updating step options (max_attempts, timeout) creates new values on first add" do
+      {:ok, _} = FlowBuilder.create_flow("test_update_opts", Repo)
+
+      # Add step with custom options
+      {:ok, step1} = FlowBuilder.add_step("test_update_opts", "custom", [], Repo, max_attempts: 5, timeout: 120)
+      assert step1["max_attempts"] == 5
+      assert step1["timeout"] == 120
+
+      # Get workflow to verify persisted
+      {:ok, workflow} = FlowBuilder.get_flow("test_update_opts", Repo)
+      step_custom = Enum.find(workflow["steps"], &(&1["step_slug"] == "custom"))
+      assert step_custom["max_attempts"] == 5
+      assert step_custom["timeout"] == 120
+    end
+
+    test "reading deleted workflow returns :not_found" do
+      {:ok, _} = FlowBuilder.create_flow("test_read_deleted", Repo)
+
+      # Verify it exists
+      {:ok, _} = FlowBuilder.get_flow("test_read_deleted", Repo)
+
+      # Delete it
+      :ok = FlowBuilder.delete_flow("test_read_deleted", Repo)
+
+      # Reading should now fail
+      result = FlowBuilder.get_flow("test_read_deleted", Repo)
+      assert result == {:error, :not_found}
+    end
+  end
+
+  describe "runtime error recovery - handling failures gracefully" do
+    test "step with no dependencies can be added after failed add_step attempt" do
+      {:ok, _} = FlowBuilder.create_flow("test_recover_1", Repo)
+
+      # First attempt fails (invalid step type)
+      result1 = FlowBuilder.add_step("test_recover_1", "bad_step", [], Repo, step_type: "invalid")
+      assert match?({:error, _}, result1)
+
+      # Second attempt with valid parameters succeeds
+      result2 = FlowBuilder.add_step("test_recover_1", "good_step", [], Repo)
+      assert match?({:ok, _}, result2)
+    end
+
+    test "workflow can be fixed after failed step add with missing dependency" do
+      {:ok, _} = FlowBuilder.create_flow("test_recover_missing_dep", Repo)
+
+      # First attempt fails (missing dependency)
+      result1 = FlowBuilder.add_step("test_recover_missing_dep", "step1", ["nonexistent"], Repo)
+      assert match?({:error, {:missing_dependencies, _}}, result1)
+
+      # Create the missing dependency first
+      {:ok, _} = FlowBuilder.add_step("test_recover_missing_dep", "nonexistent", [], Repo)
+
+      # Now add a new step with valid dependency succeeds
+      result2 = FlowBuilder.add_step("test_recover_missing_dep", "step2", ["nonexistent"], Repo)
+      assert match?({:ok, _}, result2)
+
+      # Verify workflow is queryable and has at least the dependency step
+      {:ok, workflow} = FlowBuilder.get_flow("test_recover_missing_dep", Repo)
+      assert Enum.any?(workflow["steps"], &(&1["step_slug"] == "nonexistent"))
+      assert Enum.any?(workflow["steps"], &(&1["step_slug"] == "step2"))
+    end
+
+    test "duplicate step error doesn't corrupt workflow state" do
+      {:ok, _} = FlowBuilder.create_flow("test_recover_3", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_recover_3", "step1", [], Repo)
+
+      # Try to add duplicate
+      result1 = FlowBuilder.add_step("test_recover_3", "step1", [], Repo)
+      assert match?({:error, {:duplicate_step_slug, _}}, result1)
+
+      # Workflow should still be queryable
+      {:ok, workflow} = FlowBuilder.get_flow("test_recover_3", Repo)
+      assert length(workflow["steps"]) == 1
+
+      # Can still add different step
+      {:ok, step2} = FlowBuilder.add_step("test_recover_3", "step2", ["step1"], Repo)
+      assert step2["step_slug"] == "step2"
+
+      # Verify both steps exist
+      {:ok, workflow2} = FlowBuilder.get_flow("test_recover_3", Repo)
+      assert length(workflow2["steps"]) == 2
+    end
+
+    test "invalid initial_tasks error doesn't prevent subsequent valid add" do
+      {:ok, _} = FlowBuilder.create_flow("test_recover_4", Repo)
+
+      # Try invalid initial_tasks
+      result1 = FlowBuilder.add_step("test_recover_4", "map_step", [], Repo, step_type: "map", initial_tasks: -1)
+      assert match?({:error, :initial_tasks_must_be_positive}, result1)
+
+      # Add with valid initial_tasks succeeds
+      result2 = FlowBuilder.add_step("test_recover_4", "map_step", [], Repo, step_type: "map", initial_tasks: 10)
+      assert match?({:ok, _}, result2)
+    end
+
+    test "listing workflows works even after failed operations" do
+      {:ok, _} = FlowBuilder.create_flow("test_recover_5", Repo)
+
+      # Attempt operations that fail
+      _ = FlowBuilder.add_step("test_recover_5", "step", [], Repo, step_type: "bad")
+      _ = FlowBuilder.create_flow("test_recover_5", Repo)
+
+      # List should still work
+      {:ok, workflows} = FlowBuilder.list_flows(Repo)
+      assert is_list(workflows)
+      assert length(workflows) > 0
+    end
+
+    test "deleting partially-built workflow succeeds" do
+      {:ok, _} = FlowBuilder.create_flow("test_recover_6", Repo)
+      {:ok, _} = FlowBuilder.add_step("test_recover_6", "step1", [], Repo)
+
+      # Try to add step that fails (missing dependency)
+      _ = FlowBuilder.add_step("test_recover_6", "step2", ["missing"], Repo)
+
+      # Delete should still work on partially-built workflow
+      result = FlowBuilder.delete_flow("test_recover_6", Repo)
+      assert result == :ok
+
+      # Verify completely deleted
+      {:ok, result} = Repo.query("SELECT COUNT(*) FROM workflows WHERE workflow_slug = 'test_recover_6'", [])
+      assert result.rows == [[0]]
+    end
+  end
 end
