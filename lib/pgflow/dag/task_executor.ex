@@ -96,6 +96,8 @@ defmodule Pgflow.DAG.TaskExecutor do
     # Poll up to 10 messages at once (matches pgflow default)
     max_poll_seconds = Keyword.get(opts, :max_poll_seconds, 5)
     # Max time to wait for messages (matches pgflow default)
+    task_timeout_ms = Keyword.get(opts, :task_timeout_ms, 30_000)
+    # Task execution timeout in milliseconds (default: 30 seconds)
 
     start_time = System.monotonic_time(:millisecond)
 
@@ -103,7 +105,8 @@ defmodule Pgflow.DAG.TaskExecutor do
       run_id: run_id,
       worker_id: worker_id,
       batch_size: batch_size,
-      workflow_slug: definition.slug
+      workflow_slug: definition.slug,
+      task_timeout_ms: task_timeout_ms
     )
 
     execute_loop(
@@ -116,7 +119,8 @@ defmodule Pgflow.DAG.TaskExecutor do
       timeout,
       poll_interval_ms,
       batch_size,
-      max_poll_seconds
+      max_poll_seconds,
+      task_timeout_ms
     )
   end
 
@@ -131,6 +135,7 @@ defmodule Pgflow.DAG.TaskExecutor do
           integer() | :infinity,
           integer(),
           integer(),
+          integer(),
           integer()
         ) :: {:ok, map()} | {:ok, :in_progress} | {:error, term()}
   defp execute_loop(
@@ -143,7 +148,8 @@ defmodule Pgflow.DAG.TaskExecutor do
          timeout,
          poll_interval_ms,
          batch_size,
-         max_poll_seconds
+         max_poll_seconds,
+         task_timeout_ms
        ) do
     elapsed = System.monotonic_time(:millisecond) - start_time
 
@@ -160,7 +166,8 @@ defmodule Pgflow.DAG.TaskExecutor do
                worker_id,
                batch_size,
                max_poll_seconds,
-               poll_interval_ms
+               poll_interval_ms,
+               task_timeout_ms
              ) do
           {:ok, :tasks_executed, count} ->
             # Tasks completed, poll for next batch immediately
@@ -176,7 +183,8 @@ defmodule Pgflow.DAG.TaskExecutor do
               timeout,
               poll_interval_ms,
               batch_size,
-              max_poll_seconds
+              max_poll_seconds,
+              task_timeout_ms
             )
 
           {:ok, :no_messages} ->
@@ -201,7 +209,8 @@ defmodule Pgflow.DAG.TaskExecutor do
                   timeout,
                   poll_interval_ms,
                   batch_size,
-                  max_poll_seconds
+                  max_poll_seconds,
+                  task_timeout_ms
                 )
             end
 
@@ -224,6 +233,7 @@ defmodule Pgflow.DAG.TaskExecutor do
           String.t(),
           integer(),
           integer(),
+          integer(),
           integer()
         ) :: {:ok, :no_messages} | {:ok, :tasks_executed, integer()} | {:error, term()}
   defp poll_and_execute_batch(
@@ -233,7 +243,8 @@ defmodule Pgflow.DAG.TaskExecutor do
          worker_id,
          batch_size,
          max_poll_seconds,
-         poll_interval_ms
+         poll_interval_ms,
+         task_timeout_ms
        ) do
     # Phase 1: Poll pgmq for messages
     messages_result =
@@ -295,7 +306,7 @@ defmodule Pgflow.DAG.TaskExecutor do
             results =
               Task.async_stream(
                 tasks,
-                fn task -> execute_task_from_map(task, definition, repo) end,
+                fn task -> execute_task_from_map(task, definition, repo, task_timeout_ms) end,
                 max_concurrency: batch_size,
                 timeout: 60_000
               )
@@ -339,19 +350,19 @@ defmodule Pgflow.DAG.TaskExecutor do
 
   # Execute a single task from map (after start_tasks() call)
   #
-  # Retrieves the step function from the workflow definition and executes it with a 30-second
+  # Retrieves the step function from the workflow definition and executes it with a configurable
   # timeout using Task.async/yield pattern. Catches any exceptions and converts them to error
   # tuples for consistent error handling. Upon completion (success or failure), calls
   # complete_task_success/5 or complete_task_failure/5 to update the database state.
   #
-  # Timeout handling: If a task exceeds 30 seconds, Task.shutdown(:brutal_kill) is called
-  # to terminate it and an error tuple is returned.
+  # Timeout handling: If a task exceeds the timeout (in milliseconds), Task.shutdown(:brutal_kill)
+  # is called to terminate it and an error tuple is returned.
   #
   # Exception handling: Any exception (throw, error, exit) is caught and converted to
   # {:error, {:exception, {kind, error}}} tuple for logging and recovery.
-  @spec execute_task_from_map(map(), WorkflowDefinition.t(), module()) ::
+  @spec execute_task_from_map(map(), WorkflowDefinition.t(), module(), integer()) ::
           {:ok, :task_executed} | {:error, term()}
-  defp execute_task_from_map(task_map, definition, repo) do
+  defp execute_task_from_map(task_map, definition, repo, task_timeout_ms) do
     run_id = task_map["run_id"]
     step_slug = task_map["step_slug"]
     task_index = task_map["task_index"]
@@ -375,12 +386,12 @@ defmodule Pgflow.DAG.TaskExecutor do
       task_index: task_index
     )
 
-    # Execute step function with timeout
+    # Execute step function with configurable timeout
     result =
       try do
         task_with_timeout = Task.async(fn -> step_fn.(input) end)
 
-        case Task.yield(task_with_timeout, 30_000) do
+        case Task.yield(task_with_timeout, task_timeout_ms) do
           {:ok, {:ok, output}} ->
             {:ok, output}
 
