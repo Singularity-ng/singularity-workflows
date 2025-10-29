@@ -257,6 +257,11 @@ defmodule Pgflow do
       )
   """
 
+  defdelegate send_with_notify(queue, message, repo), to: Pgflow.Notifications
+  defdelegate listen(queue, repo), to: Pgflow.Notifications
+  defdelegate unlisten(listener_pid, repo), to: Pgflow.Notifications
+  defdelegate notify_only(channel, payload, repo), to: Pgflow.Notifications
+
   @doc """
   Returns the current version of ex_pgflow.
 

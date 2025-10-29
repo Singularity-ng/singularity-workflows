@@ -31,7 +31,7 @@ tasks:
       - '_build/'
 
   test:
-    command: 'nix develop ../../#dev --command bash -lc "PGFLOW_SKIP_DB=1 mix test"'
+    command: 'nix develop ../../#dev --command bash -lc "MIX_ENV=test PGFLOW_SKIP_DB=1 mix test"'
     deps:
       - 'compile'
     inputs:

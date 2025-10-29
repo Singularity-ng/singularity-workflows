@@ -1,5 +1,6 @@
-defmodule Pgflow.Orchestrator.ExecutorTest do
-  use ExUnit.Case, async: true
+if System.get_env("PGFLOW_SKIP_DB") != "1" do
+  defmodule Pgflow.Orchestrator.ExecutorTest do
+    use ExUnit.Case, async: true
 
   alias Pgflow.Orchestrator.Executor
 

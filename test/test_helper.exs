@@ -9,8 +9,10 @@ Mox.defmock(Pgflow.Notifications.Mock, for: Pgflow.Notifications.Behaviour)
 
 # Start Ecto Repo for integration tests unless explicitly skipped
 if System.get_env("PGFLOW_SKIP_DB") != "1" do
-  {:ok, _} = Pgflow.Repo.start_link()
-  Ecto.Adapters.SQL.Sandbox.mode(Pgflow.Repo, :manual)
+{:ok, _} = Application.ensure_all_started(:mox)
+
+{:ok, _} = Pgflow.Repo.start_link()
+Ecto.Adapters.SQL.Sandbox.mode(Pgflow.Repo, :manual)
 else
   Application.put_env(:ex_pgflow, Pgflow.Repo, [])
 end
