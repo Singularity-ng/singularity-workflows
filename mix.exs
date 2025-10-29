@@ -21,7 +21,8 @@ defmodule ExPgflow.MixProject do
     [
       {:ecto_sql, "~> 3.11"},
       {:postgrex, ">= 0.0.0"},
-      {:jason, "~> 1.4"}
+      {:jason, "~> 1.4"},
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 end

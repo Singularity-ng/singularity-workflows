@@ -13,7 +13,7 @@ project:
 tasks:
   # Core Elixir tasks
   deps:
-    command: 'mix deps.get'
+    command: 'nix develop ../../#dev --command mix deps.get'
     inputs:
       - 'mix.exs'
       - 'mix.lock'
@@ -21,7 +21,7 @@ tasks:
       - 'deps/'
 
   compile:
-    command: 'mix compile'
+    command: 'nix develop ../../#dev --command mix compile'
     deps:
       - 'deps'
     inputs:
@@ -31,7 +31,7 @@ tasks:
       - '_build/'
 
   test:
-    command: 'mix test'
+    command: 'nix develop ../../#dev --command bash -lc "PGFLOW_SKIP_DB=1 mix test"'
     deps:
       - 'compile'
     inputs:
@@ -42,21 +42,21 @@ tasks:
 
   # Quality tasks
   format:
-    command: 'mix format'
+    command: 'nix develop ../../#dev --command mix format'
     inputs:
       - 'lib/**/*.{ex,exs}'
       - 'test/**/*.{ex,exs}'
       - 'config/**/*.{ex,exs}'
 
   credo:
-    command: 'mix credo --strict'
+    command: 'nix develop ../../#dev --command mix credo --strict'
     deps:
       - 'compile'
     options:
       runInCI: true
 
   dialyzer:
-    command: 'mix dialyzer'
+    command: 'nix develop ../../#dev --command mix dialyzer'
     deps:
       - 'compile'
     options:
@@ -64,7 +64,7 @@ tasks:
 
   # Documentation
   docs:
-    command: 'mix docs'
+    command: 'nix develop ../../#dev --command mix docs'
     deps:
       - 'compile'
     outputs:
@@ -72,16 +72,16 @@ tasks:
 
   # Database tasks (for testing)
   db_setup:
-    command: 'mix ecto.create && mix ecto.migrate'
+    command: 'nix develop ../../#dev --command bash -lc "mix ecto.create && mix ecto.migrate"'
     local: true
 
   db_test:
-    command: 'MIX_ENV=test mix ecto.create && MIX_ENV=test mix ecto.migrate'
+    command: 'nix develop ../../#dev --command bash -lc "MIX_ENV=test mix ecto.create && MIX_ENV=test mix ecto.migrate"'
     local: true
 
   # Release tasks
   hex_publish:
-    command: 'mix hex.publish'
+    command: 'nix develop ../../#dev --command mix hex.publish'
     local: true
     options:
       interactive: true

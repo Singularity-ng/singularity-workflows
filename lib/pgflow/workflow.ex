@@ -169,6 +169,98 @@ defmodule Pgflow.Workflow do
     {:reply, state.producer_pid, state}
   end
 
+  @doc """
+  Execute a function with retry and optional timeout semantics.
+
+  This helper is intended for workflow steps that may fail transiently.
+  """
+  @spec run_with_resilience((-> any), keyword()) :: any
+  def run_with_resilience(fun, opts \\ []) when is_function(fun, 0) do
+    timeout_ms = Keyword.get(opts, :timeout_ms, 60_000)
+    retry_opts = Keyword.get(opts, :retry_opts, [])
+    operation = Keyword.get(opts, :operation, :workflow_operation)
+
+    max_retries = Keyword.get(retry_opts, :max_retries, 0)
+    base_delay = Keyword.get(retry_opts, :base_delay_ms, 500)
+    max_delay = Keyword.get(retry_opts, :max_delay_ms, base_delay * 5)
+
+    execute_with_retries(fun, operation, timeout_ms, max_retries, base_delay, max_delay, 0)
+  end
+
+  defp execute_with_retries(fun, operation, timeout_ms, max_retries, base_delay, max_delay, attempt) do
+    result =
+      try do
+        task = Task.async(fun)
+
+        case Task.yield(task, timeout_ms) || Task.shutdown(task, :brutal_kill) do
+          {:ok, value} ->
+            value
+
+          {:exit, reason} ->
+            {:error, {:exit, reason}}
+
+          nil ->
+            {:error, :timeout}
+        end
+      rescue
+        exception ->
+          {:error, {:exception, exception, __STACKTRACE__}}
+      catch
+        kind, reason ->
+          {:error, {kind, reason}}
+      end
+
+    case result do
+      {:ok, _} = ok ->
+        ok
+
+      :ok ->
+        :ok
+
+      {:error, reason} ->
+        maybe_retry(fun, operation, timeout_ms, max_retries, base_delay, max_delay, attempt, reason)
+
+      other ->
+        {:ok, other}
+    end
+  end
+
+  defp maybe_retry(fun, operation, timeout_ms, max_retries, base_delay, max_delay, attempt, reason) do
+    if attempt < max_retries do
+      next_attempt = attempt + 1
+      delay_ms = calculate_delay(base_delay, max_delay, next_attempt)
+
+      Logger.warning("Pgflow.Workflow: retrying operation",
+        operation: operation,
+        attempt: next_attempt,
+        max_retries: max_retries,
+        reason: inspect(reason),
+        delay_ms: delay_ms
+      )
+
+      Process.sleep(delay_ms)
+
+      execute_with_retries(fun, operation, timeout_ms, max_retries, base_delay, max_delay, next_attempt)
+    else
+      Logger.error("Pgflow.Workflow: operation failed",
+        operation: operation,
+        attempts: attempt + 1,
+        reason: inspect(reason)
+      )
+
+      {:error, reason}
+    end
+  end
+
+  defp calculate_delay(base_delay, max_delay, attempt) do
+    delay =
+      base_delay
+      |> Kernel.*(:math.pow(2, attempt - 1))
+      |> round()
+
+    min(delay, max_delay)
+  end
+
   @impl GenServer
   def terminate(reason, state) do
     Logger.info("Pgflow.Workflow: Terminating",
@@ -203,7 +295,8 @@ defmodule Pgflow.Workflow do
           start_link: 3,
           enqueue: 3,
           update: 3,
-          get_parent: 1
+          get_parent: 1,
+          run_with_resilience: 2
         ]
 
       defoverridable __workflow_steps__: 0

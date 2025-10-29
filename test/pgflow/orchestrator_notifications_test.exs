@@ -1,9 +1,15 @@
 defmodule Pgflow.OrchestratorNotificationsTest do
   use ExUnit.Case, async: true
+  import Mox
 
   alias Pgflow.OrchestratorNotifications
 
+  setup :set_mox_global
   setup :verify_on_exit!
+  setup do
+    Application.put_env(:ex_pgflow, :notifications_impl, Pgflow.Notifications.Mock)
+    :ok
+  end
 
   describe "broadcast_decomposition/4" do
     test "broadcasts decomposition events successfully" do

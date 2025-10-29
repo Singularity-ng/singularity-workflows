@@ -1,3 +1,18 @@
+defmodule Pgflow.Notifications.Behaviour do
+  @moduledoc """
+  Behaviour definition for Pgflow notifications, used for testing and mocking.
+  """
+
+  @callback send_with_notify(String.t(), map(), Ecto.Repo.t()) ::
+              {:ok, String.t()} | {:error, any()}
+
+  @callback listen(String.t(), Ecto.Repo.t()) :: {:ok, pid()} | {:error, any()}
+
+  @callback unlisten(pid(), Ecto.Repo.t()) :: :ok | {:error, any()}
+
+  @callback notify_only(String.t(), String.t(), Ecto.Repo.t()) :: :ok | {:error, any()}
+end
+
 defmodule Pgflow.Notifications do
   @moduledoc """
   PostgreSQL NOTIFY integration for PGMQ flows.
@@ -38,6 +53,7 @@ defmodule Pgflow.Notifications do
       end
   """
 
+  @behaviour Pgflow.Notifications.Behaviour
   require Logger
 
   @doc """

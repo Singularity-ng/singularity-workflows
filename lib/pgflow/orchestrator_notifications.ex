@@ -65,6 +65,12 @@ defmodule Pgflow.OrchestratorNotifications do
 
   require Logger
 
+  @notifications_env_key :notifications_impl
+
+  defp notifications_impl do
+    Application.get_env(:ex_pgflow, @notifications_env_key, Pgflow.Notifications)
+  end
+
   @doc """
   Broadcast HTDAG decomposition events.
   
@@ -100,7 +106,7 @@ defmodule Pgflow.OrchestratorNotifications do
       event_type: "decomposition"
     }
     
-    Pgflow.Notifications.send_with_notify("htdag:decomposition", event_data, repo)
+    notifications_impl().send_with_notify("htdag:decomposition", event_data, repo)
   end
 
   @doc """
@@ -138,7 +144,7 @@ defmodule Pgflow.OrchestratorNotifications do
       event_type: "task"
     }
     
-    Pgflow.Notifications.send_with_notify("htdag:tasks", event_data, repo)
+    notifications_impl().send_with_notify("htdag:tasks", event_data, repo)
   end
 
   @doc """
@@ -167,7 +173,7 @@ defmodule Pgflow.OrchestratorNotifications do
       event_type: "workflow"
     }
     
-    Pgflow.Notifications.send_with_notify("htdag:workflows", event_data, repo)
+    notifications_impl().send_with_notify("htdag:workflows", event_data, repo)
   end
 
   @doc """
@@ -194,7 +200,7 @@ defmodule Pgflow.OrchestratorNotifications do
       event_type: "performance"
     }
     
-    Pgflow.Notifications.send_with_notify("htdag:performance", event_data, repo)
+    notifications_impl().send_with_notify("htdag:performance", event_data, repo)
   end
 
   @doc """
@@ -229,7 +235,8 @@ defmodule Pgflow.OrchestratorNotifications do
     Logger.info("Starting HTDAG event listener for workflow: #{workflow_name || "all"}")
     
     # Start listener process
-    spawn_link(fn -> listen_loop(workflow_name, event_types, timeout, repo) end)
+    pid = spawn_link(fn -> listen_loop(workflow_name, event_types, timeout, repo) end)
+    {:ok, pid}
   end
 
   @doc """
