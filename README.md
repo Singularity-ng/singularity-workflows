@@ -1,13 +1,13 @@
-# Pgflow - Database-Driven DAG Execution for Elixir
+# QuantumFlow (Hex package: ex_quantum_flow)
 
-[![Hex.pm](https://img.shields.io/hexpm/v/pgflow.svg)](https://hex.pm/packages/pgflow)
-[![Hex.pm](https://img.shields.io/hexpm/dt/pgflow.svg)](https://hex.pm/packages/pgflow)
-[![Build Status](https://img.shields.io/travis/your-org/pgflow.svg)](https://travis-ci.org/your-org/pgflow)
-[![Coverage Status](https://img.shields.io/coveralls/your-org/pgflow.svg)](https://coveralls.io/github/your-org/pgflow)
+[![Hex.pm](https://img.shields.io/hexpm/v/ex_quantum_flow.svg)](https://hex.pm/packages/ex_quantum_flow)
+[![Hex.pm](https://img.shields.io/hexpm/dt/ex_quantum_flow.svg)](https://hex.pm/packages/ex_quantum_flow)
+[![Build Status](https://img.shields.io/travis/your-org/ex_quantum_flow.svg)](https://travis-ci.org/your-org/ex_quantum_flow)
+[![Coverage Status](https://img.shields.io/coveralls/your-org/ex_quantum_flow.svg)](https://coveralls.io/github/your-org/ex_quantum_flow)
 
-**Elixir implementation of pgflow's database-driven DAG execution with 100% feature parity.**
+**Elixir implementation of QuantumFlow's database-driven DAG execution with 100% feature parity.**
 
-Pgflow provides reliable, scalable workflow execution using PostgreSQL + pgmq extension with real-time notifications via PostgreSQL NOTIFY.
+QuantumFlow provides reliable, scalable workflow execution using PostgreSQL + pgmq extension with real-time notifications via PostgreSQL NOTIFY.
 
 ## 🚀 Features
 
@@ -19,7 +19,7 @@ Pgflow provides reliable, scalable workflow execution using PostgreSQL + pgmq ex
 - ✅ **Static & Dynamic Workflows** - Code-based and runtime-generated workflows
 - ✅ **Map Steps** - Variable task counts for bulk processing
 - ✅ **Dependency Merging** - Steps receive outputs from all dependencies
-- ✅ **100% Feature Parity** - Matches pgflow (TypeScript) architecture
+- ✅ **100% Feature Parity** - Matches QuantumFlow (TypeScript) architecture
 
 ## 📋 Table of Contents
 
@@ -42,7 +42,7 @@ Add to your `mix.exs`:
 ```elixir
 def deps do
   [
-    {:pgflow, "~> 0.1.0"}
+    {:quantum_flow, "~> 0.1.0"}
   ]
 end
 ```
@@ -91,14 +91,14 @@ defmodule MyWorkflow do
 end
 
 # Execute workflow
-{:ok, result} = Pgflow.Executor.execute(MyWorkflow, %{data: 5}, MyApp.Repo)
+{:ok, result} = QuantumFlow.Executor.execute(MyWorkflow, %{data: 5}, MyApp.Repo)
 ```
 
 ## 🏗️ Architecture
 
 ```mermaid
 graph TB
-    A[Workflow Definition] --> B[Pgflow.Executor]
+    A[Workflow Definition] --> B[QuantumFlow.Executor]
     B --> C[PostgreSQL + pgmq]
     C --> D[Task Execution]
     D --> E[PostgreSQL NOTIFY]
@@ -120,7 +120,7 @@ graph TB
     
     subgraph "Notification Layer"
         E
-        M[Pgflow.Notifications]
+        M[QuantumFlow.Notifications]
         N[Event Listeners]
     end
 ```
@@ -129,21 +129,21 @@ graph TB
 
 | Component | Purpose | Key Features |
 |-----------|---------|--------------|
-| **Pgflow.Executor** | Workflow execution engine | Static/dynamic workflows, parallel execution |
-| **Pgflow.FlowBuilder** | Dynamic workflow creation | Runtime workflow generation, AI/LLM integration |
-| **Pgflow.Notifications** | Real-time event delivery | PostgreSQL NOTIFY, structured logging |
+| **QuantumFlow.Executor** | Workflow execution engine | Static/dynamic workflows, parallel execution |
+| **QuantumFlow.FlowBuilder** | Dynamic workflow creation | Runtime workflow generation, AI/LLM integration |
+| **QuantumFlow.Notifications** | Real-time event delivery | PostgreSQL NOTIFY, structured logging |
 | **PostgreSQL + pgmq** | Data persistence & coordination | ACID transactions, message queuing |
 | **Task Scheduler** | Dependency resolution | DAG traversal, parallel execution |
 
 ## 🔔 Real-time Notifications
 
-Pgflow includes comprehensive real-time notification support via PostgreSQL NOTIFY:
+QuantumFlow includes comprehensive real-time notification support via PostgreSQL NOTIFY:
 
 ### Send Notifications
 
 ```elixir
 # Send workflow event with NOTIFY
-{:ok, message_id} = Pgflow.Notifications.send_with_notify(
+{:ok, message_id} = QuantumFlow.Notifications.send_with_notify(
   "workflow_events", 
   %{
     type: "task_completed",
@@ -160,7 +160,7 @@ Pgflow includes comprehensive real-time notification support via PostgreSQL NOTI
 
 ```elixir
 # Start listening for workflow events
-{:ok, listener_pid} = Pgflow.Notifications.listen("workflow_events", MyApp.Repo)
+{:ok, listener_pid} = QuantumFlow.Notifications.listen("workflow_events", MyApp.Repo)
 
 # Handle notifications
 receive do
@@ -172,7 +172,7 @@ after
 end
 
 # Stop listening
-:ok = Pgflow.Notifications.unlisten(listener_pid, MyApp.Repo)
+:ok = QuantumFlow.Notifications.unlisten(listener_pid, MyApp.Repo)
 ```
 
 ### Notification Types
@@ -248,7 +248,7 @@ defmodule DataProcessingWorkflow do
 end
 
 # Execute
-{:ok, result} = Pgflow.Executor.execute(DataProcessingWorkflow, %{}, MyApp.Repo)
+{:ok, result} = QuantumFlow.Executor.execute(DataProcessingWorkflow, %{}, MyApp.Repo)
 ```
 
 ### 2. Dynamic Workflows (AI/LLM Generated)
@@ -257,12 +257,12 @@ Create workflows at runtime:
 
 ```elixir
 # Create workflow
-{:ok, workflow_id} = Pgflow.FlowBuilder.create_flow("ai_generated_workflow", MyApp.Repo)
+{:ok, workflow_id} = QuantumFlow.FlowBuilder.create_flow("ai_generated_workflow", MyApp.Repo)
 
 # Add steps
-{:ok, _} = Pgflow.FlowBuilder.add_step(workflow_id, "analyze", [], MyApp.Repo)
-{:ok, _} = Pgflow.FlowBuilder.add_step(workflow_id, "generate", ["analyze"], MyApp.Repo)
-{:ok, _} = Pgflow.FlowBuilder.add_step(workflow_id, "validate", ["generate"], MyApp.Repo)
+{:ok, _} = QuantumFlow.FlowBuilder.add_step(workflow_id, "analyze", [], MyApp.Repo)
+{:ok, _} = QuantumFlow.FlowBuilder.add_step(workflow_id, "generate", ["analyze"], MyApp.Repo)
+{:ok, _} = QuantumFlow.FlowBuilder.add_step(workflow_id, "validate", ["generate"], MyApp.Repo)
 
 # Define step functions
 step_functions = %{
@@ -272,7 +272,7 @@ step_functions = %{
 }
 
 # Execute
-{:ok, result} = Pgflow.Executor.execute_dynamic(
+{:ok, result} = QuantumFlow.Executor.execute_dynamic(
   workflow_id, 
   %{prompt: "Generate a report"}, 
   step_functions, 
@@ -304,19 +304,19 @@ end
 
 # Execute with multiple items
 items = Enum.map(1..5, &%{item_id: &1})
-{:ok, results} = Pgflow.Executor.execute(BulkProcessingWorkflow, %{items: items}, MyApp.Repo)
+{:ok, results} = QuantumFlow.Executor.execute(BulkProcessingWorkflow, %{items: items}, MyApp.Repo)
 ```
 
 ## 📚 API Reference
 
-### Pgflow.Executor
+### QuantumFlow.Executor
 
 ```elixir
 # Execute static workflow
-Pgflow.Executor.execute(workflow_module, input, repo, opts \\ [])
+QuantumFlow.Executor.execute(workflow_module, input, repo, opts \\ [])
 
 # Execute dynamic workflow
-Pgflow.Executor.execute_dynamic(workflow_id, input, step_functions, repo, opts \\ [])
+QuantumFlow.Executor.execute_dynamic(workflow_id, input, step_functions, repo, opts \\ [])
 
 # Options
 opts = [
@@ -327,39 +327,39 @@ opts = [
 ]
 ```
 
-### Pgflow.FlowBuilder
+### QuantumFlow.FlowBuilder
 
 ```elixir
 # Create workflow
-Pgflow.FlowBuilder.create_flow(name, repo)
+QuantumFlow.FlowBuilder.create_flow(name, repo)
 
 # Add step
-Pgflow.FlowBuilder.add_step(workflow_id, step_name, depends_on, repo)
+QuantumFlow.FlowBuilder.add_step(workflow_id, step_name, depends_on, repo)
 
 # Add map step
-Pgflow.FlowBuilder.add_map_step(workflow_id, step_name, depends_on, initial_tasks, repo)
+QuantumFlow.FlowBuilder.add_map_step(workflow_id, step_name, depends_on, initial_tasks, repo)
 
 # Get workflow
-Pgflow.FlowBuilder.get_workflow(workflow_id, repo)
+QuantumFlow.FlowBuilder.get_workflow(workflow_id, repo)
 
 # List workflows
-Pgflow.FlowBuilder.list_workflows(repo)
+QuantumFlow.FlowBuilder.list_workflows(repo)
 ```
 
-### Pgflow.Notifications
+### QuantumFlow.Notifications
 
 ```elixir
 # Send with NOTIFY
-Pgflow.Notifications.send_with_notify(queue_name, message, repo)
+QuantumFlow.Notifications.send_with_notify(queue_name, message, repo)
 
 # Listen for events
-Pgflow.Notifications.listen(queue_name, repo)
+QuantumFlow.Notifications.listen(queue_name, repo)
 
 # Stop listening
-Pgflow.Notifications.unlisten(pid, repo)
+QuantumFlow.Notifications.unlisten(pid, repo)
 
 # Send NOTIFY only (no persistence)
-Pgflow.Notifications.notify_only(channel, payload, repo)
+QuantumFlow.Notifications.notify_only(channel, payload, repo)
 ```
 
 ## 🧪 Testing
@@ -374,14 +374,14 @@ mix test
 mix test --cover
 
 # Run specific test file
-mix test test/pgflow/executor_test.exs
+mix test test/QuantumFlow/executor_test.exs
 ```
 
 ### Test Structure
 
 ```
 test/
-├── pgflow/
+├── QuantumFlow/
 │   ├── executor_test.exs           # Workflow execution tests
 │   ├── flow_builder_test.exs       # Dynamic workflow tests
 │   ├── notifications_test.exs      # NOTIFY functionality tests
@@ -395,9 +395,9 @@ test/
 ### Example Test
 
 ```elixir
-defmodule Pgflow.ExecutorTest do
+defmodule QuantumFlow.ExecutorTest do
   use ExUnit.Case, async: true
-  alias Pgflow.Executor
+  alias QuantumFlow.Executor
 
   test "executes simple workflow" do
     defmodule TestWorkflow do
@@ -437,7 +437,7 @@ Check the `examples/` directory for comprehensive examples:
 
 ```elixir
 # config/prod.exs
-config :pgflow,
+config :QuantumFlow,
   repo: MyApp.Repo,
   pgmq_url: System.get_env("DATABASE_URL"),
   notification_channels: ["workflow_events", "task_events"],
@@ -465,25 +465,25 @@ CMD ["mix", "phx.server"]
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: pgflow-app
+  name: quantum_flow-app
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: pgflow-app
+      app: quantum_flow-app
   template:
     metadata:
       labels:
-        app: pgflow-app
+        app: quantum_flow-app
     spec:
       containers:
-      - name: pgflow
-        image: pgflow:latest
+      - name: QuantumFlow
+        image: QuantumFlow:latest
         env:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: pgflow-secrets
+              name: quantum_flow-secrets
               key: database-url
 ```
 
@@ -493,8 +493,8 @@ spec:
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/pgflow.git
-cd pgflow
+git clone https://github.com/your-org/QuantumFlow.git
+cd QuantumFlow
 
 # Install dependencies
 mix deps.get
@@ -536,18 +536,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **pgflow** - Original TypeScript implementation
+- **QuantumFlow** - Original TypeScript implementation
 - **PostgreSQL** - Robust database foundation
 - **pgmq** - Message queuing extension
 - **Elixir Community** - Amazing ecosystem
 
 ## 📞 Support
 
-- **Documentation**: [https://hexdocs.pm/pgflow](https://hexdocs.pm/pgflow)
-- **Issues**: [GitHub Issues](https://github.com/your-org/pgflow/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/pgflow/discussions)
-- **Email**: support@pgflow.dev
+- **Documentation**: [https://hexdocs.pm/QuantumFlow](https://hexdocs.pm/QuantumFlow)
+- **Issues**: [GitHub Issues](https://github.com/your-org/QuantumFlow/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/your-org/QuantumFlow/discussions)
+- **Email**: support@QuantumFlow.dev
 
 ---
 
-**Made with ❤️ by the Pgflow Team**
+**Made with ❤️ by the QuantumFlow Team**

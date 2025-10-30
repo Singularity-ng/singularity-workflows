@@ -1,7 +1,7 @@
-defmodule Pgflow.StepDependencyTest do
+defmodule QuantumFlow.StepDependencyTest do
   use ExUnit.Case, async: true
 
-  alias Pgflow.StepDependency
+  alias QuantumFlow.StepDependency
 
   @moduledoc """
   Chicago-style TDD: State-based testing for StepDependency schema.
@@ -95,7 +95,7 @@ defmodule Pgflow.StepDependencyTest do
 
   # NOTE: find_dependents/3 and find_dependencies/3 are better tested
   # as integration tests with a real database connection.
-  # See test/pgflow/complete_task_test.exs for integration testing.
+  # See test/QuantumFlow/complete_task_test.exs for integration testing.
 
   describe "schema properties" do
     test "has no primary key" do

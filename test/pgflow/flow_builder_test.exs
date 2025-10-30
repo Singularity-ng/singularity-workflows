@@ -1,7 +1,7 @@
-defmodule Pgflow.FlowBuilderTest do
+defmodule QuantumFlow.FlowBuilderTest do
   use ExUnit.Case, async: false
 
-  alias Pgflow.{Repo, FlowBuilder}
+  alias QuantumFlow.{Repo, FlowBuilder}
 
   @moduledoc """
   Tests for FlowBuilder - Dynamic workflow creation API.
@@ -27,18 +27,18 @@ defmodule Pgflow.FlowBuilderTest do
 
   setup do
     # Set up sandbox for this test
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Pgflow.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(QuantumFlow.Repo)
 
     # Reset test clock for deterministic timestamps
-    Pgflow.TestClock.reset()
+    QuantumFlow.TestClock.reset()
 
     # Clean up any existing test workflows using old "test_" pattern (from previous runs)
     # This removes test data that may have persisted between test runs
-    {:ok, _} = Pgflow.TestWorkflowPrefix.cleanup_by_prefix("test_", Repo)
+    {:ok, _} = QuantumFlow.TestWorkflowPrefix.cleanup_by_prefix("test_", Repo)
 
     # Create unique test prefix for this specific test suite run
     # This ensures parallel test runs don't collide on workflow names
-    prefix = Pgflow.TestWorkflowPrefix.start()
+    prefix = QuantumFlow.TestWorkflowPrefix.start()
 
     # Return prefix so it's available in tests via context
     {:ok, prefix: prefix}
@@ -645,9 +645,9 @@ defmodule Pgflow.FlowBuilderTest do
 
     test "orders workflows by created_at DESC" do
       {:ok, _wf1} = FlowBuilder.create_flow("test_order_1", Repo)
-      Pgflow.TestClock.advance(1000)
+      QuantumFlow.TestClock.advance(1000)
       {:ok, _wf2} = FlowBuilder.create_flow("test_order_2", Repo)
-      Pgflow.TestClock.advance(1000)
+      QuantumFlow.TestClock.advance(1000)
       {:ok, _wf3} = FlowBuilder.create_flow("test_order_3", Repo)
 
       {:ok, workflows} = FlowBuilder.list_flows(Repo)

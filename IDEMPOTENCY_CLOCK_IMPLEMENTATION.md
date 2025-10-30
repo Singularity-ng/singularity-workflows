@@ -29,7 +29,7 @@ This document tracks the implementation of two critical "sharp fixes" recommende
    - Returns MD5 hash of: `workflow_slug || '::' || step_slug || '::' || run_id || '::' || task_index`
    - Marked IMMUTABLE for optimization
 
-4. **Elixir Function** (`lib/pgflow/step_task.ex`)
+4. **Elixir Function** (`lib/QuantumFlow/step_task.ex`)
    ```elixir
    def compute_idempotency_key(workflow_slug, step_slug, run_id, task_index) do
      data = "#{workflow_slug}::#{step_slug}::#{run_id}::#{task_index}"
@@ -44,7 +44,7 @@ This document tracks the implementation of two critical "sharp fixes" recommende
 
 #### Test Coverage
 
-**File:** `test/pgflow/idempotency_test.exs` (308 lines)
+**File:** `test/QuantumFlow/idempotency_test.exs` (308 lines)
 
 **Functional Tests (13 passing):**
 1. `StepTask.compute_idempotency_key/4` consistency tests (5 tests)
@@ -55,7 +55,7 @@ This document tracks the implementation of two critical "sharp fixes" recommende
 
 **Schema Verification Tests (2 tests, tagged with `@tag :schema_check`):**
 - These require direct database access and run separately
-- Command: `mix test test/pgflow/idempotency_test.exs --include schema_check`
+- Command: `mix test test/QuantumFlow/idempotency_test.exs --include schema_check`
 
 #### Key Design Decisions
 
@@ -81,7 +81,7 @@ This document tracks the implementation of two critical "sharp fixes" recommende
 
 #### What Was Implemented
 
-1. **Clock Behaviour** (`lib/pgflow/clock.ex`)
+1. **Clock Behaviour** (`lib/QuantumFlow/clock.ex`)
    ```elixir
    @callback now() :: DateTime.t()
    @callback advance(milliseconds :: integer()) :: :ok
@@ -93,7 +93,7 @@ This document tracks the implementation of two critical "sharp fixes" recommende
    def advance(_ms), do: :ok  # No-op in production
    ```
 
-3. **Test Adapter** (`lib/pgflow/test_clock.ex`)
+3. **Test Adapter** (`lib/QuantumFlow/test_clock.ex`)
    ```elixir
    - Backed by Agent for state management
    - Starts at fixed time: 2025-01-01 00:00:00.000000 UTC
@@ -103,19 +103,19 @@ This document tracks the implementation of two critical "sharp fixes" recommende
 
 4. **Configuration** (`config/test.exs`)
    ```elixir
-   config :ex_pgflow, :clock, Pgflow.TestClock
+   config :quantum_flow, :clock, QuantumFlow.TestClock
    ```
 
 5. **Module Integration** - Clock already injected in:
-   - `lib/pgflow/dag/run_initializer.ex` (5 locations)
-   - `lib/pgflow/workflow_run.ex` (2 locations)
-   - `lib/pgflow/step_state.ex` (3 locations)
-   - `lib/pgflow/step_task.ex` (3 locations)
-   - `lib/pgflow/test_clock.ex` (Clock itself)
+   - `lib/QuantumFlow/dag/run_initializer.ex` (5 locations)
+   - `lib/QuantumFlow/workflow_run.ex` (2 locations)
+   - `lib/QuantumFlow/step_state.ex` (3 locations)
+   - `lib/QuantumFlow/step_task.ex` (3 locations)
+   - `lib/QuantumFlow/test_clock.ex` (Clock itself)
 
 #### Test Coverage
 
-**File:** `test/pgflow/clock_test.exs` (16 tests, 100% passing)
+**File:** `test/QuantumFlow/clock_test.exs` (16 tests, 100% passing)
 
 1. Deterministic starting time test
 2. Time advancement tests
@@ -139,18 +139,18 @@ The clock is structurally complete but not yet fully utilized:
 ### Run Functional Tests (Fast)
 ```bash
 # Idempotency tests (13 tests, exclude schema checks)
-mix test test/pgflow/idempotency_test.exs --exclude schema_check
+mix test test/QuantumFlow/idempotency_test.exs --exclude schema_check
 # => Finished in 0.2 seconds, 13 tests, 0 failures
 
 # Clock tests (16 tests)
-mix test test/pgflow/clock_test.exs
+mix test test/QuantumFlow/clock_test.exs
 # => Finished in 0.1 seconds, 16 tests, 0 failures
 ```
 
 ### Run Schema Verification (Separate)
 ```bash
 # Only schema-checking tests (requires direct DB access)
-mix test test/pgflow/idempotency_test.exs --include schema_check
+mix test test/QuantumFlow/idempotency_test.exs --include schema_check
 ```
 
 ### Run Full Suite (With Timeouts)
@@ -183,7 +183,7 @@ mix test
 **How to Fix:**
 ```bash
 # Run schema checks in non-async mode
-mix test test/pgflow/idempotency_test.exs --include schema_check
+mix test test/QuantumFlow/idempotency_test.exs --include schema_check
 ```
 
 ### Issue 2: PostgreSQL Function Resolution
@@ -227,7 +227,7 @@ Task execution OR error
 # In any module needing current time:
 defmodule MyModule do
   defp get_now() do
-    clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+    clock = Application.get_env(:quantum_flow, :clock, QuantumFlow.Clock)
     clock.now()
   end
 end
@@ -235,13 +235,13 @@ end
 # In tests, setup:
 defmodule MyModuleTest do
   setup do
-    Pgflow.TestClock.reset()
+    QuantumFlow.TestClock.reset()
     :ok
   end
 
   test "something with time" do
     # Current time is 2025-01-01 00:00:00
-    Pgflow.TestClock.advance(1000)  # Add 1 second
+    QuantumFlow.TestClock.advance(1000)  # Add 1 second
     # Now 2025-01-01 00:00:01
   end
 end
@@ -285,17 +285,17 @@ Migrations:
   - 20251026200200_add_compute_idempotency_key_function.exs
 
 Code:
-  - lib/pgflow/step_task.ex (added idempotency support)
-  - lib/pgflow/clock.ex (new behaviour module)
-  - lib/pgflow/test_clock.ex (new test adapter)
-  - lib/pgflow/dag/run_initializer.ex (clock injection)
-  - lib/pgflow/workflow_run.ex (clock injection)
-  - lib/pgflow/step_state.ex (clock injection)
+  - lib/QuantumFlow/step_task.ex (added idempotency support)
+  - lib/QuantumFlow/clock.ex (new behaviour module)
+  - lib/QuantumFlow/test_clock.ex (new test adapter)
+  - lib/QuantumFlow/dag/run_initializer.ex (clock injection)
+  - lib/QuantumFlow/workflow_run.ex (clock injection)
+  - lib/QuantumFlow/step_state.ex (clock injection)
   - config/test.exs (clock config)
 
 Tests:
-  - test/pgflow/idempotency_test.exs (13/15 functional tests passing)
-  - test/pgflow/clock_test.exs (16/16 tests passing)
+  - test/QuantumFlow/idempotency_test.exs (13/15 functional tests passing)
+  - test/QuantumFlow/clock_test.exs (16/16 tests passing)
 ```
 
 ---

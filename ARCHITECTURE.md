@@ -1,6 +1,6 @@
-# ExPgflow Architecture
+# ExQuantumFlow Architecture
 
-ExPgflow is an Elixir implementation of pgflow's database-driven DAG execution engine. This document explains the internal architecture, design decisions, and how components interact.
+ExQuantumFlow is an Elixir implementation of QuantumFlow's database-driven DAG execution engine. This document explains the internal architecture, design decisions, and how components interact.
 
 ## Architecture Overview
 
@@ -29,7 +29,7 @@ graph TB
 
 ### Layer Stack
 
-ExPgflow is organized into three layers:
+ExQuantumFlow is organized into three layers:
 
 1. **Application Layer** - Workflow definitions, user code entry points
 2. **Orchestration Layer** - DAG parsing/validation and task execution coordination
@@ -41,7 +41,7 @@ The DAG layer handles workflow definition parsing, validation, and graph analysi
 
 ### Key Modules
 
-**Pgflow.DAG.WorkflowDefinition** (`lib/pgflow/dag/workflow_definition.ex`)
+**QuantumFlow.DAG.WorkflowDefinition** (`lib/QuantumFlow/dag/workflow_definition.ex`)
 - Parses JSON workflow definitions
 - Validates step structure and dependencies
 - Detects cycles to prevent infinite loops
@@ -62,7 +62,7 @@ definition = %{
 {:ok, workflow} = WorkflowDefinition.parse(definition)
 ```
 
-**Pgflow.DAG.DynamicWorkflowLoader** (`lib/pgflow/dag/dynamic_workflow_loader.ex`)
+**QuantumFlow.DAG.DynamicWorkflowLoader** (`lib/QuantumFlow/dag/dynamic_workflow_loader.ex`)
 - Loads workflow definitions from modules at runtime
 - Implements dynamic behavior callbacks
 - Bridges workflow code and engine execution
@@ -104,7 +104,7 @@ The execution layer orchestrates task processing, state management, and completi
 
 ### Key Modules
 
-**Pgflow.Executor** (`lib/pgflow/executor.ex`)
+**QuantumFlow.Executor** (`lib/QuantumFlow/executor.ex`)
 - Main entry point for starting and monitoring workflows
 - Delegates to DAG for definition parsing
 - Initializes workflow state in database
@@ -117,13 +117,13 @@ The execution layer orchestrates task processing, state management, and completi
 {:ok, run} = Executor.status(run_id)
 ```
 
-**Pgflow.DAG.RunInitializer** (`lib/pgflow/dag/run_initializer.ex`)
+**QuantumFlow.DAG.RunInitializer** (`lib/QuantumFlow/dag/run_initializer.ex`)
 - Creates workflow_runs record
 - Initializes step_states for all workflow steps
 - Sets up step_dependencies edges
 - For map steps, creates one task per item
 
-**Pgflow.DAG.TaskExecutor** (`lib/pgflow/dag/task_executor.ex`)
+**QuantumFlow.DAG.TaskExecutor** (`lib/QuantumFlow/dag/task_executor.ex`)
 - Polls pgmq queue for pending tasks
 - Executes tasks via workflow callback functions
 - Handles retries and error handling
@@ -198,7 +198,7 @@ sequenceDiagram
 
 ### Counter-Based Coordination
 
-ExPgflow uses two counters to track completion:
+ExQuantumFlow uses two counters to track completion:
 
 ```mermaid
 %%{init: {'theme':'dark'}}%%
@@ -315,7 +315,7 @@ graph TB
   - `to_step_name` (string): Dependency target
 
 **pgmq Tables** (created by extension)
-- `pgmq.q_pgflow_queue`: Message queue for task coordination
+- `pgmq.q_quantum_flow_queue`: Message queue for task coordination
 - Messages contain:
   ```json
   {
@@ -503,7 +503,7 @@ graph TB
 
 ## Workflow Behavior Callbacks
 
-Workflows implement `Pgflow.Executor.Workflow` behavior with callbacks:
+Workflows implement `QuantumFlow.Executor.Workflow` behavior with callbacks:
 
 ```elixir
 @callback definition :: map()
@@ -532,21 +532,21 @@ Workflows implement `Pgflow.Executor.Workflow` behavior with callbacks:
   # Called when any step fails
 ```
 
-## Comparison with pgflow (Python)
+## Comparison with QuantumFlow (Python)
 
-ExPgflow is a faithful Elixir port of pgflow with identical execution semantics:
+ExQuantumFlow is a faithful Elixir port of QuantumFlow with identical execution semantics:
 
 ```mermaid
 %%{init: {'theme':'dark'}}%%
 graph TB
-    subgraph "pgflow (Python)"
+    subgraph "QuantumFlow (Python)"
         PL["Python<br/>asyncio runtime"]
         PDAG["JSON parsing<br/>DFS validation"]
         PQ["pgmq-python<br/>driver"]
         PDB["PostgreSQL<br/>same schema"]
     end
 
-    subgraph "ExPgflow (Elixir)"
+    subgraph "ExQuantumFlow (Elixir)"
         EL["Elixir<br/>BEAM VM"]
         EDAG["Module parsing<br/>DFS validation"]
         EQ["Postgrex<br/>driver"]
@@ -580,7 +580,7 @@ graph TB
 
 ### Feature Comparison
 
-| Feature | pgflow | ExPgflow |
+| Feature | QuantumFlow | ExQuantumFlow |
 |---------|--------|----------|
 | **DAG Parsing** | JSON parsing | Module parsing + JSON |
 | **Cycle Detection** | DFS | DFS (identical algorithm) |
@@ -592,7 +592,7 @@ graph TB
 | **Error Handling** | try/except | {:ok, result} \| {:error, reason} |
 | **Type Safety** | Type hints | Dialyzer/specs |
 
-### Why ExPgflow Over pgflow?
+### Why ExQuantumFlow Over QuantumFlow?
 
 ✅ **BEAM advantages:**
 - Lightweight processes (millions possible)
@@ -621,7 +621,7 @@ graph TB
 - **Bottleneck**: PostgreSQL connection pool, pgmq queue throughput
 
 ### Scalability
-- **Horizontal**: Add more ExPgflow instances polling same pgmq queue
+- **Horizontal**: Add more ExQuantumFlow instances polling same pgmq queue
 - **Vertical**: Increase PostgreSQL resources (CPU, RAM, I/O)
 - **Maximum**: Limited by PostgreSQL capacity (10K+ tasks/second possible)
 
@@ -639,7 +639,7 @@ Possible enhancements without breaking the core architecture:
 
 ## Testing Strategy
 
-ExPgflow uses:
+ExQuantumFlow uses:
 - **Unit tests**: SQL logic, cycle detection algorithm
 - **Integration tests**: Full workflow execution end-to-end
 - **Mock workflows**: Deterministic testing without external dependencies
@@ -720,20 +720,20 @@ end
 
 ### Check Workflow Status
 ```elixir
-{:ok, run} = Pgflow.Executor.status(run_id)
+{:ok, run} = QuantumFlow.Executor.status(run_id)
 IO.inspect(run, pretty: true)
 ```
 
 ### View Pending Tasks
 ```elixir
-alias Pgflow.StepState
-Pgflow.Repo.all(from s in StepState, where: s.run_id == ^run_id)
+alias QuantumFlow.StepState
+QuantumFlow.Repo.all(from s in StepState, where: s.run_id == ^run_id)
 ```
 
 ### Check Step Dependencies
 ```elixir
-alias Pgflow.StepDependency
-deps = Pgflow.Repo.all(
+alias QuantumFlow.StepDependency
+deps = QuantumFlow.Repo.all(
   from d in StepDependency,
   where: d.run_id == ^run_id
 )
@@ -745,10 +745,10 @@ Enum.each(deps, &IO.inspect/1)
 -- Check queue stats
 SELECT COUNT(*) as total,
        SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) as unread
-FROM pgmq.q_pgflow_queue;
+FROM pgmq.q_quantum_flow_queue;
 
 -- View oldest unread message
-SELECT * FROM pgmq.q_pgflow_queue
+SELECT * FROM pgmq.q_quantum_flow_queue
 WHERE read_at IS NULL
 ORDER BY msg_id ASC LIMIT 1;
 ```
@@ -761,12 +761,12 @@ config :logger, level: :debug
 # Filter specific modules
 config :logger,
   backends: [
-    {LoggerFileBackend, [:pgflow_log]},
+    {LoggerFileBackend, [:quantum_flow_log]},
     {LoggerTerminalBackend, [:console]}
   ]
 
-config :logger, :pgflow_log,
-  path: "log/pgflow.log",
+config :logger, :quantum_flow_log,
+  path: "log/QuantumFlow.log",
   format: "$date $time [$level] $metadata$message\n"
 ```
 

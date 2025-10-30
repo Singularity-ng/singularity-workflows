@@ -4,25 +4,25 @@ import Config
 config :logger, level: :warning
 
 # Use TestClock for testing
-config :ex_pgflow, :clock, Pgflow.TestClock
+config :quantum_flow, :clock, QuantumFlow.TestClock
 
 # Configure your database
-config :ex_pgflow, Pgflow.Repo,
+config :quantum_flow, QuantumFlow.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "ex_pgflow_test#{System.get_env("MIX_TEST_PARTITION")}",
+  database: "quantum_flow_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
 # We use a file-based database for testing
-config :ex_pgflow, Pgflow.Repo,
+config :quantum_flow, QuantumFlow.Repo,
   adapter: Ecto.Adapters.Postgres,
-  database: "ex_pgflow_test#{System.get_env("MIX_TEST_PARTITION")}",
+  database: "quantum_flow_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox
 
 # Orchestrator test configuration
-config :ex_pgflow, :orchestrator,
+config :quantum_flow, :orchestrator,
   # Disable features that might interfere with tests
   features: %{
     monitoring: false,

@@ -1,7 +1,7 @@
-defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
+defmodule QuantumFlow.DAG.DynamicWorkflowLoaderTest do
   use ExUnit.Case, async: false
 
-  alias Pgflow.{Repo, FlowBuilder, DAG.DynamicWorkflowLoader, DAG.WorkflowDefinition}
+  alias QuantumFlow.{Repo, FlowBuilder, DAG.DynamicWorkflowLoader, DAG.WorkflowDefinition}
 
   @moduledoc """
   Comprehensive DynamicWorkflowLoader tests covering:
@@ -449,7 +449,7 @@ defmodule Pgflow.DAG.DynamicWorkflowLoaderTest do
       # Load should succeed since no invalid dependencies were inserted
       result = DynamicWorkflowLoader.load("test_invalid_dep_validation", step_functions, Repo)
 
-      assert {:ok, %Pgflow.DAG.WorkflowDefinition{}} = result
+      assert {:ok, %QuantumFlow.DAG.WorkflowDefinition{}} = result
     end
   end
 

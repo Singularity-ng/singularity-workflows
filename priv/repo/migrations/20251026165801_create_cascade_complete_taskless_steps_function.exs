@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.CreateCascadeCompleteTasklessStepsFunction do
+defmodule QuantumFlow.Repo.Migrations.CreateCascadeCompleteTasklessStepsFunction do
   @moduledoc """
   Creates the missing cascade_complete_taskless_steps function.
 
@@ -12,7 +12,7 @@ defmodule Pgflow.Repo.Migrations.CreateCascadeCompleteTasklessStepsFunction do
 
   def up do
     execute("""
-    CREATE OR REPLACE FUNCTION pgflow.cascade_complete_taskless_steps(p_run_id UUID)
+    CREATE OR REPLACE FUNCTION QuantumFlow.cascade_complete_taskless_steps(p_run_id UUID)
     RETURNS INTEGER
     LANGUAGE plpgsql
     AS $$
@@ -54,7 +54,7 @@ defmodule Pgflow.Repo.Migrations.CreateCascadeCompleteTasklessStepsFunction do
         PERFORM start_ready_steps(p_run_id);
 
         -- Check if the run is now complete
-        PERFORM pgflow.maybe_complete_run(p_run_id);
+        PERFORM QuantumFlow.maybe_complete_run(p_run_id);
       END LOOP;
 
       RETURN v_completed_count;
@@ -64,6 +64,6 @@ defmodule Pgflow.Repo.Migrations.CreateCascadeCompleteTasklessStepsFunction do
   end
 
   def down do
-    execute("DROP FUNCTION IF EXISTS pgflow.cascade_complete_taskless_steps(UUID)")
+    execute("DROP FUNCTION IF EXISTS QuantumFlow.cascade_complete_taskless_steps(UUID)")
   end
 end

@@ -1,6 +1,6 @@
-# ExPgflow Reference Documentation
+# ExQuantumFlow Reference Documentation
 
-This directory contains in-depth reference documentation for ExPgflow developers and users.
+This directory contains in-depth reference documentation for ExQuantumFlow developers and users.
 
 ## Quick Navigation
 
@@ -15,7 +15,7 @@ This directory contains in-depth reference documentation for ExPgflow developers
 
 ### For Understanding Design
 - [PGFLOW_REFERENCE.md](PGFLOW_REFERENCE.md) - Complete API reference
-- [PGFLOW_DEV_FEATURE_COMPARISON.md](PGFLOW_DEV_FEATURE_COMPARISON.md) - How ExPgflow compares to pgflow
+- [PGFLOW_DEV_FEATURE_COMPARISON.md](PGFLOW_DEV_FEATURE_COMPARISON.md) - How ExQuantumFlow compares to QuantumFlow
 - [SECURITY_AUDIT.md](SECURITY_AUDIT.md) - Security considerations and audit results
 
 ### For Operational Deployment
@@ -40,11 +40,11 @@ Complete API reference:
 - Return value documentation
 
 ### PGFLOW_DEV_FEATURE_COMPARISON.md
-Detailed comparison with original pgflow:
+Detailed comparison with original QuantumFlow:
 - Feature parity matrix
 - Performance comparisons
 - Architectural differences
-- Migration guide from pgflow
+- Migration guide from QuantumFlow
 
 ### SECURITY_AUDIT.md
 Security analysis and findings:
@@ -76,7 +76,7 @@ GitHub Actions CI/CD:
 
 ## Contributing to Documentation
 
-When adding new features to ExPgflow:
+When adding new features to ExQuantumFlow:
 
 1. Update the relevant reference document
 2. Add examples to [DYNAMIC_WORKFLOWS_GUIDE.md](DYNAMIC_WORKFLOWS_GUIDE.md) if applicable

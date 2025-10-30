@@ -166,9 +166,9 @@ avg_cost = Enum.sum(costs) / length(costs)
 
 ## Running the Scripts
 
-1. **Navigate to the ex_pgflow directory:**
+1. **Navigate to the quantum_flow directory:**
    ```bash
-   cd /path/to/singularity-incubation/packages/ex_pgflow
+   cd /path/to/singularity-incubation/packages/quantum_flow
    ```
 
 2. **Run any script:**

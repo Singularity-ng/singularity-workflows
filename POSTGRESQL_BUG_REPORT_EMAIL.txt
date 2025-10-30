@@ -20,7 +20,7 @@ CREATE TABLE workflows (
   created_at TIMESTAMPTZ DEFAULT now()
 );
 
-CREATE FUNCTION pgflow.create_flow(
+CREATE FUNCTION QuantumFlow.create_flow(
   p_workflow_slug TEXT,
   p_max_attempts INTEGER DEFAULT 3,
   p_timeout INTEGER DEFAULT 60
@@ -46,7 +46,7 @@ BEGIN
 END;
 $$;
 
-SELECT * FROM pgflow.create_flow('test-workflow', 5, 120);
+SELECT * FROM QuantumFlow.create_flow('test-workflow', 5, 120);
 
 ERROR:  column reference "workflow_slug" is ambiguous
 
@@ -90,12 +90,12 @@ proves this is NOT a parameter naming issue or a code structure issue, but a reg
 PostgreSQL's parser.
 
 IMPACT:
-- Blocks 74/90 integration tests in the ex_pgflow production workflow engine
+- Blocks 74/90 integration tests in the quantum_flow production workflow engine
 - Affects all PL/pgSQL functions using RETURNS TABLE with parameterized WHERE clauses
 - Common pattern - many databases use this approach for returning filtered result sets
 
 TEST CASE SOURCE:
-Repository: https://github.com/anthropics/singularity-incubation/tree/main/packages/ex_pgflow
+Repository: https://github.com/anthropics/singularity-incubation/tree/main/packages/quantum_flow
 - 11 migration files demonstrating each attempted workaround (priv/repo/migrations/)
 - 90 integration tests with 74 blocked by this regression
 - Detailed investigation documentation (commit 466e784)
@@ -124,4 +124,4 @@ RETURNS TABLE functions.
 ---
 Report submitted via PostgreSQL bug reporting process.
 For more details, see:
-- https://github.com/anthropics/singularity-incubation/packages/ex_pgflow/POSTGRESQL_BUG_REPORT.md
+- https://github.com/anthropics/singularity-incubation/packages/quantum_flow/POSTGRESQL_BUG_REPORT.md

@@ -53,10 +53,10 @@ defmodule TestExecSingleStepFlow do
   def only(input), do: {:ok, Map.put(input, :result, "done")}
 end
 
-defmodule Pgflow.ExecutorTest do
+defmodule QuantumFlow.ExecutorTest do
   use ExUnit.Case, async: false
 
-  alias Pgflow.{Executor, WorkflowRun, StepState, Repo}
+  alias QuantumFlow.{Executor, WorkflowRun, StepState, Repo}
   import Ecto.Query
 
   @moduledoc """
@@ -67,16 +67,16 @@ defmodule Pgflow.ExecutorTest do
   - Error handling and status queries
   - Database-driven DAG coordination
 
-  NOTE: These are integration tests requiring PostgreSQL with pgflow schema.
+  NOTE: These are integration tests requiring PostgreSQL with QuantumFlow schema.
   Tests run against real database with migrations applied.
   """
 
   setup do
     # Set up sandbox for this test
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Pgflow.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(QuantumFlow.Repo)
 
     # Allow all processes spawned during this test to use the sandbox connection
-    Ecto.Adapters.SQL.Sandbox.mode(Pgflow.Repo, {:shared, self()})
+    Ecto.Adapters.SQL.Sandbox.mode(QuantumFlow.Repo, {:shared, self()})
 
     # Clean up any existing test data
     Repo.delete_all(WorkflowRun)
@@ -302,11 +302,11 @@ defmodule Pgflow.ExecutorTest do
   describe "execute_dynamic/5 - Dynamic workflow execution" do
     test "executes workflow loaded from database" do
       # Create workflow in database
-      {:ok, _workflow} = Pgflow.FlowBuilder.create_flow("test_dynamic_simple", Repo)
+      {:ok, _workflow} = QuantumFlow.FlowBuilder.create_flow("test_dynamic_simple", Repo)
 
       # Add steps
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_simple", "step1", [], Repo)
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_simple", "step2", ["step1"], Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic_simple", "step1", [], Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic_simple", "step2", ["step1"], Repo)
 
       # Define step functions
       step_functions = %{
@@ -331,11 +331,11 @@ defmodule Pgflow.ExecutorTest do
 
     test "maps step functions correctly" do
       # Create workflow
-      {:ok, _} = Pgflow.FlowBuilder.create_flow("test_dynamic_mapping", Repo)
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_mapping", "transform", [], Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.create_flow("test_dynamic_mapping", Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic_mapping", "transform", [], Repo)
 
       {:ok, _} =
-        Pgflow.FlowBuilder.add_step("test_dynamic_mapping", "validate", ["transform"], Repo)
+        QuantumFlow.FlowBuilder.add_step("test_dynamic_mapping", "validate", ["transform"], Repo)
 
       # Define step functions with specific behavior
       step_functions = %{
@@ -364,9 +364,9 @@ defmodule Pgflow.ExecutorTest do
 
     test "handles missing step functions" do
       # Create workflow with more steps than functions provided
-      {:ok, _} = Pgflow.FlowBuilder.create_flow("test_dynamic_missing", Repo)
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_missing", "step_a", [], Repo)
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic_missing", "step_b", ["step_a"], Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.create_flow("test_dynamic_missing", Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic_missing", "step_a", [], Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic_missing", "step_b", ["step_a"], Repo)
 
       # Only provide step_a function, missing step_b
       step_functions = %{
@@ -495,7 +495,7 @@ defmodule Pgflow.ExecutorTest do
       # Sequential workflow: step2 depends on step1
       deps =
         Repo.all(
-          from(d in Pgflow.StepDependency,
+          from(d in QuantumFlow.StepDependency,
             where: d.run_id == ^run.id,
             order_by: d.step_slug
           )
@@ -514,7 +514,7 @@ defmodule Pgflow.ExecutorTest do
 
       deps =
         Repo.all(
-          from(d in Pgflow.StepDependency,
+          from(d in QuantumFlow.StepDependency,
             where: d.run_id == ^run.id,
             order_by: [d.step_slug, d.depends_on_step]
           )
@@ -592,8 +592,8 @@ defmodule Pgflow.ExecutorTest do
       # Clean up the failed run (simulate retry scenario)
       Repo.delete_all(WorkflowRun)
       Repo.delete_all(StepState)
-      Repo.delete_all(Pgflow.StepDependency)
-      Repo.delete_all(Pgflow.StepTask)
+      Repo.delete_all(QuantumFlow.StepDependency)
+      Repo.delete_all(QuantumFlow.StepTask)
 
       # Retry with corrected workflow
       {:ok, result2} = Executor.execute(TestExecSimpleFlow, %{retry_test: true}, Repo)

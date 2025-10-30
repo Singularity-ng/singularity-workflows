@@ -10,7 +10,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: mikkihugo/ex_pgflow-postgres
+  IMAGE_NAME: mikkihugo/quantum_flow-postgres
 
 jobs:
   build-postgres:

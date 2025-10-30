@@ -1,7 +1,7 @@
-defmodule Pgflow.ExecutorTest do
+defmodule QuantumFlow.ExecutorTest do
   use ExUnit.Case, async: false
 
-  alias Pgflow.{Executor, WorkflowRun, StepState, StepTask, Repo}
+  alias QuantumFlow.{Executor, WorkflowRun, StepState, StepTask, Repo}
 
   @moduledoc """
   Comprehensive executor tests covering:
@@ -305,10 +305,10 @@ defmodule Pgflow.ExecutorTest do
       }
 
       # First create a dynamic workflow via FlowBuilder
-      {:ok, _workflow} = Pgflow.FlowBuilder.create_flow("test_dynamic", Repo)
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic", "fetch", [], Repo)
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic", "process", ["fetch"], Repo)
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic", "save", ["process"], Repo)
+      {:ok, _workflow} = QuantumFlow.FlowBuilder.create_flow("test_dynamic", Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic", "fetch", [], Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic", "process", ["fetch"], Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic", "save", ["process"], Repo)
 
       # Execute the dynamic workflow
       {:ok, result} =
@@ -325,9 +325,9 @@ defmodule Pgflow.ExecutorTest do
       }
       # Missing process and save functions
 
-      {:ok, _workflow} = Pgflow.FlowBuilder.create_flow("test_dynamic2", Repo)
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic2", "fetch", [], Repo)
-      {:ok, _} = Pgflow.FlowBuilder.add_step("test_dynamic2", "process", ["fetch"], Repo)
+      {:ok, _workflow} = QuantumFlow.FlowBuilder.create_flow("test_dynamic2", Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic2", "fetch", [], Repo)
+      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic2", "process", ["fetch"], Repo)
 
       result = Executor.execute_dynamic("test_dynamic2", %{}, step_functions, Repo)
 

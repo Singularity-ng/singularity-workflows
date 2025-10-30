@@ -2,10 +2,10 @@
 # Run with: MIX_ENV=test mix run test_complete_task_debug.exs
 
 # Start Repo
-{:ok, _} = Application.ensure_all_started(:pgflow)
+{:ok, _} = Application.ensure_all_started(:quantum_flow)
 
-alias Pgflow.{Repo, WorkflowRun, StepState, StepTask}
-alias Pgflow.DAG.{WorkflowDefinition, RunInitializer}
+alias QuantumFlow.{Repo, WorkflowRun, StepState, StepTask}
+alias QuantumFlow.DAG.{WorkflowDefinition, RunInitializer}
 import Ecto.Query
 
 # Simple test workflow

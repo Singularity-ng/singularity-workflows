@@ -10,28 +10,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of ExPgflow - Elixir implementation of pgflow's database-driven DAG execution
-- Complete feature parity with pgflow including:
+- Initial release of ExQuantumFlow - Elixir implementation of QuantumFlow's database-driven DAG execution
+- Complete feature parity with QuantumFlow including:
   - **DAG Workflow Support**: Define workflows with explicit dependencies between steps
   - **Parallel Execution**: Automatically execute independent steps in parallel
   - **Map Steps**: Execute the same step across multiple items (map/reduce pattern)
   - **Dependency Merging**: Steps can depend on multiple other steps
   - **Database-First Coordination**: PostgreSQL + pgmq for reliable task coordination
-  - **Multi-Instance Scaling**: Multiple ExPgflow instances can safely execute the same workflows
+  - **Multi-Instance Scaling**: Multiple ExQuantumFlow instances can safely execute the same workflows
   - **Visibility Timeout Pattern**: Automatic retry if task executor crashes
   - **Comprehensive Testing**: 160+ tests covering all execution paths
 
 ### Core Modules
 
-- `Pgflow.Executor` - Main entry point for workflow execution
-- `Pgflow.FlowBuilder` - Dynamic workflow construction API
-- `Pgflow.DAG.WorkflowDefinition` - DAG parsing and cycle detection
-- `Pgflow.DAG.RunInitializer` - Workflow initialization and state setup
-- `Pgflow.DAG.TaskExecutor` - Task execution and polling loop
-- `Pgflow.StepState` - Step state tracking (Ecto schema)
-- `Pgflow.StepTask` - Individual task tracking for map steps (Ecto schema)
-- `Pgflow.WorkflowRun` - Workflow execution tracking (Ecto schema)
-- `Pgflow.StepDependency` - DAG edge tracking (Ecto schema)
+- `QuantumFlow.Executor` - Main entry point for workflow execution
+- `QuantumFlow.FlowBuilder` - Dynamic workflow construction API
+- `QuantumFlow.DAG.WorkflowDefinition` - DAG parsing and cycle detection
+- `QuantumFlow.DAG.RunInitializer` - Workflow initialization and state setup
+- `QuantumFlow.DAG.TaskExecutor` - Task execution and polling loop
+- `QuantumFlow.StepState` - Step state tracking (Ecto schema)
+- `QuantumFlow.StepTask` - Individual task tracking for map steps (Ecto schema)
+- `QuantumFlow.WorkflowRun` - Workflow execution tracking (Ecto schema)
+- `QuantumFlow.StepDependency` - DAG edge tracking (Ecto schema)
 
 ### Database Features
 
@@ -47,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Configurable via environment variables:
   - `DATABASE_URL` - PostgreSQL connection
-  - `PGFLOW_QUEUE_NAME` - pgmq queue name (default: "pgflow_queue")
+  - `PGFLOW_QUEUE_NAME` - pgmq queue name (default: "quantum_flow_queue")
   - `PGFLOW_VT` - Visibility timeout in seconds (default: 300)
   - `PGFLOW_MAX_WORKERS` - Max concurrent task executions (default: 10)
 
@@ -58,7 +58,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CONTRIBUTING.md` - Development guidelines and workflow
 - `docs/PGFLOW_REFERENCE.md` - Complete API reference
 - `docs/DYNAMIC_WORKFLOWS_GUIDE.md` - Advanced workflow patterns
-- `docs/PGFLOW_DEV_FEATURE_COMPARISON.md` - Detailed comparison with original pgflow
+- `docs/PGFLOW_DEV_FEATURE_COMPARISON.md` - Detailed comparison with original QuantumFlow
 - `docs/SECURITY_AUDIT.md` - Security analysis and best practices
 
 ### Development Tools
@@ -73,7 +73,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known Limitations (v0.1.0)
 
-- Step definitions use legacy Elixir module functions (not JSON-based like pgflow)
+- Step definitions use legacy Elixir module functions (not JSON-based like QuantumFlow)
   - Plan to support JSON workflow definitions in v0.2.0
 - Conditional step execution not yet supported
   - Plan for v0.2.0
@@ -103,5 +103,5 @@ Development version prior to public release.
 
 ---
 
-[Unreleased]: https://github.com/mikkihugo/ex_pgflow
-[0.1.0]: https://github.com/mikkihugo/ex_pgflow/releases/tag/v0.1.0
+[Unreleased]: https://github.com/mikkihugo/quantum_flow
+[0.1.0]: https://github.com/mikkihugo/quantum_flow/releases/tag/v0.1.0

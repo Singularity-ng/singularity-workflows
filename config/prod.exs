@@ -7,7 +7,7 @@ config :logger, level: :info
 # of environment variables, is done in config/runtime.exs.
 
 # Orchestrator production configuration
-config :ex_pgflow, :orchestrator,
+config :quantum_flow, :orchestrator,
   # Production-optimized settings
   max_depth: 5,
   timeout: 300_000,

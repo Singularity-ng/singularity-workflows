@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.CreateTestWrapperFunctions do
+defmodule QuantumFlow.Repo.Migrations.CreateTestWrapperFunctions do
   @moduledoc """
   Creates test wrapper functions for void-returning functions.
 

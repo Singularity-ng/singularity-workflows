@@ -1,7 +1,7 @@
-defmodule Pgflow.DAG.WorkflowDefinitionTest do
+defmodule QuantumFlow.DAG.WorkflowDefinitionTest do
   use ExUnit.Case, async: true
 
-  alias Pgflow.DAG.WorkflowDefinition
+  alias QuantumFlow.DAG.WorkflowDefinition
 
   @moduledoc """
   Comprehensive WorkflowDefinition tests covering:

@@ -1,4 +1,4 @@
-defmodule Pgflow.IdempotencyTest do
+defmodule QuantumFlow.IdempotencyTest do
   @moduledoc """
   Tests for idempotency key implementation in workflow_step_tasks.
 
@@ -9,7 +9,7 @@ defmodule Pgflow.IdempotencyTest do
   """
   use ExUnit.Case, async: true
 
-  alias Pgflow.{StepTask, Repo}
+  alias QuantumFlow.{StepTask, Repo}
   import Ecto.Query
 
   setup do
@@ -39,7 +39,7 @@ defmodule Pgflow.IdempotencyTest do
       started_at: DateTime.utc_now()
     }
 
-    Repo.insert!(%Pgflow.WorkflowRun{} |> Pgflow.WorkflowRun.changeset(run_attrs))
+    Repo.insert!(%QuantumFlow.WorkflowRun{} |> QuantumFlow.WorkflowRun.changeset(run_attrs))
   end
 
   describe "StepTask.compute_idempotency_key/4" do
@@ -166,7 +166,7 @@ defmodule Pgflow.IdempotencyTest do
         remaining_steps: 1
       }
 
-      run = Repo.insert!(%Pgflow.WorkflowRun{} |> Pgflow.WorkflowRun.changeset(run_attrs))
+      run = Repo.insert!(%QuantumFlow.WorkflowRun{} |> QuantumFlow.WorkflowRun.changeset(run_attrs))
 
       # Insert first task
       task1 =
@@ -207,7 +207,7 @@ defmodule Pgflow.IdempotencyTest do
         remaining_steps: 1
       }
 
-      run = Repo.insert!(%Pgflow.WorkflowRun{} |> Pgflow.WorkflowRun.changeset(run_attrs))
+      run = Repo.insert!(%QuantumFlow.WorkflowRun{} |> QuantumFlow.WorkflowRun.changeset(run_attrs))
 
       # Insert first task
       task1 =

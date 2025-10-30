@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.AddMessageIdToStepTasks do
+defmodule QuantumFlow.Repo.Migrations.AddMessageIdToStepTasks do
   use Ecto.Migration
 
   def change do

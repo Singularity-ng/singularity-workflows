@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.AddIdempotencyKeyToStepTasks do
+defmodule QuantumFlow.Repo.Migrations.AddIdempotencyKeyToStepTasks do
   @moduledoc """
   Adds idempotency_key column to workflow_step_tasks table to prevent duplicate task execution.
 

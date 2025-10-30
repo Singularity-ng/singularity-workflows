@@ -1,17 +1,17 @@
-# pgflow.dev Feature Comparison - ex_pgflow vs pgflow
+# QuantumFlow.dev Feature Comparison - quantum_flow vs QuantumFlow
 
 **Date:** 2025-10-25
 **Status:** ✅ **100% Core Feature Parity Achieved**
 
 ---
 
-## pgflow.dev Advertised Features
+## QuantumFlow.dev Advertised Features
 
-From https://pgflow.dev and /tmp/pgflow/README.md:
+From https://QuantumFlow.dev and /tmp/QuantumFlow/README.md:
 
 ### Core Value Propositions
 
-| Feature | pgflow (TypeScript) | ex_pgflow (Elixir) | Status |
+| Feature | QuantumFlow (TypeScript) | quantum_flow (Elixir) | Status |
 |---------|---------------------|-------------------|--------|
 | **Postgres as Single Source of Truth** | ✅ All state in DB | ✅ All state in DB | ✅ **MATCHED** |
 | **Zero Infrastructure** | ✅ No external services | ✅ No external services | ✅ **MATCHED** |
@@ -24,9 +24,9 @@ From https://pgflow.dev and /tmp/pgflow/README.md:
 
 ### 1. SQL Core ✅ **100% MATCHED**
 
-**pgflow SQL Core Features:**
+**QuantumFlow SQL Core Features:**
 
-| Feature | pgflow | ex_pgflow | Implementation |
+| Feature | QuantumFlow | quantum_flow | Implementation |
 |---------|--------|-----------|----------------|
 | **Workflow Runs** | `workflow_runs` table | ✅ `workflow_runs` table | Migration 20251025140000 |
 | **Step States** | `workflow_step_states` | ✅ `workflow_step_states` | Migration 20251025140001 |
@@ -52,10 +52,10 @@ From https://pgflow.dev and /tmp/pgflow/README.md:
 
 ### 2. Workflow Definition (DSL vs Modules)
 
-**pgflow Approach:**
+**QuantumFlow Approach:**
 ```typescript
 // TypeScript DSL
-import { defineFlow, step } from '@pgflow/dsl'
+import { defineFlow, step } from '@QuantumFlow/dsl'
 
 const myFlow = defineFlow('my_flow', {
   steps: {
@@ -70,7 +70,7 @@ const myFlow = defineFlow('my_flow', {
 })
 ```
 
-**ex_pgflow Approach (Static):**
+**quantum_flow Approach (Static):**
 ```elixir
 # Elixir module
 defmodule MyWorkflow do
@@ -87,17 +87,17 @@ defmodule MyWorkflow do
   def save(input), do: {:ok, %{done: true}}
 end
 
-Pgflow.Executor.execute(MyWorkflow, %{}, repo)
+QuantumFlow.Executor.execute(MyWorkflow, %{}, repo)
 ```
 
-**ex_pgflow Approach (Dynamic - AI/LLM):**
+**quantum_flow Approach (Dynamic - AI/LLM):**
 ```elixir
-# Dynamic workflow creation (matches pgflow create_flow/add_step)
-{:ok, _} = Pgflow.FlowBuilder.create_flow("ai_workflow", repo)
-{:ok, _} = Pgflow.FlowBuilder.add_step("ai_workflow", "fetch", [], repo)
-{:ok, _} = Pgflow.FlowBuilder.add_step("ai_workflow", "process", ["fetch"], repo,
+# Dynamic workflow creation (matches QuantumFlow create_flow/add_step)
+{:ok, _} = QuantumFlow.FlowBuilder.create_flow("ai_workflow", repo)
+{:ok, _} = QuantumFlow.FlowBuilder.add_step("ai_workflow", "fetch", [], repo)
+{:ok, _} = QuantumFlow.FlowBuilder.add_step("ai_workflow", "process", ["fetch"], repo,
   step_type: "map", initial_tasks: 100)
-{:ok, _} = Pgflow.FlowBuilder.add_step("ai_workflow", "save", ["process"], repo)
+{:ok, _} = QuantumFlow.FlowBuilder.add_step("ai_workflow", "save", ["process"], repo)
 
 step_functions = %{
   fetch: fn _input -> {:ok, Enum.to_list(1..100)} end,
@@ -105,21 +105,21 @@ step_functions = %{
   save: fn input -> {:ok, %{done: true}} end
 }
 
-Pgflow.Executor.execute_dynamic("ai_workflow", %{}, step_functions, repo)
+QuantumFlow.Executor.execute_dynamic("ai_workflow", %{}, step_functions, repo)
 ```
 
 **Verdict:** ✅ **MATCHED** (language-appropriate alternatives provided)
 - Static workflows = Elixir modules (equivalent to TypeScript DSL)
-- Dynamic workflows = FlowBuilder API (equivalent to pgflow create_flow/add_step)
+- Dynamic workflows = FlowBuilder API (equivalent to QuantumFlow create_flow/add_step)
 
 ---
 
 ### 3. Execution Engine
 
-**pgflow Edge Worker:**
+**QuantumFlow Edge Worker:**
 ```typescript
 // Edge Function worker (Supabase Deno runtime)
-import { createWorker } from '@pgflow/edge-worker'
+import { createWorker } from '@QuantumFlow/edge-worker'
 
 const worker = createWorker({
   queueName: 'my_flow',
@@ -129,10 +129,10 @@ const worker = createWorker({
 })
 ```
 
-**ex_pgflow TaskExecutor:**
+**quantum_flow TaskExecutor:**
 ```elixir
 # Elixir task executor (BEAM runtime)
-defmodule Pgflow.DAG.TaskExecutor do
+defmodule QuantumFlow.DAG.TaskExecutor do
   def execute_run(run_id, definition, repo, opts \\ []) do
     # Poll pgmq
     messages = poll_pgmq(workflow_slug)
@@ -157,19 +157,19 @@ end
 
 ### 4. Client Library
 
-**pgflow Client:**
+**QuantumFlow Client:**
 ```typescript
-import { createClient } from '@pgflow/client'
+import { createClient } from '@QuantumFlow/client'
 
 const client = createClient(supabase)
 const runId = await client.run('my_flow', { input: 'data' })
 const status = await client.getStatus(runId)
 ```
 
-**ex_pgflow API:**
+**quantum_flow API:**
 ```elixir
 # Execution API
-{:ok, run_id} = Pgflow.Executor.execute(MyWorkflow, %{input: "data"}, repo)
+{:ok, run_id} = QuantumFlow.Executor.execute(MyWorkflow, %{input: "data"}, repo)
 
 # Query status
 {:ok, run} = repo.one(from r in WorkflowRun, where: r.id == ^run_id)
@@ -179,20 +179,20 @@ run.status  # "started", "completed", "failed"
 **Verdict:** ✅ **MATCHED** (Elixir API instead of TypeScript client)
 - Both provide programmatic execution
 - Both allow status querying
-- ex_pgflow uses direct Ecto queries (more powerful)
+- quantum_flow uses direct Ecto queries (more powerful)
 
 ---
 
 ### 5. CLI Tools
 
-**pgflow CLI:**
+**QuantumFlow CLI:**
 ```bash
-npx pgflow install    # Setup SQL schema
-npx pgflow compile    # Compile DSL to SQL migrations
-npx pgflow migrate    # Run migrations
+npx QuantumFlow install    # Setup SQL schema
+npx QuantumFlow compile    # Compile DSL to SQL migrations
+npx QuantumFlow migrate    # Run migrations
 ```
 
-**ex_pgflow Mix Tasks:**
+**quantum_flow Mix Tasks:**
 ```bash
 mix ecto.create       # Create database
 mix ecto.migrate      # Run all migrations (22 total)
@@ -202,13 +202,13 @@ mix test              # Run tests
 **Verdict:** ✅ **MATCHED** (Mix tasks instead of npm scripts)
 - Both provide one-command setup
 - Both handle schema migrations
-- ex_pgflow migrations are more granular (22 vs pgflow's bundled approach)
+- quantum_flow migrations are more granular (22 vs QuantumFlow's bundled approach)
 
 ---
 
 ## What Can You Build? ✅ **ALL USE CASES SUPPORTED**
 
-| Use Case | pgflow | ex_pgflow | Notes |
+| Use Case | QuantumFlow | quantum_flow | Notes |
 |----------|--------|-----------|-------|
 | **AI Workflows** | ✅ Chain LLMs, handle failures | ✅ Same | Use dynamic workflows for AI-generated flows |
 | **Background Jobs** | ✅ Process emails, files, tasks | ✅ Same | Use map steps for parallel processing |
@@ -218,9 +218,9 @@ mix test              # Run tests
 
 ## Core Workflow Features Comparison
 
-### Advertised Features from pgflow.dev
+### Advertised Features from QuantumFlow.dev
 
-| Feature | pgflow | ex_pgflow | Implementation |
+| Feature | QuantumFlow | quantum_flow | Implementation |
 |---------|--------|-----------|----------------|
 | **Parallel Task Execution** | ✅ Yes | ✅ Yes | Map steps with `initial_tasks: N` |
 | **Automatic Dependency Resolution** | ✅ Yes | ✅ Yes | DAG validation + cascade triggers |
@@ -239,7 +239,7 @@ mix test              # Run tests
 
 ---
 
-## Unique ex_pgflow Advantages
+## Unique quantum_flow Advantages
 
 ### 1. **Pure Elixir Implementation**
 - No need for Node.js/Deno runtime
@@ -279,11 +279,11 @@ mix test              # Run tests
 
 ---
 
-## Summary: Do We Match pgflow.dev?
+## Summary: Do We Match QuantumFlow.dev?
 
 ### ✅ **YES - 100% Core Feature Parity**
 
-**What pgflow.dev advertises:**
+**What QuantumFlow.dev advertises:**
 1. **Postgres as Single Source of Truth** ✅ We have this
 2. **Zero Infrastructure** ✅ We have this
 3. **Type-Safe Workflows** ✅ We have this (Elixir)
@@ -294,7 +294,7 @@ mix test              # Run tests
 8. **Dynamic Workflows** ✅ We have this (for AI/LLM)
 
 **Our implementation:**
-- ✅ **Same SQL Core** - All 11 PostgreSQL functions matching pgflow
+- ✅ **Same SQL Core** - All 11 PostgreSQL functions matching QuantumFlow
 - ✅ **Same Coordination** - pgmq extension for task distribution
 - ✅ **Same Features** - DAG, map steps, worker tracking, retries
 - ✅ **Same Use Cases** - AI workflows, background jobs, data pipelines
@@ -305,7 +305,7 @@ mix test              # Run tests
 
 ## Conclusion
 
-**ex_pgflow achieves TRUE 100% feature parity with pgflow.dev's advertised capabilities.**
+**quantum_flow achieves TRUE 100% feature parity with QuantumFlow.dev's advertised capabilities.**
 
 The only differences are:
 - **Language:** TypeScript → Elixir (by design)
@@ -314,4 +314,4 @@ The only differences are:
 
 **All core workflow features, database schema, SQL functions, and coordination patterns are identical.**
 
-We matched pgflow, but in Elixir! ✅
+We matched QuantumFlow, but in Elixir! ✅

@@ -4,7 +4,7 @@
 
 PostgreSQL 17 contains a parser regression that incorrectly reports "column reference is ambiguous" errors in PL/pgSQL functions using `RETURNS TABLE` syntax with parameterized `WHERE` clauses. This is a false positive that blocks legitimate, well-formed code.
 
-**Status**: Blocks 74/90 tests in production workflow engine (ex_pgflow Elixir package)
+**Status**: Blocks 74/90 tests in production workflow engine (quantum_flow Elixir package)
 **Reproducible**: Yes - consistent across PostgreSQL 17.6+
 **Severity**: High - affects common database function patterns
 **Regression**: Yes - identical code works in PostgreSQL 16
@@ -23,7 +23,7 @@ CREATE TABLE workflows (
 );
 
 -- Problem: This function fails in PostgreSQL 17 with "column ambiguous" error
-CREATE FUNCTION pgflow.create_flow(
+CREATE FUNCTION QuantumFlow.create_flow(
   p_workflow_slug TEXT,
   p_max_attempts INTEGER DEFAULT 3,
   p_timeout INTEGER DEFAULT 60
@@ -50,7 +50,7 @@ END;
 $$;
 
 -- Attempt to call function
-SELECT * FROM pgflow.create_flow('test-workflow', 5, 120);
+SELECT * FROM QuantumFlow.create_flow('test-workflow', 5, 120);
 ```
 
 ### Expected Behavior
@@ -69,7 +69,7 @@ ERROR 42P09 (ambiguous_column): column reference "workflow_slug" is ambiguous
 - **SQLState**: `42P09` (ambiguous column)
 - **Message**: `column reference "workflow_slug" is ambiguous`
 - **Context**: When `RETURN QUERY SELECT` includes a parameterized `WHERE` clause
-- **Affected Functions**: Both `create_flow` and `add_step` in pgflow schema
+- **Affected Functions**: Both `create_flow` and `add_step` in QuantumFlow schema
 - **Frequency**: 100% reproducible - affects all 74 tests that execute these functions
 
 ### Why This Is a False Positive
@@ -127,7 +127,7 @@ END;
 
 ### 7. **Pure SQL Functions (LANGUAGE SQL)**
 ```sql
-CREATE FUNCTION pgflow.create_flow(...)
+CREATE FUNCTION QuantumFlow.create_flow(...)
 RETURNS TABLE (...)
 LANGUAGE SQL
 AS $$
@@ -156,7 +156,7 @@ CREATE FUNCTION ... RETURNS SETOF workflow_result ...
 
 ### 10. **arg_* Prefix (Cannot Conflict with Column Names)**
 ```plpgsql
-CREATE FUNCTION pgflow.create_flow(
+CREATE FUNCTION QuantumFlow.create_flow(
   arg_workflow_slug TEXT,
   arg_max_attempts INTEGER,
   arg_timeout INTEGER
@@ -178,7 +178,7 @@ CREATE FUNCTION pgflow.create_flow(
 ## Evidence of PostgreSQL 17 Regression
 
 ### Tests Work on PostgreSQL 16
-The identical ex_pgflow test suite passes completely on PostgreSQL 16:
+The identical quantum_flow test suite passes completely on PostgreSQL 16:
 - Total tests: 90
 - Passing on PostgreSQL 16: 90/90 ✅
 - Passing on PostgreSQL 17: 16/90 ❌
@@ -214,7 +214,7 @@ And incorrectly reports the table column as ambiguous when a parameter is used i
 ## Impact Assessment
 
 ### Current Impact
-- **Affected Package**: `ex_pgflow` (Elixir workflow engine with PgBouncer queue)
+- **Affected Package**: `quantum_flow` (Elixir workflow engine with PgBouncer queue)
 - **Test Coverage Loss**: 74/90 integration tests blocked
 - **Function Blocking**: 2 core functions (`create_flow`, `add_step`)
 - **Use Case Blocking**: Workflow creation, step definition (critical paths)
@@ -265,9 +265,9 @@ Since this is a parser issue, there are no good SQL-level workarounds:
 
 ## Test Case Source
 
-This issue was discovered while implementing comprehensive integration tests for the ex_pgflow package:
+This issue was discovered while implementing comprehensive integration tests for the quantum_flow package:
 
-- **Repository**: https://github.com/anthropics/singularity-incubation/tree/main/packages/ex_pgflow
+- **Repository**: https://github.com/anthropics/singularity-incubation/tree/main/packages/quantum_flow
 - **Investigation Commit**: `466e784` - Comprehensive parameter renaming fix failed
 - **Migration Files**: 11 separate migrations in `priv/repo/migrations/` demonstrating each attempted workaround
 - **Test Suite**: 90 integration tests with 74 currently blocked
@@ -278,7 +278,7 @@ This issue was discovered while implementing comprehensive integration tests for
 
 1. Create PostgreSQL 17.6+ instance
 2. Run migrations from `priv/repo/migrations/20251026225000_rename_create_flow_parameters.exs` onward
-3. Execute: `SELECT * FROM pgflow.create_flow('test', 3, 60);`
+3. Execute: `SELECT * FROM QuantumFlow.create_flow('test', 3, 60);`
 4. Observe: "column reference is ambiguous" error
 
 Or use the minimal reproducible example above.
@@ -303,8 +303,8 @@ This is blocking production use of common, legitimate PL/pgSQL patterns.
 - Systematic elimination of potential causes (parameter naming, table qualification, function nesting, etc.)
 
 ### Documentation
-Complete investigation details with all migration attempts available in the ex_pgflow repository at commit `466e784` and subsequent commits showing the investigation history.
+Complete investigation details with all migration attempts available in the quantum_flow repository at commit `466e784` and subsequent commits showing the investigation history.
 
 ### Contact
 This report was generated from the Singularity AI development environment (internal tooling).
-For questions about the investigation methodology or test cases, see the ex_pgflow package.
+For questions about the investigation methodology or test cases, see the quantum_flow package.

@@ -1,9 +1,9 @@
-defmodule Pgflow.SqlCase do
+defmodule QuantumFlow.SqlCase do
   @moduledoc """
   Helper for SQL-based tests. Connects to Postgres using POSTGRES_URL or DATABASE_URL.
 
   Tests using this helper will be skipped if a DB is not reachable or the required
-  pgflow tables are not present. This makes the migrated tests non-fatal in CI
+  QuantumFlow tables are not present. This makes the migrated tests non-fatal in CI
   environments where the developer hasn't prepared a DB.
   """
 
@@ -11,20 +11,20 @@ defmodule Pgflow.SqlCase do
 
   @doc """
   Attempt to connect to the database and return a Postgrex connection.
-  If the DB is unavailable or the pgflow tables are not present, call
+  If the DB is unavailable or the QuantumFlow tables are not present, call
   ExUnit.Callbacks.skip/1 to skip the test at runtime.
   """
   def connect_or_skip do
     _db_url =
       System.get_env("DATABASE_URL") || System.get_env("POSTGRES_URL") ||
-        "postgresql://#{System.get_env("USER") || "mhugo"}@localhost:5432/ex_pgflow"
+        "postgresql://#{System.get_env("USER") || "mhugo"}@localhost:5432/quantum_flow"
 
     case Postgrex.start_link(
            hostname: "localhost",
            port: 5432,
            username: System.get_env("USER") || "mhugo",
            password: "",
-           database: "ex_pgflow"
+           database: "quantum_flow"
          ) do
       {:ok, conn} ->
         case Postgrex.query(conn, "SELECT to_regclass('public.workflow_runs')", []) do
@@ -36,7 +36,7 @@ defmodule Pgflow.SqlCase do
                 Process.exit(conn, :normal)
 
                 {:skip,
-                 "Database does not have pgflow tables; run migrations before enabling SQL tests"}
+                 "Database does not have QuantumFlow tables; run migrations before enabling SQL tests"}
 
               _ ->
                 # register a stop on exit and return connection
@@ -47,7 +47,7 @@ defmodule Pgflow.SqlCase do
 
           {:error, _} ->
             Process.exit(conn, :normal)
-            {:skip, "Database query failed; ensure DATABASE_URL points to a migrated pgflow DB"}
+            {:skip, "Database query failed; ensure DATABASE_URL points to a migrated QuantumFlow DB"}
         end
 
       {:error, reason} ->

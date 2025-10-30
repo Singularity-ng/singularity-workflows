@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.CreateWorkflowStepDependencies do
+defmodule QuantumFlow.Repo.Migrations.CreateWorkflowStepDependencies do
   @moduledoc """
   Creates workflow_step_dependencies table to explicitly track step dependencies.
 

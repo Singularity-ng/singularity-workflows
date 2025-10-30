@@ -4,8 +4,8 @@
 
 Go to https://github.com/new and create a new repository:
 
-- **Repository name:** `ex_pgflow`
-- **Description:** Elixir implementation of pgflow - Postgres-based workflow orchestration with 100% feature parity
+- **Repository name:** `quantum_flow`
+- **Description:** Elixir implementation of QuantumFlow - Postgres-based workflow orchestration with 100% feature parity
 - **Visibility:** Public
 - **Initialize with:**
   - [ ] Do NOT add README (we already have one)
@@ -20,7 +20,7 @@ GitHub will show you commands. Use these:
 
 ```bash
 # Add the remote
-git remote add origin https://github.com/YOUR_USERNAME/ex_pgflow.git
+git remote add origin https://github.com/YOUR_USERNAME/quantum_flow.git
 
 # Push the main branch
 git push -u origin main
@@ -39,19 +39,19 @@ Add these topics to your repository:
 - `pgmq`
 - `dag`
 - `background-jobs`
-- `pgflow`
+- `QuantumFlow`
 - `beam`
 - `otp`
 
 ### About Section
 Short description:
 ```
-Elixir implementation of pgflow - Postgres-based workflow orchestration with 100% feature parity
+Elixir implementation of QuantumFlow - Postgres-based workflow orchestration with 100% feature parity
 ```
 
 Website:
 ```
-https://pgflow.dev
+https://QuantumFlow.dev
 ```
 
 ### Features to Enable
@@ -80,24 +80,24 @@ mix hex.publish docs
 ### Create First Release
 ```bash
 # Tag the commit
-git tag -a v0.1.0 -m "Initial release - 100% pgflow.dev parity"
+git tag -a v0.1.0 -m "Initial release - 100% QuantumFlow.dev parity"
 git push origin v0.1.0
 
 # Create GitHub release from the tag
-# Go to https://github.com/YOUR_USERNAME/ex_pgflow/releases/new
+# Go to https://github.com/YOUR_USERNAME/quantum_flow/releases/new
 ```
 
 ### Add Badges to README
 After publishing to Hex.pm, the badges will work:
-- [![Hex.pm](https://img.shields.io/hexpm/v/ex_pgflow.svg)](https://hex.pm/packages/ex_pgflow)
-- [![Documentation](https://img.shields.io/badge/docs-hexpm-blue.svg)](https://hexdocs.pm/ex_pgflow)
+- [![Hex.pm](https://img.shields.io/hexpm/v/quantum_flow.svg)](https://hex.pm/packages/quantum_flow)
+- [![Documentation](https://img.shields.io/badge/docs-hexpm-blue.svg)](https://hexdocs.pm/quantum_flow)
 
 ## 5. Community Engagement
 
 ### Announce on Elixir Forum
 Post on https://elixirforum.com/c/elixir-chat/5 with:
 - Link to GitHub repo
-- Brief explanation of what ex_pgflow does
+- Brief explanation of what quantum_flow does
 - How it compares to Oban
 - Link to documentation
 
@@ -106,8 +106,8 @@ Post on https://elixirforum.com/c/elixir-chat/5 with:
 - Reddit: r/elixir
 - LinkedIn
 
-### Link from pgflow
-Consider submitting a PR to pgflow.dev to add ex_pgflow to their "Implementations" page.
+### Link from QuantumFlow
+Consider submitting a PR to QuantumFlow.dev to add quantum_flow to their "Implementations" page.
 
 ---
 

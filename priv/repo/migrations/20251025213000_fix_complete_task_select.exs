@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.FixCompleteTaskSelect do
+defmodule QuantumFlow.Repo.Migrations.FixCompleteTaskSelect do
   @moduledoc """
   Fixes "query has no destination for result data" error in complete_task().
 
@@ -216,9 +216,9 @@ defmodule Pgflow.Repo.Migrations.FixCompleteTaskSelect do
         SET remaining_steps = remaining_steps - 1
         WHERE id = p_run_id;
 
-        PERFORM pgflow.cascade_complete_taskless_steps(p_run_id);
+        PERFORM QuantumFlow.cascade_complete_taskless_steps(p_run_id);
         PERFORM start_ready_steps(p_run_id);
-        PERFORM pgflow.maybe_complete_run(p_run_id);
+        PERFORM QuantumFlow.maybe_complete_run(p_run_id);
       END IF;
 
       RETURN 1;

@@ -1,13 +1,13 @@
-defmodule Pgflow.CompleteTaskTest do
+defmodule QuantumFlow.CompleteTaskTest do
   use ExUnit.Case, async: false
-  use Pgflow.SqlCase
+  use QuantumFlow.SqlCase
 
-  alias Pgflow.StepTask
+  alias QuantumFlow.StepTask
 
   @moduledoc """
   Integration tests for complete_task() SQL function.
 
-  These tests require a running Postgres with the pgflow schema/migrations applied.
+  These tests require a running Postgres with the QuantumFlow schema/migrations applied.
   Set DATABASE_URL to point to the DB before running `mix test` to enable them.
 
   NOTE: These tests have database state management issues with simultaneous test execution.
@@ -25,7 +25,7 @@ defmodule Pgflow.CompleteTaskTest do
 
   @tag :integration
   test "complete_task marks task completed and updates dependent state" do
-    case Pgflow.SqlCase.connect_or_skip() do
+    case QuantumFlow.SqlCase.connect_or_skip() do
       {:skip, reason} ->
         IO.puts("SKIPPED: #{reason}")
         assert true
@@ -146,7 +146,7 @@ defmodule Pgflow.CompleteTaskTest do
 
   @tag :integration
   test "type violation (single -> map non-array) marks run failed" do
-    case Pgflow.SqlCase.connect_or_skip() do
+    case QuantumFlow.SqlCase.connect_or_skip() do
       {:skip, reason} ->
         IO.puts("SKIPPED: #{reason}")
         assert true
@@ -251,7 +251,7 @@ defmodule Pgflow.CompleteTaskTest do
 
   @tag :integration
   test "complete_task returns 0 guard when run already failed (no mutation)" do
-    case Pgflow.SqlCase.connect_or_skip() do
+    case QuantumFlow.SqlCase.connect_or_skip() do
       {:skip, reason} ->
         IO.puts("SKIPPED: #{reason}")
         assert true
@@ -322,7 +322,7 @@ defmodule Pgflow.CompleteTaskTest do
 
   @tag :integration
   test "complete_task with array output sets child map step initial_tasks correctly" do
-    case Pgflow.SqlCase.connect_or_skip() do
+    case QuantumFlow.SqlCase.connect_or_skip() do
       {:skip, reason} ->
         IO.puts("SKIPPED: #{reason}")
         assert true
@@ -420,7 +420,7 @@ defmodule Pgflow.CompleteTaskTest do
 
   @tag :integration
   test "complete_task marks workflow as completed when all steps done" do
-    case Pgflow.SqlCase.connect_or_skip() do
+    case QuantumFlow.SqlCase.connect_or_skip() do
       {:skip, reason} ->
         IO.puts("SKIPPED: #{reason}")
         assert true

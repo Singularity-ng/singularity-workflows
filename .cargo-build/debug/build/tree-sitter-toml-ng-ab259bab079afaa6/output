@@ -1,6 +1,6 @@
 cargo:rerun-if-changed=src/parser.c
 cargo:rerun-if-changed=src/scanner.c
-OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/build/tree-sitter-toml-ng-ab259bab079afaa6/out)
+OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/quantum_flow/.cargo-build/debug/build/tree-sitter-toml-ng-ab259bab079afaa6/out)
 OPT_LEVEL = Some(0)
 TARGET = Some(aarch64-apple-darwin)
 CARGO_ENCODED_RUSTFLAGS = Some(-Clinker=gcc)
@@ -30,7 +30,7 @@ cargo:rerun-if-env-changed=CFLAGS_aarch64_apple_darwin
 CFLAGS_aarch64_apple_darwin = None
 cargo:rerun-if-env-changed=CFLAGS_aarch64-apple-darwin
 CFLAGS_aarch64-apple-darwin = None
-OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/build/tree-sitter-toml-ng-ab259bab079afaa6/out)
+OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/quantum_flow/.cargo-build/debug/build/tree-sitter-toml-ng-ab259bab079afaa6/out)
 cargo:rerun-if-env-changed=CC_ENABLE_DEBUG_OUTPUT
 cargo:rerun-if-env-changed=CRATE_CC_NO_DEFAULTS
 CRATE_CC_NO_DEFAULTS = None
@@ -87,4 +87,4 @@ ARFLAGS_aarch64_apple_darwin = None
 cargo:rerun-if-env-changed=ARFLAGS_aarch64-apple-darwin
 ARFLAGS_aarch64-apple-darwin = None
 cargo:rustc-link-lib=static=tree-sitter-toml
-cargo:rustc-link-search=native=/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/build/tree-sitter-toml-ng-ab259bab079afaa6/out
+cargo:rustc-link-search=native=/Users/mhugo/code/singularity-incubation/packages/quantum_flow/.cargo-build/debug/build/tree-sitter-toml-ng-ab259bab079afaa6/out

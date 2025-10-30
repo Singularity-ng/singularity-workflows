@@ -54,25 +54,25 @@ jobs:
         sleep 1
 
         # Create test database
-        PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE ex_pgflow_test;" 2>/dev/null || echo "Database may already exist"
+        PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE quantum_flow_test;" 2>/dev/null || echo "Database may already exist"
 
     - name: Run migrations
       run: |
-        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ex_pgflow_test"
+        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/quantum_flow_test"
         mix ecto.migrate
       env:
         MIX_ENV: test
 
     - name: Run tests
       run: |
-        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ex_pgflow_test"
+        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/quantum_flow_test"
         mix test
       env:
         MIX_ENV: test
 
     - name: Generate coverage report
       run: |
-        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ex_pgflow_test"
+        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/quantum_flow_test"
         mix test.coverage --exclude integration
       env:
         MIX_ENV: test
@@ -106,7 +106,7 @@ jobs:
     - name: Print quality summary
       if: always()
       run: |
-        echo "=== ex_pgflow CI Quality Summary ==="
+        echo "=== quantum_flow CI Quality Summary ==="
         echo "✓ Tests: mix test"
         echo "✓ Coverage: mix test.coverage (18.5%+)"
         echo "✓ Formatting: mix format --check-formatted"

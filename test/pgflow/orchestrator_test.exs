@@ -1,7 +1,7 @@
-defmodule Pgflow.OrchestratorTest do
+defmodule QuantumFlow.OrchestratorTest do
   use ExUnit.Case, async: true
 
-  alias Pgflow.Orchestrator
+  alias QuantumFlow.Orchestrator
 
   setup :verify_on_exit!
 
@@ -141,7 +141,7 @@ defmodule Pgflow.OrchestratorTest do
       }
 
       # Mock the Executor
-      Mox.stub(Pgflow.Executor.Mock, :execute, fn _workflow, _context, _repo ->
+      Mox.stub(QuantumFlow.Executor.Mock, :execute, fn _workflow, _context, _repo ->
         {:ok, %{success: true, results: %{"task1" => "result1", "task2" => "result2"}}}
       end)
 

@@ -1,8 +1,8 @@
-defmodule Pgflow.StepTaskTest do
+defmodule QuantumFlow.StepTaskTest do
   # async: false - TestClock is shared state (Agent)
   use ExUnit.Case, async: false
 
-  alias Pgflow.StepTask
+  alias QuantumFlow.StepTask
 
   @moduledoc """
   Chicago-style TDD: State-based testing for StepTask schema.
@@ -11,7 +11,7 @@ defmodule Pgflow.StepTaskTest do
   Tests verify final state after operations, including retry logic.
   """
 
-  alias Pgflow.TestClock
+  alias QuantumFlow.TestClock
 
   setup do
     # Reset clock for deterministic timestamps

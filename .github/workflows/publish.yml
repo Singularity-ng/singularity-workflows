@@ -18,7 +18,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: ex_pgflow_test
+          POSTGRES_DB: quantum_flow_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -41,9 +41,9 @@ jobs:
         # Wait for PostgreSQL to be ready
         until pg_isready -h localhost -U postgres; do sleep 1; done
         # Create the database if it doesn't exist
-        PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE IF NOT EXISTS ex_pgflow_test;"
+        PGPASSWORD=postgres psql -h localhost -U postgres -c "CREATE DATABASE IF NOT EXISTS quantum_flow_test;"
         # pgmq extension is pre-installed in tembo/pgmq image
-        PGPASSWORD=postgres psql -h localhost -U postgres -d ex_pgflow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
+        PGPASSWORD=postgres psql -h localhost -U postgres -d quantum_flow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
 
     - name: Restore dependencies cache
       uses: actions/cache@v4
@@ -61,7 +61,7 @@ jobs:
         MIX_ENV: test
         POSTGRES_USER: postgres
         POSTGRES_PASSWORD: postgres
-        POSTGRES_DB: ex_pgflow_test
+        POSTGRES_DB: quantum_flow_test
         POSTGRES_HOST: localhost
 
     - name: Check formatting

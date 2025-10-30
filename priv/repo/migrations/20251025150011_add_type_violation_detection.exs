@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.AddTypeViolationDetection do
+defmodule QuantumFlow.Repo.Migrations.AddTypeViolationDetection do
   @moduledoc """
   Adds type violation detection to complete_task() for map step validation.
 
@@ -9,7 +9,7 @@ defmodule Pgflow.Repo.Migrations.AddTypeViolationDetection do
   3. Store violation details in error messages
   4. Prevent further execution
 
-  Matches pgflow's type safety for map steps.
+  Matches QuantumFlow's type safety for map steps.
   """
   use Ecto.Migration
 
@@ -222,13 +222,13 @@ defmodule Pgflow.Repo.Migrations.AddTypeViolationDetection do
         WHERE id = p_run_id;
 
         -- After step completion, cascade any taskless steps (empty-array propagation)
-        PERFORM pgflow.cascade_complete_taskless_steps(p_run_id);
+        PERFORM QuantumFlow.cascade_complete_taskless_steps(p_run_id);
 
         -- Trigger start_ready_steps to awaken newly ready steps
         PERFORM start_ready_steps(p_run_id);
 
         -- Then check if run is complete and aggregate leaf outputs
-        PERFORM pgflow.maybe_complete_run(p_run_id);
+        PERFORM QuantumFlow.maybe_complete_run(p_run_id);
       END IF;
     END;
     $$;
@@ -236,7 +236,7 @@ defmodule Pgflow.Repo.Migrations.AddTypeViolationDetection do
 
     execute("""
     COMMENT ON FUNCTION complete_task(UUID, TEXT, INTEGER, JSONB) IS
-    'Completes task with type violation detection for map steps. Archives pgmq message, cascades to dependencies. Matches pgflow implementation.'
+    'Completes task with type violation detection for map steps. Archives pgmq message, cascades to dependencies. Matches QuantumFlow implementation.'
     """)
   end
 
@@ -321,7 +321,7 @@ defmodule Pgflow.Repo.Migrations.AddTypeViolationDetection do
         SET remaining_steps = remaining_steps - 1
         WHERE id = p_run_id;
 
-        PERFORM pgflow.maybe_complete_run(p_run_id);
+        PERFORM QuantumFlow.maybe_complete_run(p_run_id);
         PERFORM start_ready_steps(p_run_id);
       END IF;
     END;

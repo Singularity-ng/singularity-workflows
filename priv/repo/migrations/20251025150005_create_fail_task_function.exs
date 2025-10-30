@@ -1,8 +1,8 @@
-defmodule Pgflow.Repo.Migrations.CreateFailTaskFunction do
+defmodule QuantumFlow.Repo.Migrations.CreateFailTaskFunction do
   @moduledoc """
-  Creates pgflow.fail_task() function for handling task failures.
+  Creates QuantumFlow.fail_task() function for handling task failures.
 
-  Matches pgflow's architecture:
+  Matches QuantumFlow's architecture:
   1. Check if run is already failed (no retry allowed)
   2. Determine if task should retry based on attempts_count vs max_attempts
   3. Update task status (queued for retry, or failed permanently)
@@ -14,7 +14,7 @@ defmodule Pgflow.Repo.Migrations.CreateFailTaskFunction do
   def up do
     # First create helper function for retry delay calculation
     execute("""
-    CREATE OR REPLACE FUNCTION pgflow.calculate_retry_delay(
+    CREATE OR REPLACE FUNCTION QuantumFlow.calculate_retry_delay(
       base_delay INTEGER,
       attempts_count INTEGER
     )
@@ -27,7 +27,7 @@ defmodule Pgflow.Repo.Migrations.CreateFailTaskFunction do
     """)
 
     execute("""
-    CREATE OR REPLACE FUNCTION pgflow.fail_task(
+    CREATE OR REPLACE FUNCTION QuantumFlow.fail_task(
       p_run_id UUID,
       p_step_slug TEXT,
       p_task_index INTEGER,
@@ -116,7 +116,7 @@ defmodule Pgflow.Repo.Migrations.CreateFailTaskFunction do
           PERFORM pgmq.set_vt(
             v_workflow_slug,
             v_message_id,
-            pgflow.calculate_retry_delay(5, v_attempts_count)
+            QuantumFlow.calculate_retry_delay(5, v_attempts_count)
           );
         END IF;
       END IF;
@@ -125,13 +125,13 @@ defmodule Pgflow.Repo.Migrations.CreateFailTaskFunction do
     """)
 
     execute("""
-    COMMENT ON FUNCTION pgflow.fail_task(UUID, TEXT, INTEGER, TEXT) IS
-    'Handles task failure with retry logic. Either requeues for retry or marks as permanently failed. Matches pgflow architecture.'
+    COMMENT ON FUNCTION QuantumFlow.fail_task(UUID, TEXT, INTEGER, TEXT) IS
+    'Handles task failure with retry logic. Either requeues for retry or marks as permanently failed. Matches QuantumFlow architecture.'
     """)
   end
 
   def down do
-    execute("DROP FUNCTION IF EXISTS pgflow.fail_task(UUID, TEXT, INTEGER, TEXT)")
-    execute("DROP FUNCTION IF EXISTS pgflow.calculate_retry_delay(INTEGER, INTEGER)")
+    execute("DROP FUNCTION IF EXISTS QuantumFlow.fail_task(UUID, TEXT, INTEGER, TEXT)")
+    execute("DROP FUNCTION IF EXISTS QuantumFlow.calculate_retry_delay(INTEGER, INTEGER)")
   end
 end

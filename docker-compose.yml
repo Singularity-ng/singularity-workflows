@@ -10,7 +10,7 @@ services:
     ports:
       - "5433:5432"  # Use port 5433 to avoid conflict with main DB on 5432
     volumes:
-      - pgflow_test_data:/var/lib/postgresql/data
+      - quantum_flow_test_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -19,4 +19,4 @@ services:
       retries: 5
 
 volumes:
-  pgflow_test_data:
+  quantum_flow_test_data:

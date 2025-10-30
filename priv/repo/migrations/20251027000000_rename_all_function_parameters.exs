@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
+defmodule QuantumFlow.Repo.Migrations.RenameAllFunctionParameters do
   @moduledoc """
   Comprehensive fix: Rename ALL parameters in PL/pgSQL functions to use _arg prefix.
 
@@ -18,10 +18,10 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
 
   def up do
     # Fix create_flow - revert to last known working version but qualify all column references
-    execute("DROP FUNCTION IF EXISTS pgflow.create_flow(TEXT, INTEGER, INTEGER) CASCADE")
+    execute("DROP FUNCTION IF EXISTS QuantumFlow.create_flow(TEXT, INTEGER, INTEGER) CASCADE")
 
     execute("""
-    CREATE FUNCTION pgflow.create_flow(
+    CREATE FUNCTION QuantumFlow.create_flow(
       arg_workflow_slug TEXT,
       arg_max_attempts INTEGER DEFAULT 3,
       arg_timeout INTEGER DEFAULT 60
@@ -44,8 +44,8 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
       v_max_attempts := arg_max_attempts;
       v_timeout := arg_timeout;
 
-      -- Validate slug using pgflow schema prefix
-      IF NOT pgflow.is_valid_slug(v_workflow_slug) THEN
+      -- Validate slug using QuantumFlow schema prefix
+      IF NOT QuantumFlow.is_valid_slug(v_workflow_slug) THEN
         RAISE EXCEPTION 'Invalid workflow_slug: %', v_workflow_slug;
       END IF;
 
@@ -66,10 +66,10 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
     """)
 
     # Fix add_step - similar qualified column approach
-    execute("DROP FUNCTION IF EXISTS pgflow.add_step(TEXT, TEXT, TEXT[], TEXT, INTEGER, INTEGER, INTEGER) CASCADE")
+    execute("DROP FUNCTION IF EXISTS QuantumFlow.add_step(TEXT, TEXT, TEXT[], TEXT, INTEGER, INTEGER, INTEGER) CASCADE")
 
     execute("""
-    CREATE FUNCTION pgflow.add_step(
+    CREATE FUNCTION QuantumFlow.add_step(
       arg_workflow_slug TEXT,
       arg_step_slug TEXT,
       arg_depends_on TEXT[] DEFAULT '{}',
@@ -111,11 +111,11 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
       v_max_attempts := arg_max_attempts;
       v_timeout := arg_timeout;
 
-      IF NOT pgflow.is_valid_slug(v_workflow_slug) THEN
+      IF NOT QuantumFlow.is_valid_slug(v_workflow_slug) THEN
         RAISE EXCEPTION 'Invalid workflow_slug: %', v_workflow_slug;
       END IF;
 
-      IF NOT pgflow.is_valid_slug(v_step_slug) THEN
+      IF NOT QuantumFlow.is_valid_slug(v_step_slug) THEN
         RAISE EXCEPTION 'Invalid step_slug: %', v_step_slug;
       END IF;
 
@@ -166,10 +166,10 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
 
   def down do
     # Restore original create_flow
-    execute("DROP FUNCTION IF EXISTS pgflow.create_flow(TEXT, INTEGER, INTEGER) CASCADE")
+    execute("DROP FUNCTION IF EXISTS QuantumFlow.create_flow(TEXT, INTEGER, INTEGER) CASCADE")
 
     execute("""
-    CREATE FUNCTION pgflow.create_flow(
+    CREATE FUNCTION QuantumFlow.create_flow(
       p_workflow_slug TEXT,
       p_max_attempts INTEGER DEFAULT 3,
       p_timeout INTEGER DEFAULT 60
@@ -183,7 +183,7 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
     LANGUAGE plpgsql
     AS $$
     BEGIN
-      IF NOT pgflow.is_valid_slug(p_workflow_slug) THEN
+      IF NOT QuantumFlow.is_valid_slug(p_workflow_slug) THEN
         RAISE EXCEPTION 'Invalid workflow_slug: %', p_workflow_slug;
       END IF;
 
@@ -201,10 +201,10 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
     """)
 
     # Restore original add_step
-    execute("DROP FUNCTION IF EXISTS pgflow.add_step(TEXT, TEXT, TEXT[], TEXT, INTEGER, INTEGER, INTEGER) CASCADE")
+    execute("DROP FUNCTION IF EXISTS QuantumFlow.add_step(TEXT, TEXT, TEXT[], TEXT, INTEGER, INTEGER, INTEGER) CASCADE")
 
     execute("""
-    CREATE FUNCTION pgflow.add_step(
+    CREATE FUNCTION QuantumFlow.add_step(
       p_workflow_slug TEXT,
       p_step_slug TEXT,
       p_depends_on TEXT[] DEFAULT '{}',
@@ -231,11 +231,11 @@ defmodule Pgflow.Repo.Migrations.RenameAllFunctionParameters do
       v_next_index INTEGER;
       v_deps_count INTEGER;
     BEGIN
-      IF NOT pgflow.is_valid_slug(p_workflow_slug) THEN
+      IF NOT QuantumFlow.is_valid_slug(p_workflow_slug) THEN
         RAISE EXCEPTION 'Invalid workflow_slug: %', p_workflow_slug;
       END IF;
 
-      IF NOT pgflow.is_valid_slug(p_step_slug) THEN
+      IF NOT QuantumFlow.is_valid_slug(p_step_slug) THEN
         RAISE EXCEPTION 'Invalid step_slug: %', p_step_slug;
       END IF;
 

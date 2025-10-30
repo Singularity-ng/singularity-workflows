@@ -1,4 +1,4 @@
-# Testing Guide for ex_pgflow
+# Testing Guide for quantum_flow
 
 This guide explains how to run tests, understand test coverage, and work around the PostgreSQL 17 issue.
 
@@ -12,7 +12,7 @@ mix test
 mix test --exclude flow_builder_test
 
 # Run specific test file
-mix test test/pgflow/complete_task_test.exs
+mix test test/QuantumFlow/complete_task_test.exs
 
 # Run with verbose output
 mix test --trace
@@ -35,7 +35,7 @@ mix test --trace
 
 ### PostgreSQL 16: ✅ Fully Supported
 ```bash
-export DATABASE_URL="postgresql://user:pass@localhost/ex_pgflow"
+export DATABASE_URL="postgresql://user:pass@localhost/quantum_flow"
 mix test  # All tests pass
 ```
 
@@ -46,7 +46,7 @@ mix test  # All tests pass
 
 ### PostgreSQL 17: ⚠️ Partial Support
 ```bash
-export DATABASE_URL="postgresql://user:pass@localhost/ex_pgflow"
+export DATABASE_URL="postgresql://user:pass@localhost/quantum_flow"
 mix test --exclude flow_builder_test  # Recommended
 # Or:
 mix test  # 336/413 passing (82%)
@@ -59,8 +59,8 @@ mix test  # 336/413 passing (82%)
 - Core workflow logic fully functional
 
 **Known Issues**:
-- `pgflow.create_flow()` - Parser ambiguity in RETURNS TABLE
-- `pgflow.add_step()` - Same parser ambiguity issue
+- `QuantumFlow.create_flow()` - Parser ambiguity in RETURNS TABLE
+- `QuantumFlow.add_step()` - Same parser ambiguity issue
 - Workaround not available (parser-level issue in PostgreSQL 17)
 
 **Investigation**: See [POSTGRESQL_BUG_REPORT.md](POSTGRESQL_BUG_REPORT.md) for:
@@ -71,7 +71,7 @@ mix test  # 336/413 passing (82%)
 
 ### PostgreSQL 18: ✅ Fully Supported
 ```bash
-export DATABASE_URL="postgresql://user:pass@localhost/ex_pgflow"
+export DATABASE_URL="postgresql://user:pass@localhost/quantum_flow"
 mix test  # All tests pass
 ```
 
@@ -93,8 +93,8 @@ sudo apt-get install postgresql-server
 
 # Or use Docker
 docker run -d \
-  --name ex_pgflow_db \
-  -e POSTGRES_DB=ex_pgflow \
+  --name quantum_flow_db \
+  -e POSTGRES_DB=quantum_flow \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \
   -p 5432:5432 \
@@ -105,11 +105,11 @@ docker run -d \
 
 ```bash
 # If using local PostgreSQL
-createdb ex_pgflow
-export DATABASE_URL="postgresql://postgres@localhost/ex_pgflow"
+createdb quantum_flow
+export DATABASE_URL="postgresql://postgres@localhost/quantum_flow"
 
 # If using Docker
-export DATABASE_URL="postgresql://postgres:postgres@localhost/ex_pgflow"
+export DATABASE_URL="postgresql://postgres:postgres@localhost/quantum_flow"
 ```
 
 ### 3. Run Migrations
@@ -125,7 +125,7 @@ This creates:
 - `workflow_step_tasks` - Individual tasks
 - `workflow_runs` - Run instances
 - `workflow_step_dependencies` - Step dependencies
-- pgflow SQL functions
+- QuantumFlow SQL functions
 - pgmq queue tables
 
 ## Running Tests
@@ -156,16 +156,16 @@ This runs 336/336 tests and passes on all PostgreSQL versions.
 
 ```bash
 # Test complete_task functionality
-mix test test/pgflow/complete_task_test.exs
+mix test test/QuantumFlow/complete_task_test.exs
 
 # Test clock abstraction
-mix test test/pgflow/clock_test.exs
+mix test test/QuantumFlow/clock_test.exs
 
 # Test step task logic
-mix test test/pgflow/step_task_test.exs
+mix test test/QuantumFlow/step_task_test.exs
 
 # Test workflow execution
-mix test test/pgflow/workflow_run_test.exs
+mix test test/QuantumFlow/workflow_run_test.exs
 ```
 
 ### Run with Verbose Output
@@ -186,7 +186,7 @@ mix test --statistics
 ### Clock Integration Tests (`clock_test.exs`)
 - **Tests**: 158/158 passing ✅
 - **Purpose**: Verify deterministic time control in tests
-- **Key**: Uses `Pgflow.TestClock` instead of wall-clock time
+- **Key**: Uses `QuantumFlow.TestClock` instead of wall-clock time
 - **Why**: Prevents flaky timing-dependent tests
 
 ### Complete Task Tests (`complete_task_test.exs`)
@@ -217,10 +217,10 @@ mix test --statistics
 
 ```bash
 # Run with debug SQL output
-ECTO_LOG_LEVEL=debug mix test test/pgflow/complete_task_test.exs
+ECTO_LOG_LEVEL=debug mix test test/QuantumFlow/complete_task_test.exs
 
 # Run with very verbose output
-mix test test/pgflow/complete_task_test.exs --trace
+mix test test/QuantumFlow/complete_task_test.exs --trace
 ```
 
 ### Check Test Helpers
@@ -235,10 +235,10 @@ mix test test/pgflow/complete_task_test.exs --trace
 
 ### Common Test Issues
 
-**Issue**: "database ex_pgflow does not exist"
+**Issue**: "database quantum_flow does not exist"
 ```bash
-createdb ex_pgflow
-export DATABASE_URL="postgresql://user@localhost/ex_pgflow"
+createdb quantum_flow
+export DATABASE_URL="postgresql://user@localhost/quantum_flow"
 mix ecto.migrate
 ```
 
@@ -249,7 +249,7 @@ brew services start postgresql  # macOS
 sudo service postgresql start   # Linux
 
 # Or use Docker
-docker start ex_pgflow_db
+docker start quantum_flow_db
 ```
 
 **Issue**: "Tests timing out"
@@ -320,18 +320,18 @@ test:
 
 ```bash
 # PostgreSQL 16
-docker run -e POSTGRES_DB=ex_pgflow postgres:16
-export DATABASE_URL="postgresql://postgres@localhost/ex_pgflow"
+docker run -e POSTGRES_DB=quantum_flow postgres:16
+export DATABASE_URL="postgresql://postgres@localhost/quantum_flow"
 mix test
 
 # PostgreSQL 17
-docker run -e POSTGRES_DB=ex_pgflow postgres:17
-export DATABASE_URL="postgresql://postgres@localhost/ex_pgflow"
+docker run -e POSTGRES_DB=quantum_flow postgres:17
+export DATABASE_URL="postgresql://postgres@localhost/quantum_flow"
 mix test --exclude flow_builder_test
 
 # PostgreSQL 18
-docker run -e POSTGRES_DB=ex_pgflow postgres:18
-export DATABASE_URL="postgresql://postgres@localhost/ex_pgflow"
+docker run -e POSTGRES_DB=quantum_flow postgres:18
+export DATABASE_URL="postgresql://postgres@localhost/quantum_flow"
 mix test
 ```
 

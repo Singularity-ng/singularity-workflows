@@ -1,7 +1,7 @@
-defmodule Pgflow.ClockTest do
+defmodule QuantumFlow.ClockTest do
   use ExUnit.Case, async: false
 
-  alias Pgflow.{Clock, TestClock}
+  alias QuantumFlow.{Clock, TestClock}
 
   @moduledoc """
   Tests for deterministic clock behavior.
@@ -146,14 +146,14 @@ defmodule Pgflow.ClockTest do
 
   describe "TestClock - integration with Application config" do
     test "Application.get_env returns TestClock in test environment" do
-      clock = Application.get_env(:ex_pgflow, :clock)
+      clock = Application.get_env(:quantum_flow, :clock)
 
-      assert clock == Pgflow.TestClock
+      assert clock == QuantumFlow.TestClock
     end
 
     test "using configured clock for timestamps" do
       TestClock.reset()
-      clock = Application.get_env(:ex_pgflow, :clock, Pgflow.Clock)
+      clock = Application.get_env(:quantum_flow, :clock, QuantumFlow.Clock)
 
       time1 = clock.now()
       clock.advance(5000)

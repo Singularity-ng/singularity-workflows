@@ -1,25 +1,25 @@
-# pgflow Reference - What's in /tmp/pgflow
+# QuantumFlow Reference - What's in /tmp/QuantumFlow
 
-Complete overview of the official pgflow TypeScript implementation.
+Complete overview of the official QuantumFlow TypeScript implementation.
 
-**Location:** `/tmp/pgflow/`  
+**Location:** `/tmp/QuantumFlow/`  
 **What it is:** Official TypeScript workflow orchestration using PostgreSQL + pgmq  
-**Our achievement:** ex_pgflow = 100% feature parity with this
+**Our achievement:** quantum_flow = 100% feature parity with this
 
 ---
 
 ## Directory Structure
 
 ```
-/tmp/pgflow/
+/tmp/QuantumFlow/
 ├── pkgs/
-│   ├── cli/              # Command-line tool for pgflow
+│   ├── cli/              # Command-line tool for QuantumFlow
 │   ├── client/           # TypeScript client library
 │   ├── core/             # ⭐ Core SQL schemas (what we matched!)
 │   ├── dsl/              # TypeScript DSL for workflow definitions
 │   ├── edge-worker/      # Supabase Edge Function worker
 │   ├── example-flows/    # Example workflow implementations
-│   └── website/          # Documentation website (https://pgflow.dev)
+│   └── website/          # Documentation website (https://QuantumFlow.dev)
 ├── examples/             # Additional examples
 ├── scripts/              # Build and deployment scripts
 └── README.md
@@ -29,12 +29,12 @@ Complete overview of the official pgflow TypeScript implementation.
 
 ## 1. Core SQL Schemas (`pkgs/core/schemas/`)
 
-**The heart of pgflow** - All the SQL we matched in ex_pgflow:
+**The heart of QuantumFlow** - All the SQL we matched in quantum_flow:
 
 | File | Size | What It Does | Our Migration |
 |------|------|--------------|---------------|
 | `0010_extensions.sql` | 89B | Installs pgmq extension | `20251025150000_add_pgmq_extension.exs` |
-| `0020_schemas.sql` | 54B | Creates pgflow schema | Implicit in migrations |
+| `0020_schemas.sql` | 54B | Creates QuantumFlow schema | Implicit in migrations |
 | `0030_utilities.sql` | 626B | Utility functions (is_valid_slug) | `20251025160000_add_is_valid_slug_function.exs` |
 | `0040_types.sql` | 164B | Custom types | Embedded in migrations |
 | `0050_tables_definitions.sql` | 2.4K | workflows, workflow_steps, deps tables | `20251025160001_create_workflow_definition_tables.exs` |
@@ -59,7 +59,7 @@ Complete overview of the official pgflow TypeScript implementation.
 ### Simple Flow (`example-flow.ts`)
 
 ```typescript
-import { Flow } from '@pgflow/dsl';
+import { Flow } from '@QuantumFlow/dsl';
 
 export const ExampleFlow = new Flow<{ value: number }>({
   slug: 'example_flow',
@@ -76,7 +76,7 @@ export const ExampleFlow = new Flow<{ value: number }>({
   }));
 ```
 
-**ex_pgflow Equivalent:**
+**quantum_flow Equivalent:**
 
 ```elixir
 defmodule ExampleWorkflow do
@@ -101,7 +101,7 @@ defmodule ExampleWorkflow do
   end
 end
 
-Pgflow.Executor.execute(ExampleWorkflow, %{"value" => 23}, repo)
+QuantumFlow.Executor.execute(ExampleWorkflow, %{"value" => 23}, repo)
 ```
 
 ### Map Flow (`map-flow.ts`)
@@ -123,7 +123,7 @@ export const TextProcessingFlow = new Flow<string[]>({
   }));
 ```
 
-**ex_pgflow Equivalent:**
+**quantum_flow Equivalent:**
 
 ```elixir
 defmodule TextProcessingWorkflow do
@@ -185,7 +185,7 @@ export class EdgeWorker {
 
 ### Key Features
 
-| Feature | pgflow Edge Worker | ex_pgflow TaskExecutor |
+| Feature | QuantumFlow Edge Worker | quantum_flow TaskExecutor |
 |---------|-------------------|----------------------|
 | **Runtime** | Deno (Supabase Edge Function) | BEAM/Erlang |
 | **Polling** | `read_with_poll()` (5s default) | `read_with_poll()` (5s configurable) |
@@ -196,10 +196,10 @@ export class EdgeWorker {
 
 ### Example Usage
 
-**pgflow (TypeScript):**
+**QuantumFlow (TypeScript):**
 
 ```typescript
-import { EdgeWorker } from '@pgflow/edge-worker';
+import { EdgeWorker } from '@QuantumFlow/edge-worker';
 import { MyFlow } from './flows.js';
 
 EdgeWorker.start(MyFlow, {
@@ -208,10 +208,10 @@ EdgeWorker.start(MyFlow, {
 });
 ```
 
-**ex_pgflow (Elixir):**
+**quantum_flow (Elixir):**
 
 ```elixir
-{:ok, result} = Pgflow.Executor.execute(
+{:ok, result} = QuantumFlow.Executor.execute(
   MyWorkflow,
   %{"input" => "data"},
   repo,
@@ -224,12 +224,12 @@ EdgeWorker.start(MyFlow, {
 
 ## 4. Website (`pkgs/website/`)
 
-**What it is:** Astro-based documentation site at https://pgflow.dev
+**What it is:** Astro-based documentation site at https://QuantumFlow.dev
 
 ### Documentation Structure
 
 ```
-/tmp/pgflow/pkgs/website/src/content/docs/
+/tmp/QuantumFlow/pkgs/website/src/content/docs/
 ├── index.mdx                    # Homepage
 ├── get-started/                 # Getting started guides
 ├── concepts/                    # Core concepts (DAGs, map steps, etc.)
@@ -249,7 +249,7 @@ EdgeWorker.start(MyFlow, {
 - **Comparisons:** vs Oban, vs BullMQ, vs Sidekiq
 - **API Reference:** Complete TypeScript API docs
 
-**We can use these for ex_pgflow documentation!**
+**We can use these for quantum_flow documentation!**
 
 ---
 
@@ -258,7 +258,7 @@ EdgeWorker.start(MyFlow, {
 **What it is:** TypeScript DSL for defining workflows with full type safety
 
 ```typescript
-import { Flow } from '@pgflow/dsl';
+import { Flow } from '@QuantumFlow/dsl';
 
 // Type-safe workflow definition
 const MyFlow = new Flow<{ userId: string }>({
@@ -276,7 +276,7 @@ const MyFlow = new Flow<{ userId: string }>({
   }));
 ```
 
-**ex_pgflow Equivalent:** Elixir modules with @spec annotations
+**quantum_flow Equivalent:** Elixir modules with @spec annotations
 
 ---
 
@@ -285,7 +285,7 @@ const MyFlow = new Flow<{ userId: string }>({
 **What it is:** TypeScript client for starting workflows and querying status
 
 ```typescript
-import { createClient } from '@pgflow/client';
+import { createClient } from '@QuantumFlow/client';
 
 const client = createClient(supabase);
 
@@ -296,21 +296,21 @@ const runId = await client.run('my_flow', { input: 'data' });
 const status = await client.getStatus(runId);
 ```
 
-**ex_pgflow Equivalent:** Direct Ecto queries + Executor API
+**quantum_flow Equivalent:** Direct Ecto queries + Executor API
 
 ---
 
 ## 7. CLI (`pkgs/cli/`)
 
-**What it is:** Command-line tool for pgflow operations
+**What it is:** Command-line tool for QuantumFlow operations
 
 ```bash
-npx pgflow install    # Install SQL schemas
-npx pgflow migrate    # Run migrations
-npx pgflow compile    # Compile DSL to SQL
+npx QuantumFlow install    # Install SQL schemas
+npx QuantumFlow migrate    # Run migrations
+npx QuantumFlow compile    # Compile DSL to SQL
 ```
 
-**ex_pgflow Equivalent:** Mix tasks
+**quantum_flow Equivalent:** Mix tasks
 
 ```bash
 mix ecto.migrate      # Run all 28 migrations
@@ -319,9 +319,9 @@ mix test              # Run tests
 
 ---
 
-## Key Differences: pgflow vs ex_pgflow
+## Key Differences: QuantumFlow vs quantum_flow
 
-| Aspect | pgflow | ex_pgflow |
+| Aspect | QuantumFlow | quantum_flow |
 |--------|--------|-----------|
 | **Language** | TypeScript | Elixir |
 | **Runtime** | Deno/Node.js | BEAM/Erlang |
@@ -338,22 +338,22 @@ mix test              # Run tests
 
 ## Summary
 
-**What we learned from /tmp/pgflow:**
+**What we learned from /tmp/QuantumFlow:**
 
 1. ✅ **SQL Core** - Matched all 22 SQL schema files
 2. ✅ **Example Flows** - Understood patterns (simple, map, wide)
 3. ✅ **Edge Worker** - Implemented equivalent TaskExecutor
-4. ✅ **Website** - Can use docs for ex_pgflow inspiration
+4. ✅ **Website** - Can use docs for quantum_flow inspiration
 5. ✅ **DSL** - Created Elixir module equivalent
 6. ✅ **Client** - Created Executor + Ecto query API
 7. ✅ **CLI** - Created Mix tasks
 
-**Result:** ex_pgflow = 100% feature parity with pgflow! 🎯
+**Result:** quantum_flow = 100% feature parity with QuantumFlow! 🎯
 
 ---
 
 **References:**
 
-- pgflow GitHub: https://github.com/pgflow/pgflow
-- pgflow Website: https://pgflow.dev
-- ex_pgflow: Our standalone Elixir implementation
+- QuantumFlow GitHub: https://github.com/QuantumFlow/QuantumFlow
+- QuantumFlow Website: https://QuantumFlow.dev
+- quantum_flow: Our standalone Elixir implementation

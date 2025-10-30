@@ -2,7 +2,7 @@ cargo:rerun-if-changed=tree-sitter-markdown/src/parser.c
 cargo:rerun-if-changed=tree-sitter-markdown/src/scanner.c
 cargo:rerun-if-changed=tree-sitter-markdown-inline/src/parser.c
 cargo:rerun-if-changed=tree-sitter-markdown-inline/src/scanner.c
-OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/build/tree-sitter-md-4a6e73f3271bcc74/out)
+OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/quantum_flow/.cargo-build/debug/build/tree-sitter-md-4a6e73f3271bcc74/out)
 OPT_LEVEL = Some(0)
 TARGET = Some(aarch64-apple-darwin)
 CARGO_ENCODED_RUSTFLAGS = Some(-Clinker=gcc)
@@ -53,4 +53,4 @@ ARFLAGS_aarch64_apple_darwin = None
 cargo:rerun-if-env-changed=ARFLAGS_aarch64-apple-darwin
 ARFLAGS_aarch64-apple-darwin = None
 cargo:rustc-link-lib=static=tree-sitter-markdown
-cargo:rustc-link-search=native=/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/build/tree-sitter-md-4a6e73f3271bcc74/out
+cargo:rustc-link-search=native=/Users/mhugo/code/singularity-incubation/packages/quantum_flow/.cargo-build/debug/build/tree-sitter-md-4a6e73f3271bcc74/out

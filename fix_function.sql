@@ -1,6 +1,6 @@
-DROP FUNCTION IF EXISTS pgflow.cascade_complete_taskless_steps(UUID);
+DROP FUNCTION IF EXISTS quantum_flow.cascade_complete_taskless_steps(UUID);
 
-CREATE OR REPLACE FUNCTION pgflow.cascade_complete_taskless_steps(p_run_id UUID)
+CREATE OR REPLACE FUNCTION quantum_flow.cascade_complete_taskless_steps(p_run_id UUID)
 RETURNS INTEGER
 LANGUAGE plpgsql
 AS $$
@@ -42,7 +42,7 @@ BEGIN
     PERFORM start_ready_steps(p_run_id);
 
     -- Check if the run is now complete
-    PERFORM pgflow.maybe_complete_run(p_run_id);
+    PERFORM quantum_flow.maybe_complete_run(p_run_id);
   END LOOP;
 
   RETURN v_completed_count;

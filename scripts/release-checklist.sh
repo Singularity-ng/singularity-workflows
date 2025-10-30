@@ -1,10 +1,10 @@
 #!/bin/bash
-# Release Checklist Script for ex_pgflow
+# Release Checklist Script for quantum_flow
 # Run this before creating a version tag to ensure everything is ready
 
 set -e
 
-echo "🚀 ex_pgflow Release Checklist"
+echo "🚀 quantum_flow Release Checklist"
 echo "=============================="
 echo ""
 

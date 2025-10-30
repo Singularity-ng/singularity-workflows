@@ -1,8 +1,8 @@
-defmodule Pgflow.Repo.Migrations.CreateWorkflowRuns do
+defmodule QuantumFlow.Repo.Migrations.CreateWorkflowRuns do
   @moduledoc """
   Creates workflow_runs table for tracking workflow execution instances.
 
-  Matches pgflow's runs table design - one record per workflow execution.
+  Matches QuantumFlow's runs table design - one record per workflow execution.
   """
   use Ecto.Migration
 
@@ -36,7 +36,7 @@ defmodule Pgflow.Repo.Migrations.CreateWorkflowRuns do
 
     execute """
     COMMENT ON TABLE workflow_runs IS
-    'Tracks workflow execution instances (pgflow-compatible design)'
+    'Tracks workflow execution instances (quantum_flow-compatible design)'
     """
 
     execute """

@@ -1,13 +1,13 @@
 ---
 name: Question
-about: Ask a question about ExPgflow
+about: Ask a question about ExQuantumFlow
 title: "[QUESTION] "
 labels: question
 ---
 
 ## Question
 
-What would you like to know about ExPgflow?
+What would you like to know about ExQuantumFlow?
 
 ## Context
 
@@ -18,10 +18,10 @@ Provide any relevant context about your question:
 
 ## Documentation Checked
 
-- [ ] [GETTING_STARTED.md](https://github.com/mikkihugo/ex_pgflow/blob/main/GETTING_STARTED.md)
-- [ ] [ARCHITECTURE.md](https://github.com/mikkihugo/ex_pgflow/blob/main/ARCHITECTURE.md)
-- [ ] Generated API docs (https://hexdocs.pm/ex_pgflow)
-- [ ] [docs/ reference materials](https://github.com/mikkihugo/ex_pgflow/tree/main/docs)
+- [ ] [GETTING_STARTED.md](https://github.com/mikkihugo/quantum_flow/blob/main/GETTING_STARTED.md)
+- [ ] [ARCHITECTURE.md](https://github.com/mikkihugo/quantum_flow/blob/main/ARCHITECTURE.md)
+- [ ] Generated API docs (https://hexdocs.pm/quantum_flow)
+- [ ] [docs/ reference materials](https://github.com/mikkihugo/quantum_flow/tree/main/docs)
 
 ## Code Example (if applicable)
 

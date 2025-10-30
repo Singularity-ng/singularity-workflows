@@ -1,8 +1,8 @@
-defmodule Pgflow.NotificationsTest do
+defmodule QuantumFlow.NotificationsTest do
   use ExUnit.Case, async: true
   import ExUnit.CaptureLog
 
-  alias Pgflow.Notifications
+  alias QuantumFlow.Notifications
 
   # Mock repo for testing
   defmodule TestRepo do
@@ -63,11 +63,11 @@ defmodule Pgflow.NotificationsTest do
   describe "listen/2" do
     test "starts listening for NOTIFY events with logging" do
       # Mock Postgrex.Notifications
-      original_notifications = Application.get_env(:pgflow, :notifications_module, Postgrex.Notifications)
-      Application.put_env(:pgflow, :notifications_module, MockNotifications)
+      original_notifications = Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+      Application.put_env(:quantum_flow, :notifications_module, MockNotifications)
       
       on_exit(fn ->
-        Application.put_env(:pgflow, :notifications_module, original_notifications)
+        Application.put_env(:quantum_flow, :notifications_module, original_notifications)
       end)
 
       log = capture_log(fn ->
@@ -88,11 +88,11 @@ defmodule Pgflow.NotificationsTest do
         end
       end
 
-      original_notifications = Application.get_env(:pgflow, :notifications_module, Postgrex.Notifications)
-      Application.put_env(:pgflow, :notifications_module, FailingNotifications)
+      original_notifications = Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+      Application.put_env(:quantum_flow, :notifications_module, FailingNotifications)
       
       on_exit(fn ->
-        Application.put_env(:pgflow, :notifications_module, original_notifications)
+        Application.put_env(:quantum_flow, :notifications_module, original_notifications)
       end)
 
       log = capture_log(fn ->
@@ -108,11 +108,11 @@ defmodule Pgflow.NotificationsTest do
   describe "unlisten/2" do
     test "stops listening for notifications with logging" do
       # Mock Postgrex.Notifications
-      original_notifications = Application.get_env(:pgflow, :notifications_module, Postgrex.Notifications)
-      Application.put_env(:pgflow, :notifications_module, MockNotifications)
+      original_notifications = Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+      Application.put_env(:quantum_flow, :notifications_module, MockNotifications)
       
       on_exit(fn ->
-        Application.put_env(:pgflow, :notifications_module, original_notifications)
+        Application.put_env(:quantum_flow, :notifications_module, original_notifications)
       end)
 
       log = capture_log(fn ->
@@ -131,11 +131,11 @@ defmodule Pgflow.NotificationsTest do
         end
       end
 
-      original_notifications = Application.get_env(:pgflow, :notifications_module, Postgrex.Notifications)
-      Application.put_env(:pgflow, :notifications_module, FailingUnlisten)
+      original_notifications = Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+      Application.put_env(:quantum_flow, :notifications_module, FailingUnlisten)
       
       on_exit(fn ->
-        Application.put_env(:pgflow, :notifications_module, original_notifications)
+        Application.put_env(:quantum_flow, :notifications_module, original_notifications)
       end)
 
       log = capture_log(fn ->

@@ -1,6 +1,6 @@
-defmodule Pgflow.Repo.Migrations.UpdateCompleteTaskWithPgmq do
+defmodule QuantumFlow.Repo.Migrations.UpdateCompleteTaskWithPgmq do
   @moduledoc """
-  Updates complete_task() to match pgflow's pgmq-integrated implementation.
+  Updates complete_task() to match QuantumFlow's pgmq-integrated implementation.
 
   Changes:
   1. Archive pgmq message when task completes
@@ -149,13 +149,13 @@ defmodule Pgflow.Repo.Migrations.UpdateCompleteTaskWithPgmq do
         WHERE id = p_run_id;
 
         -- After step completion, cascade any taskless steps (empty-array propagation)
-        PERFORM pgflow.cascade_complete_taskless_steps(p_run_id);
+        PERFORM QuantumFlow.cascade_complete_taskless_steps(p_run_id);
 
         -- Trigger start_ready_steps to awaken newly ready steps
         PERFORM start_ready_steps(p_run_id);
 
         -- Then check if run is complete and aggregate leaf outputs
-        PERFORM pgflow.maybe_complete_run(p_run_id);
+        PERFORM QuantumFlow.maybe_complete_run(p_run_id);
       END IF;
     END;
     $$;
@@ -163,7 +163,7 @@ defmodule Pgflow.Repo.Migrations.UpdateCompleteTaskWithPgmq do
 
     execute("""
     COMMENT ON FUNCTION complete_task(UUID, TEXT, INTEGER, JSONB) IS
-    'Marks task as completed, archives pgmq message, cascades to dependencies, and checks run completion. Matches pgflow architecture.'
+    'Marks task as completed, archives pgmq message, cascades to dependencies, and checks run completion. Matches QuantumFlow architecture.'
     """)
   end
 

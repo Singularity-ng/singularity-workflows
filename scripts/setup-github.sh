@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Setting up GitHub repository for ExPgflow v0.1.0"
+echo "🚀 Setting up GitHub repository for ExQuantumFlow v0.1.0"
 echo ""
 
 # Check if gh is installed
@@ -12,7 +12,7 @@ if ! command -v gh &> /dev/null; then
     exit 1
 fi
 
-REPO="mikkihugo/ex_pgflow"
+REPO="mikkihugo/quantum_flow"
 
 # Authenticate with GitHub if needed
 if ! gh auth status &> /dev/null; then
@@ -26,8 +26,8 @@ echo ""
 # Update repository description
 echo "📝 Updating repository description..."
 gh repo edit "$REPO" \
-    --description "Elixir implementation of pgflow - database-driven DAG execution engine with 100% feature parity. Parallel execution, map steps, dependency merging, multi-instance scaling via PostgreSQL + pgmq." \
-    --homepage "https://hexdocs.pm/ex_pgflow"
+    --description "Elixir implementation of QuantumFlow - database-driven DAG execution engine with 100% feature parity. Parallel execution, map steps, dependency merging, multi-instance scaling via PostgreSQL + pgmq." \
+    --homepage "https://hexdocs.pm/quantum_flow"
 
 # Add topics
 echo "🏷️  Adding repository topics..."
@@ -36,7 +36,7 @@ gh repo edit "$REPO" --add-topic "postgresql"
 gh repo edit "$REPO" --add-topic "workflow"
 gh repo edit "$REPO" --add-topic "dag"
 gh repo edit "$REPO" --add-topic "task-execution"
-gh repo edit "$REPO" --add-topic "pgflow"
+gh repo edit "$REPO" --add-topic "QuantumFlow"
 gh repo edit "$REPO" --add-topic "distributed-systems"
 
 # Enable Issues (should be on by default)

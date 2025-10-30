@@ -11,28 +11,28 @@
 import Config
 
 # General application configuration
-config :ex_pgflow,
-  ecto_repos: [Pgflow.Repo]
+config :quantum_flow,
+  ecto_repos: [QuantumFlow.Repo]
 
 # Configures Elixir's Logger
 config :logger,
   level: :info
 
 # Use Jason for JSON parsing
-config :ex_pgflow, :json_library, Jason
+config :quantum_flow, :json_library, Jason
 
 # PGMQ configuration
-config :ex_pgflow, :pgmq,
+config :quantum_flow, :pgmq,
   host: "localhost",
   port: 5432,
-  database: "ex_pgflow_dev",
+  database: "quantum_flow_dev",
   username: "postgres",
   password: "postgres",
   pool_size: 10,
   timeout: 30_000
 
 # Orchestrator configuration
-config :ex_pgflow, :orchestrator,
+config :quantum_flow, :orchestrator,
   # Global settings
   max_depth: 5,
   timeout: 300_000,

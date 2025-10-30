@@ -4,8 +4,8 @@ $schema: '../../.moon/cache/schemas/project.json'
 type: 'library'
 language: 'elixir'
 project:
-  name: '@singularity/ex_pgflow'
-  description: 'Elixir implementation of pgflow - PostgreSQL-native workflow orchestration'
+  name: '@singularity/quantum_flow'
+  description: 'Elixir implementation of QuantumFlow - PostgreSQL-native workflow orchestration'
   channel: '#external'
   owner: 'singularity'
   maintainers: ['mikkihugo']

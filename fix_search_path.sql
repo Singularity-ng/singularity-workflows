@@ -1,5 +1,5 @@
 -- Fix create_flow function search_path
-CREATE OR REPLACE FUNCTION pgflow.create_flow(
+CREATE OR REPLACE FUNCTION quantum_flow.create_flow(
   p_workflow_slug TEXT,
   p_max_attempts INTEGER DEFAULT 3,
   p_timeout INTEGER DEFAULT 60
@@ -15,7 +15,7 @@ SET search_path = 'public'
 AS $$
 BEGIN
   -- Validate slug
-  IF NOT pgflow.is_valid_slug(p_workflow_slug) THEN
+  IF NOT quantum_flow.is_valid_slug(p_workflow_slug) THEN
     RAISE EXCEPTION 'Invalid workflow_slug: %', p_workflow_slug;
   END IF;
 
@@ -26,7 +26,7 @@ BEGIN
   SET workflow_slug = workflows.workflow_slug;
 
   -- Ensure pgmq queue exists
-  PERFORM pgflow.ensure_workflow_queue(p_workflow_slug);
+  PERFORM quantum_flow.ensure_workflow_queue(p_workflow_slug);
 
   -- Return workflow record
   RETURN QUERY
@@ -37,7 +37,7 @@ END;
 $$;
 
 -- Fix add_step function search_path  
-CREATE OR REPLACE FUNCTION pgflow.add_step(
+CREATE OR REPLACE FUNCTION quantum_flow.add_step(
   p_workflow_slug TEXT,
   p_step_slug TEXT,
   p_depends_on TEXT[] DEFAULT '{}',
@@ -65,11 +65,11 @@ DECLARE
   v_deps_count INTEGER;
 BEGIN
   -- Validate slugs
-  IF NOT pgflow.is_valid_slug(p_workflow_slug) THEN
+  IF NOT quantum_flow.is_valid_slug(p_workflow_slug) THEN
     RAISE EXCEPTION 'Invalid workflow_slug: %', p_workflow_slug;
   END IF;
   
-  IF NOT pgflow.is_valid_slug(p_step_slug) THEN
+  IF NOT quantum_flow.is_valid_slug(p_step_slug) THEN
     RAISE EXCEPTION 'Invalid step_slug: %', p_step_slug;
   END IF;
 

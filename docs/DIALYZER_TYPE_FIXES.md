@@ -104,7 +104,7 @@ hostname = to_string(hostname_charlist)
 
 1. **Timeout Configuration:**
    ```elixir
-   Pgflow.Executor.execute(MyWorkflow, input, repo, timeout: 60_000)
+   QuantumFlow.Executor.execute(MyWorkflow, input, repo, timeout: 60_000)
    ```
 
 2. **During Execution:**
@@ -136,7 +136,7 @@ hostname = to_string(hostname_charlist)
 
 ```elixir
 # Start workflow with 30 second timeout
-{:ok, result} = Pgflow.Executor.execute(LongWorkflow, input, repo, timeout: 30_000)
+{:ok, result} = QuantumFlow.Executor.execute(LongWorkflow, input, repo, timeout: 30_000)
 
 case result do
   %{} ->
@@ -175,7 +175,7 @@ end
 ### 2. **Better for Long-Running Workflows**
 ```elixir
 # Start workflow, don't wait forever
-{:ok, :in_progress} = Pgflow.Executor.execute(BigJob, input, repo, timeout: 5_000)
+{:ok, :in_progress} = QuantumFlow.Executor.execute(BigJob, input, repo, timeout: 5_000)
 
 # Do other work...
 do_other_stuff()

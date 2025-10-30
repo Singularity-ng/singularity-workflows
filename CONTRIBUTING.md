@@ -1,6 +1,6 @@
-# Contributing to ExPgflow
+# Contributing to ExQuantumFlow
 
-Thank you for your interest in ExPgflow! This document provides guidelines for contributing to the project.
+Thank you for your interest in ExQuantumFlow! This document provides guidelines for contributing to the project.
 
 ## Getting Started
 
@@ -13,8 +13,8 @@ Thank you for your interest in ExPgflow! This document provides guidelines for c
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/mikkihugo/ex_pgflow.git
-cd ex_pgflow
+git clone https://github.com/mikkihugo/quantum_flow.git
+cd quantum_flow
 ```
 
 2. Install dependencies:
@@ -25,10 +25,10 @@ mix deps.get
 3. Set up the database:
 ```bash
 # Create test database
-createdb ex_pgflow_test
+createdb quantum_flow_test
 
 # Configure connection
-export DATABASE_URL="postgres://localhost/ex_pgflow_test"
+export DATABASE_URL="postgres://localhost/quantum_flow_test"
 
 # Run migrations
 mix ecto.migrate
@@ -48,7 +48,7 @@ mix test
 mix test
 
 # Run specific test file
-mix test test/pgflow/executor_test.exs
+mix test test/QuantumFlow/executor_test.exs
 
 # Run tests with coverage report
 mix test.coverage
@@ -59,7 +59,7 @@ mix test.watch
 
 ### Code Quality
 
-ExPgflow enforces high code quality standards:
+ExQuantumFlow enforces high code quality standards:
 
 ```bash
 # Run all quality checks (recommended before committing)
@@ -75,7 +75,7 @@ mix deps.audit          # Check dependencies for vulnerabilities
 
 ### Code Style
 
-ExPgflow follows standard Elixir conventions:
+ExQuantumFlow follows standard Elixir conventions:
 
 1. **Formatting**: Run `mix format` before committing
 2. **Line Length**: Maximum 100 characters (enforced in .formatter.exs)
@@ -89,7 +89,7 @@ All code contributions must include:
 
 1. **Module Documentation** (@moduledoc)
    ```elixir
-   defmodule Pgflow.MyModule do
+   defmodule QuantumFlow.MyModule do
      @moduledoc """
      Brief description of what this module does.
 
@@ -138,7 +138,7 @@ All code contributions must include:
 
 ### Database-First Design
 
-ExPgflow uses PostgreSQL as the source of truth. When adding features:
+ExQuantumFlow uses PostgreSQL as the source of truth. When adding features:
 
 1. **Schema Changes**: Create migrations for all schema additions
 2. **SQL Functions**: Complex logic lives in PostgreSQL functions (for atomicity)
@@ -185,8 +185,8 @@ When working with workflows:
 ### File Organization
 
 ```
-ex_pgflow/
-├── lib/pgflow/
+quantum_flow/
+├── lib/QuantumFlow/
 │   ├── executor.ex          # Main entry point
 │   ├── flow_builder.ex      # Dynamic workflow API
 │   ├── repo.ex              # Ecto repository
@@ -200,7 +200,7 @@ ex_pgflow/
 ├── priv/repo/
 │   └── migrations/          # Database migrations
 ├── test/
-│   ├── pgflow/
+│   ├── QuantumFlow/
 │   │   └── *_test.exs       # Unit/integration tests
 │   └── support/
 │       └── sql_case.ex      # Test helpers
@@ -225,9 +225,9 @@ ex_pgflow/
 
 ### Example Test Structure
 ```elixir
-defmodule Pgflow.MyModuleTest do
+defmodule QuantumFlow.MyModuleTest do
   use ExUnit.Case
-  alias Pgflow.MyModule
+  alias QuantumFlow.MyModule
 
   describe "my_function/1" do
     test "handles valid input" do
@@ -324,7 +324,7 @@ Reviewers may request changes. Please:
 
 ## Release Process
 
-ExPgflow follows [Semantic Versioning](https://semver.org/):
+ExQuantumFlow follows [Semantic Versioning](https://semver.org/):
 
 - **0.1.0** (current): Initial release, API may change
 - **0.x.0**: Minor versions (new features, API additions)
@@ -348,4 +348,4 @@ Only maintainers can publish releases:
 - **Architecture questions**: See [ARCHITECTURE.md](ARCHITECTURE.md)
 - **Issue or PR**: Open a GitHub issue
 
-Thank you for contributing to ExPgflow!
+Thank you for contributing to ExQuantumFlow!

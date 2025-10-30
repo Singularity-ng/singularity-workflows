@@ -1,4 +1,4 @@
-# Pgflow Architecture Diagrams
+# QuantumFlow Architecture Diagrams
 
 This document contains comprehensive Mermaid diagrams showing the PGMQ + NOTIFY architecture and data flow.
 
@@ -9,8 +9,8 @@ This document contains comprehensive Mermaid diagrams showing the PGMQ + NOTIFY 
 ```mermaid
 graph TB
     subgraph "Application Layer"
-        A[Workflow Definition] --> B[Pgflow.Executor]
-        C[AI/LLM System] --> D[Pgflow.FlowBuilder]
+        A[Workflow Definition] --> B[QuantumFlow.Executor]
+        C[AI/LLM System] --> D[QuantumFlow.FlowBuilder]
     end
     
     subgraph "Execution Engine"
@@ -29,7 +29,7 @@ graph TB
     
     subgraph "Notification Layer"
         H --> L[PostgreSQL NOTIFY]
-        L --> M[Pgflow.Notifications]
+        L --> M[QuantumFlow.Notifications]
         M --> N[Event Listeners]
         N --> O[Real-time Updates]
     end
@@ -70,7 +70,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[Define Workflow Module] --> B[Call Pgflow.Executor.execute]
+    A[Define Workflow Module] --> B[Call QuantumFlow.Executor.execute]
     B --> C[Parse workflow steps]
     C --> D[Create dependency graph]
     D --> E[Store in PostgreSQL]
@@ -93,13 +93,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[AI/LLM System] --> B[Call Pgflow.FlowBuilder.create_flow]
+    A[AI/LLM System] --> B[Call QuantumFlow.FlowBuilder.create_flow]
     B --> C[Create workflow record]
     C --> D[Add steps via add_step]
     D --> E[Define dependencies]
     E --> F[Store in PostgreSQL]
     F --> G[Generate step functions]
-    G --> H[Call Pgflow.Executor.execute_dynamic]
+    G --> H[Call QuantumFlow.Executor.execute_dynamic]
     H --> I[Execute like static workflow]
 ```
 
@@ -189,7 +189,7 @@ flowchart TB
     
     subgraph "Notification System"
         M --> Q[PostgreSQL NOTIFY]
-        Q --> R[Pgflow.Notifications]
+        Q --> R[QuantumFlow.Notifications]
         R --> S[Event Listeners]
     end
     
@@ -254,9 +254,9 @@ graph TB
     end
     
     subgraph "Application Tier"
-        B[Pgflow App 1]
-        C[Pgflow App 2]
-        D[Pgflow App 3]
+        B[QuantumFlow App 1]
+        C[QuantumFlow App 2]
+        D[QuantumFlow App 3]
     end
     
     subgraph "Database Tier"
@@ -291,8 +291,8 @@ graph TB
 ```mermaid
 graph TB
     subgraph "Kubernetes Cluster"
-        subgraph "Namespace: pgflow"
-            A[Pgflow Deployment]
+        subgraph "Namespace: QuantumFlow"
+            A[QuantumFlow Deployment]
             B[PostgreSQL StatefulSet]
             C[pgmq Extension]
         end
@@ -414,17 +414,17 @@ sequenceDiagram
 ```mermaid
 graph TB
     subgraph "Instance 1"
-        A1[Pgflow App 1]
+        A1[QuantumFlow App 1]
         B1[Local Tasks]
     end
     
     subgraph "Instance 2"
-        A2[Pgflow App 2]
+        A2[QuantumFlow App 2]
         B2[Local Tasks]
     end
     
     subgraph "Instance 3"
-        A3[Pgflow App 3]
+        A3[QuantumFlow App 3]
         B3[Local Tasks]
     end
     
@@ -444,4 +444,4 @@ graph TB
     E --> A3
 ```
 
-These diagrams provide a comprehensive view of the Pgflow architecture, showing how PGMQ + NOTIFY integration works across all layers of the system.
+These diagrams provide a comprehensive view of the QuantumFlow architecture, showing how PGMQ + NOTIFY integration works across all layers of the system.

@@ -1,7 +1,7 @@
-defmodule Pgflow.WorkflowComposerTest do
+defmodule QuantumFlow.WorkflowComposerTest do
   use ExUnit.Case, async: true
 
-  alias Pgflow.WorkflowComposer
+  alias QuantumFlow.WorkflowComposer
 
   setup :verify_on_exit!
 
@@ -20,15 +20,15 @@ defmodule Pgflow.WorkflowComposerTest do
       }
 
       # Mock the Orchestrator modules
-      Mox.stub(Pgflow.Orchestrator.Mock, :decompose_goal, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :decompose_goal, fn _, _, _ ->
         {:ok, %{tasks: %{}, root_tasks: [], max_depth: 2, created_at: DateTime.utc_now()}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
         {:ok, %{name: "test_workflow", steps: [], max_parallel: 10}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, _ ->
         {:ok, %{success: true, results: %{"task1" => "result1", "task2" => "result2"}}}
       end)
 
@@ -48,7 +48,7 @@ defmodule Pgflow.WorkflowComposerTest do
       decomposer = fn _goal -> {:error, :decomposition_failed} end
       step_functions = %{}
 
-      Mox.stub(Pgflow.Orchestrator.Mock, :decompose_goal, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :decompose_goal, fn _, _, _ ->
         {:error, :decomposition_failed}
       end)
 
@@ -67,11 +67,11 @@ defmodule Pgflow.WorkflowComposerTest do
 
       step_functions = %{}
 
-      Mox.stub(Pgflow.Orchestrator.Mock, :decompose_goal, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :decompose_goal, fn _, _, _ ->
         {:ok, %{tasks: %{}, root_tasks: [], max_depth: 1, created_at: DateTime.utc_now()}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
         {:error, :workflow_creation_failed}
       end)
 
@@ -92,15 +92,15 @@ defmodule Pgflow.WorkflowComposerTest do
         "task1" => fn _ -> {:ok, "result1"} end
       }
 
-      Mox.stub(Pgflow.Orchestrator.Mock, :decompose_goal, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :decompose_goal, fn _, _, _ ->
         {:ok, %{tasks: %{}, root_tasks: [], max_depth: 1, created_at: DateTime.utc_now()}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
         {:ok, %{name: "test_workflow", steps: [], max_parallel: 10}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, opts ->
+      Mox.stub(QuantumFlow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, opts ->
         assert Keyword.get(opts, :monitor) == true
         {:ok, %{success: true}}
       end)
@@ -131,11 +131,11 @@ defmodule Pgflow.WorkflowComposerTest do
         "task1" => fn _ -> {:ok, "result1"} end
       }
 
-      Mox.stub(Pgflow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
         {:ok, %{name: "test_workflow", steps: [], max_parallel: 10}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, _ ->
         {:ok, %{success: true}}
       end)
 
@@ -165,11 +165,11 @@ defmodule Pgflow.WorkflowComposerTest do
         "task2" => fn _ -> {:ok, "result2"} end
       }
 
-      Mox.stub(Pgflow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
         {:ok, %{name: "test_workflow", steps: [], max_parallel: 10}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, _ ->
         {:ok, %{success: true}}
       end)
 
@@ -199,11 +199,11 @@ defmodule Pgflow.WorkflowComposerTest do
         "task2" => fn _ -> {:ok, "result2"} end
       }
 
-      Mox.stub(Pgflow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Mock, :create_workflow, fn _, _, _ ->
         {:ok, %{name: "test_workflow", steps: [], max_parallel: 10}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Executor.Mock, :execute_workflow, fn _, _, _, _ ->
         {:error, :execution_failed}
       end)
 

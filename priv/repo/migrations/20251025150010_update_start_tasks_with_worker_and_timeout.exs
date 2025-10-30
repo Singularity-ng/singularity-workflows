@@ -1,11 +1,11 @@
-defmodule Pgflow.Repo.Migrations.UpdateStartTasksWithWorkerAndTimeout do
+defmodule QuantumFlow.Repo.Migrations.UpdateStartTasksWithWorkerAndTimeout do
   @moduledoc """
   Updates start_tasks() to:
   1. Set last_worker_id when claiming tasks
   2. Use set_vt_batch() to set visibility timeouts for all messages
   3. Calculate timeout based on step/workflow configuration
 
-  Matches pgflow's complete start_tasks implementation.
+  Matches QuantumFlow's complete start_tasks implementation.
   """
   use Ecto.Migration
 
@@ -121,7 +121,7 @@ defmodule Pgflow.Repo.Migrations.UpdateStartTasksWithWorkerAndTimeout do
 
     execute("""
     COMMENT ON FUNCTION start_tasks(TEXT, BIGINT[], TEXT) IS
-    'Claims tasks from pgmq messages, sets worker tracking, configures timeouts via set_vt_batch, builds input. Matches pgflow implementation.'
+    'Claims tasks from pgmq messages, sets worker tracking, configures timeouts via set_vt_batch, builds input. Matches QuantumFlow implementation.'
     """)
   end
 

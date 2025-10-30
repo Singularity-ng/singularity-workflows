@@ -1,4 +1,4 @@
-# ex_pgflow Test Coverage Progress Summary
+# quantum_flow Test Coverage Progress Summary
 
 **Date:** 2025-10-25
 **Status:** In Progress - Critical SQL Function Fix Complete
@@ -8,14 +8,14 @@
 ### 1. Comprehensive Test Suite Created ✅
 
 **Schema Tests (100% Coverage):**
-- `test/pgflow/workflow_run_test.exs` - WorkflowRun schema (100%, 4/4 lines)
-- `test/pgflow/step_state_test.exs` - StepState schema (100%, 9/9 lines)
-- `test/pgflow/step_task_test.exs` - StepTask schema (100%, 8/8 lines)
+- `test/QuantumFlow/workflow_run_test.exs` - WorkflowRun schema (100%, 4/4 lines)
+- `test/QuantumFlow/step_state_test.exs` - StepState schema (100%, 9/9 lines)
+- `test/QuantumFlow/step_task_test.exs` - StepTask schema (100%, 8/8 lines)
 
 **DAG Module Tests:**
-- `test/pgflow/workflow_definition_test.exs` - WorkflowDefinition (98.1%, 46 tests)
-- `test/pgflow/run_initializer_test.exs` - RunInitializer (92.3%, 20 tests)
-- `test/pgflow/executor_test.exs` - Executor integration (35 tests, 511 lines) ✅ **NEW**
+- `test/QuantumFlow/workflow_definition_test.exs` - WorkflowDefinition (98.1%, 46 tests)
+- `test/QuantumFlow/run_initializer_test.exs` - RunInitializer (92.3%, 20 tests)
+- `test/QuantumFlow/executor_test.exs` - Executor integration (35 tests, 511 lines) ✅ **NEW**
 
 **Total Tests:** 115+ tests created
 
@@ -44,7 +44,7 @@ protocol errors: `"query has no destination for result data"`.
    - Changed `complete_task()` return type from `RETURNS void` to `RETURNS INTEGER`
    - Returns 1 on success, 0 on guard (failed run), -1 on type violation
    - Maintains identical functionality with Postgrex compatibility
-   - See: `test/pgflow/complete_task_test.exs` lines 14-45 for detailed explanation
+   - See: `test/QuantumFlow/complete_task_test.exs` lines 14-45 for detailed explanation
 
 ### 3. Comprehensive ETL Pipeline Example ✅
 
@@ -66,7 +66,7 @@ Includes:
 ### Database Setup ✅
 - PostgreSQL 18 running via Nix development shell
 - `postgres` superuser role created
-- Test database `ex_pgflow` exists
+- Test database `quantum_flow` exists
 - All migrations applied successfully ("Migrations already up")
 
 ### Migration Status ✅
@@ -107,10 +107,10 @@ while maintaining 100% backward compatibility (return value was never used).
 1. **Migration 20251025210500** - Extensive @moduledoc explaining:
    - The Postgrex protocol issue
    - Why it only affects tests
-   - References to test/pgflow/complete_task_test.exs for details
+   - References to test/QuantumFlow/complete_task_test.exs for details
    - Return value semantics (1=success, 0=guard, -1=violation)
 
-2. **Test File Comments** - `test/pgflow/complete_task_test.exs` lines 14-45:
+2. **Test File Comments** - `test/QuantumFlow/complete_task_test.exs` lines 14-45:
    - Complete explanation of the void return type issue
    - List of attempted solutions that failed
    - Why it works in production but not in ExUnit
@@ -159,11 +159,11 @@ while maintaining 100% backward compatibility (return value was never used).
 **Current Overall Coverage:** 29.4% (before Executor tests)
 
 **High-Coverage Modules:**
-- Pgflow.WorkflowRun: 100% (4/4)
-- Pgflow.StepState: 100% (9/9)
-- Pgflow.StepTask: 100% (8/8)
-- Pgflow.DAG.WorkflowDefinition: 98.1% (55/56)
-- Pgflow.DAG.RunInitializer: 92.3% (39/42)
+- QuantumFlow.WorkflowRun: 100% (4/4)
+- QuantumFlow.StepState: 100% (9/9)
+- QuantumFlow.StepTask: 100% (8/8)
+- QuantumFlow.DAG.WorkflowDefinition: 98.1% (55/56)
+- QuantumFlow.DAG.RunInitializer: 92.3% (39/42)
 
 **Target:** 100% coverage for all DAG modules
 
@@ -184,7 +184,7 @@ while maintaining 100% backward compatibility (return value was never used).
 
 ## References
 
-- **pgflow.dev** - Original SQL coordination pattern
+- **QuantumFlow.dev** - Original SQL coordination pattern
 - **Postgrex** - PostgreSQL Elixir driver (extended query protocol)
 - **ExUnit** - Elixir test framework
 - **Ecto** - Database wrapper and DSL
@@ -192,5 +192,5 @@ while maintaining 100% backward compatibility (return value was never used).
 
 ## Acknowledgments
 
-Thanks to the pgflow project for the excellent SQL coordination pattern and the detailed
+Thanks to the QuantumFlow project for the excellent SQL coordination pattern and the detailed
 PostgreSQL function implementations that made this Elixir port possible.

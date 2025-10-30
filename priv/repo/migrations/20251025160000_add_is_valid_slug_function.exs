@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.AddIsValidSlugFunction do
+defmodule QuantumFlow.Repo.Migrations.AddIsValidSlugFunction do
   @moduledoc """
   Adds is_valid_slug() utility function for slug validation.
 
@@ -8,13 +8,13 @@ defmodule Pgflow.Repo.Migrations.AddIsValidSlugFunction do
   - Pattern: ^[a-zA-Z_][a-zA-Z0-9_]*$
   - Not reserved words ('run')
 
-  Matches pgflow's validation logic.
+  Matches QuantumFlow's validation logic.
   """
   use Ecto.Migration
 
   def up do
     execute("""
-    CREATE OR REPLACE FUNCTION pgflow.is_valid_slug(slug TEXT)
+    CREATE OR REPLACE FUNCTION QuantumFlow.is_valid_slug(slug TEXT)
     RETURNS BOOLEAN
     LANGUAGE plpgsql
     IMMUTABLE
@@ -31,12 +31,12 @@ defmodule Pgflow.Repo.Migrations.AddIsValidSlugFunction do
     """)
 
     execute("""
-    COMMENT ON FUNCTION pgflow.is_valid_slug(TEXT) IS
-    'Validates slug format: not null, 1-128 chars, alphanumeric with underscores, no reserved words. Matches pgflow implementation.'
+    COMMENT ON FUNCTION QuantumFlow.is_valid_slug(TEXT) IS
+    'Validates slug format: not null, 1-128 chars, alphanumeric with underscores, no reserved words. Matches QuantumFlow implementation.'
     """)
   end
 
   def down do
-    execute("DROP FUNCTION IF EXISTS pgflow.is_valid_slug(TEXT)")
+    execute("DROP FUNCTION IF EXISTS QuantumFlow.is_valid_slug(TEXT)")
   end
 end

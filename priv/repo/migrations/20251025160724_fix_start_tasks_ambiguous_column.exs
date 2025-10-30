@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.FixStartTasksAmbiguousColumn do
+defmodule QuantumFlow.Repo.Migrations.FixStartTasksAmbiguousColumn do
   @moduledoc """
   Fixes ambiguous column reference in start_tasks() function.
 

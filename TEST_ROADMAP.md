@@ -1,4 +1,4 @@
-# ex_pgflow Test Coverage Roadmap
+# quantum_flow Test Coverage Roadmap
 
 ## Current Status: 60% Production Ready
 
@@ -22,7 +22,7 @@
 ## Critical Issues (Must Fix for Production)
 
 ### 🔴 Issue #1: TaskExecutor Tests Are Placeholders (51 tests)
-**File:** `test/pgflow/dag/task_executor_test.exs`
+**File:** `test/QuantumFlow/dag/task_executor_test.exs`
 **Impact:** Core task execution completely untested
 
 **What's needed:**
@@ -35,7 +35,7 @@
 **Estimated effort:** 40-50 hours
 
 ### 🔴 Issue #2: DynamicWorkflowLoader Tests Are Placeholders (57 tests)
-**File:** `test/pgflow/dynamic_workflow_loader_test.exs`
+**File:** `test/QuantumFlow/dynamic_workflow_loader_test.exs`
 **Impact:** FlowBuilder workflows untested in execution
 
 **What's needed:**
@@ -47,7 +47,7 @@
 **Estimated effort:** 20-30 hours
 
 ### 🔴 Issue #3: complete_task SQL Function Untested (2 tests, blocked)
-**File:** `test/pgflow/complete_task_test.exs`
+**File:** `test/QuantumFlow/complete_task_test.exs`
 **Impact:** Critical completion function unverified
 
 **Root cause:** Postgrex returns `{:ok, nil}` for void functions, making result verification impossible
@@ -123,7 +123,7 @@
 
 ### Chicago-Style State Testing
 ```elixir
-defmodule Pgflow.DAG.TaskExecutorTest do
+defmodule QuantumFlow.DAG.TaskExecutorTest do
   use ExUnit.Case
 
   setup do
@@ -245,8 +245,8 @@ end
 ## Resources
 
 **Pattern Reference:**
-- See `test/pgflow/executor_test.exs` for Chicago-style patterns
-- See `test/pgflow/flow_builder_test.exs` for API testing patterns
+- See `test/QuantumFlow/executor_test.exs` for Chicago-style patterns
+- See `test/QuantumFlow/flow_builder_test.exs` for API testing patterns
 - See `test/support/test_workflows/` for workflow fixtures
 
 **Documentation:**

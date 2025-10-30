@@ -1,8 +1,8 @@
 if System.get_env("PGFLOW_SKIP_DB") != "1" do
-  defmodule Pgflow.Orchestrator.ExecutorTest do
+  defmodule QuantumFlow.Orchestrator.ExecutorTest do
     use ExUnit.Case, async: true
 
-  alias Pgflow.Orchestrator.Executor
+  alias QuantumFlow.Orchestrator.Executor
 
   setup :verify_on_exit!
 
@@ -17,15 +17,15 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
 
       context = %{goal: "Build auth system"}
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :create_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :create_execution, fn _, _ ->
         {:ok, %{id: "exec_123", execution_id: "exec_123", status: "running"}}
       end)
 
-      Mox.stub(Pgflow.Executor.Mock, :execute, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Executor.Mock, :execute, fn _, _, _ ->
         {:ok, %{success: true, results: %{"task1" => "result1"}}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :update_execution_status, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :update_execution_status, fn _, _, _, _ ->
         {:ok, %{id: "exec_123", status: "completed"}}
       end)
 
@@ -46,15 +46,15 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
 
       context = %{goal: "Build auth system"}
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :create_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :create_execution, fn _, _ ->
         {:ok, %{id: "exec_123", execution_id: "exec_123", status: "running"}}
       end)
 
-      Mox.stub(Pgflow.Executor.Mock, :execute, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Executor.Mock, :execute, fn _, _, _ ->
         {:error, :execution_failed}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :update_execution_status, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :update_execution_status, fn _, _, _, _ ->
         {:ok, %{id: "exec_123", status: "failed"}}
       end)
 
@@ -71,7 +71,7 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
 
       context = %{goal: "Build auth system"}
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :create_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :create_execution, fn _, _ ->
         {:error, :database_error}
       end)
 
@@ -92,11 +92,11 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
       context = %{goal: "Build auth system"}
       execution = %{id: "exec_123", execution_id: "exec_123"}
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :create_task_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :create_task_execution, fn _, _ ->
         {:ok, %{id: "task_exec_123", task_id: "task1", status: "pending"}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :update_task_execution_status, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :update_task_execution_status, fn _, _, _, _ ->
         {:ok, %{id: "task_exec_123", status: "completed"}}
       end)
 
@@ -117,11 +117,11 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
       context = %{goal: "Build auth system"}
       execution = %{id: "exec_123", execution_id: "exec_123"}
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :create_task_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :create_task_execution, fn _, _ ->
         {:ok, %{id: "task_exec_123", task_id: "task1", status: "pending"}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :update_task_execution_status, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :update_task_execution_status, fn _, _, _, _ ->
         {:ok, %{id: "task_exec_123", status: "failed"}}
       end)
 
@@ -141,11 +141,11 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
       context = %{goal: "Build auth system"}
       execution = %{id: "exec_123", execution_id: "exec_123"}
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :create_task_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :create_task_execution, fn _, _ ->
         {:ok, %{id: "task_exec_123", task_id: "task1", status: "pending"}}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :update_task_execution_status, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :update_task_execution_status, fn _, _, _, _ ->
         {:ok, %{id: "task_exec_123", status: "failed"}}
       end)
 
@@ -164,11 +164,11 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
         duration_ms: nil
       }
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
         {:ok, execution}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Executor.Mock, :get_task_executions, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Executor.Mock, :get_task_executions, fn _, _ ->
         {:ok, [
           %{task_id: "task1", status: "completed"},
           %{task_id: "task2", status: "running"},
@@ -188,7 +188,7 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
     end
 
     test "handles execution not found" do
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
         {:error, :not_found}
       end)
 
@@ -204,11 +204,11 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
         status: "running"
       }
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
         {:ok, execution}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :update_execution_status, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :update_execution_status, fn _, _, _, _ ->
         {:ok, %{id: "exec_123", status: "cancelled"}}
       end)
 
@@ -216,7 +216,7 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
     end
 
     test "handles execution not found" do
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
         {:error, :not_found}
       end)
 
@@ -230,7 +230,7 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
         status: "completed"
       }
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
         {:ok, execution}
       end)
 
@@ -244,11 +244,11 @@ if System.get_env("PGFLOW_SKIP_DB") != "1" do
         status: "completed"
       }
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :get_execution, fn _, _ ->
         {:ok, execution}
       end)
 
-      Mox.stub(Pgflow.Orchestrator.Repository.Mock, :update_execution_status, fn _, _, _, _ ->
+      Mox.stub(QuantumFlow.Orchestrator.Repository.Mock, :update_execution_status, fn _, _, _, _ ->
         {:ok, %{id: "exec_123", status: "cancelled"}}
       end)
 

@@ -1,11 +1,11 @@
 import Config
 
 # Configure your database
-config :ex_pgflow, Pgflow.Repo,
+config :quantum_flow, QuantumFlow.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "ex_pgflow_dev",
+  database: "quantum_flow_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
@@ -16,7 +16,7 @@ config :ex_pgflow, Pgflow.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we use it
 # with esbuild to bundle .js and .css sources.
-config :ex_pgflow, PgflowWeb.Endpoint,
+config :quantum_flow, QuantumFlowWeb.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   http: [ip: {127, 0, 0, 1}, port: 4000],
@@ -54,18 +54,18 @@ config :ex_pgflow, PgflowWeb.Endpoint,
 # different ports.
 
 # Watch static and templates for browser reloading.
-config :ex_pgflow, PgflowWeb.Endpoint,
+config :quantum_flow, QuantumFlowWeb.Endpoint,
   live_reload: [
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
-      ~r"lib/pgflow_web/(live|views)/.*(ex)$",
-      ~r"lib/pgflow_web/templates/.*(eex)$"
+      ~r"lib/quantum_flow_web/(live|views)/.*(ex)$",
+      ~r"lib/quantum_flow_web/templates/.*(eex)$"
     ]
   ]
 
 # Enable dev routes for dashboard and mailbox
-config :ex_pgflow, dev_routes: true
+config :quantum_flow, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
@@ -78,7 +78,7 @@ config :phoenix, :stacktrace_depth, 20
 config :phoenix, :plug_init_mode, :runtime
 
 # Orchestrator development configuration
-config :ex_pgflow, :orchestrator,
+config :quantum_flow, :orchestrator,
   # Enable debug logging for development
   debug: true,
   

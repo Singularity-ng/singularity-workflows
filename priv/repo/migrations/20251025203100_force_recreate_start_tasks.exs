@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.ForceRecreateStartTasks do
+defmodule QuantumFlow.Repo.Migrations.ForceRecreateStartTasks do
   @moduledoc """
   Force recreation of start_tasks function by dropping all versions first.
 

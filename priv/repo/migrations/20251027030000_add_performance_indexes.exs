@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.AddPerformanceIndexes do
+defmodule QuantumFlow.Repo.Migrations.AddPerformanceIndexes do
   use Ecto.Migration
 
   def change do

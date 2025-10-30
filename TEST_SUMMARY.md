@@ -1,4 +1,4 @@
-# Test Structure Summary - ex_pgflow Package
+# Test Structure Summary - quantum_flow Package
 
 ## Quick Overview
 
@@ -109,7 +109,7 @@ Error Recovery:              ████░░░░░░░░ 40% ○
 mix test
 
 # Specific file
-mix test test/pgflow/executor_test.exs
+mix test test/QuantumFlow/executor_test.exs
 
 # Async only (faster)
 mix test --exclude integration --only async

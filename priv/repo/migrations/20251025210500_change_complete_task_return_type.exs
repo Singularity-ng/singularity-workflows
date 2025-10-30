@@ -1,4 +1,4 @@
-defmodule Pgflow.Repo.Migrations.ChangeCompleteTaskReturnType do
+defmodule QuantumFlow.Repo.Migrations.ChangeCompleteTaskReturnType do
   @moduledoc """
   Changes complete_task() return type from void to INTEGER.
 
@@ -17,7 +17,7 @@ defmodule Pgflow.Repo.Migrations.ChangeCompleteTaskReturnType do
 
   ## See Also
 
-  - test/pgflow/complete_task_test.exs (lines 14-45) - Detailed explanation
+  - test/QuantumFlow/complete_task_test.exs (lines 14-45) - Detailed explanation
   - https://github.com/elixir-ecto/postgrex/issues/  (Postgrex void return issues)
   """
   use Ecto.Migration
@@ -231,13 +231,13 @@ defmodule Pgflow.Repo.Migrations.ChangeCompleteTaskReturnType do
         WHERE id = p_run_id;
 
         -- After step completion, cascade any taskless steps (empty-array propagation)
-        PERFORM pgflow.cascade_complete_taskless_steps(p_run_id);
+        PERFORM QuantumFlow.cascade_complete_taskless_steps(p_run_id);
 
         -- Trigger start_ready_steps to awaken newly ready steps
         PERFORM start_ready_steps(p_run_id);
 
         -- Then check if run is complete and aggregate leaf outputs
-        PERFORM pgflow.maybe_complete_run(p_run_id);
+        PERFORM QuantumFlow.maybe_complete_run(p_run_id);
       END IF;
 
       RETURN 1;  -- Success: 1 task completed

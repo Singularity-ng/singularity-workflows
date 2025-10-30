@@ -1,19 +1,19 @@
-defmodule Pgflow.OrchestratorNotificationsTest do
+defmodule QuantumFlow.OrchestratorNotificationsTest do
   use ExUnit.Case, async: true
   import Mox
 
-  alias Pgflow.OrchestratorNotifications
+  alias QuantumFlow.OrchestratorNotifications
 
   setup :set_mox_global
   setup :verify_on_exit!
   setup do
-    Application.put_env(:ex_pgflow, :notifications_impl, Pgflow.Notifications.Mock)
+    Application.put_env(:quantum_flow, :notifications_impl, QuantumFlow.Notifications.Mock)
     :ok
   end
 
   describe "broadcast_decomposition/4" do
     test "broadcasts decomposition events successfully" do
-      Mox.stub(Pgflow.Notifications.Mock, :send_with_notify, fn queue, data, repo ->
+      Mox.stub(QuantumFlow.Notifications.Mock, :send_with_notify, fn queue, data, repo ->
         assert queue == "htdag:decomposition"
         assert data.goal_id == "goal_123"
         assert data.event == :started
@@ -33,7 +33,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
     end
 
     test "handles broadcast failures" do
-      Mox.stub(Pgflow.Notifications.Mock, :send_with_notify, fn _, _, _ ->
+      Mox.stub(QuantumFlow.Notifications.Mock, :send_with_notify, fn _, _, _ ->
         {:error, :network_error}
       end)
 
@@ -48,7 +48,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
 
   describe "broadcast_task/4" do
     test "broadcasts task events successfully" do
-      Mox.stub(Pgflow.Notifications.Mock, :send_with_notify, fn queue, data, repo ->
+      Mox.stub(QuantumFlow.Notifications.Mock, :send_with_notify, fn queue, data, repo ->
         assert queue == "htdag:tasks"
         assert data.task_id == "task_456"
         assert data.event == :completed
@@ -69,7 +69,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
 
   describe "broadcast_workflow/4" do
     test "broadcasts workflow events successfully" do
-      Mox.stub(Pgflow.Notifications.Mock, :send_with_notify, fn queue, data, repo ->
+      Mox.stub(QuantumFlow.Notifications.Mock, :send_with_notify, fn queue, data, repo ->
         assert queue == "htdag:workflows"
         assert data.workflow_id == "workflow_789"
         assert data.event == :started
@@ -90,7 +90,7 @@ defmodule Pgflow.OrchestratorNotificationsTest do
 
   describe "broadcast_performance/3" do
     test "broadcasts performance metrics successfully" do
-      Mox.stub(Pgflow.Notifications.Mock, :send_with_notify, fn queue, data, repo ->
+      Mox.stub(QuantumFlow.Notifications.Mock, :send_with_notify, fn queue, data, repo ->
         assert queue == "htdag:performance"
         assert data.workflow_id == "workflow_789"
         assert data.event_type == "performance"

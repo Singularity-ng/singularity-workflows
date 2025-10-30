@@ -1,7 +1,7 @@
-defmodule Pgflow.Orchestrator.SchemasTest do
+defmodule QuantumFlow.Orchestrator.SchemasTest do
   use ExUnit.Case, async: true
 
-  alias Pgflow.Orchestrator.Schemas
+  alias QuantumFlow.Orchestrator.Schemas
 
   describe "TaskGraph changeset" do
     test "valid changeset" do

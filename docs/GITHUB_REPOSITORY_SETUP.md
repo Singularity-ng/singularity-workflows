@@ -1,6 +1,6 @@
-# GitHub Repository Setup for ExPgflow
+# GitHub Repository Setup for ExQuantumFlow
 
-This guide covers configuring the GitHub repository for ExPgflow v0.1.0 release.
+This guide covers configuring the GitHub repository for ExQuantumFlow v0.1.0 release.
 
 ## Repository Description
 
@@ -8,22 +8,22 @@ Update the repository description to help potential users understand the project
 
 ### Current Description
 ```
-Elixir implementation of pgflow's database-driven DAG execution engine
+Elixir implementation of QuantumFlow's database-driven DAG execution engine
 ```
 
 ### Setup Steps
 
-1. Go to https://github.com/mikkihugo/ex_pgflow
+1. Go to https://github.com/mikkihugo/quantum_flow
 2. Click **Settings** (gear icon)
 3. In the "General" section at the top, find the **Description** field
 4. Update to:
    ```
-   Elixir implementation of pgflow - database-driven DAG execution engine with 100% feature parity.
+   Elixir implementation of QuantumFlow - database-driven DAG execution engine with 100% feature parity.
    Parallel execution, map steps, dependency merging, multi-instance scaling via PostgreSQL + pgmq.
    ```
 5. Add a **Website** URL (optional):
    ```
-   https://hexdocs.pm/ex_pgflow
+   https://hexdocs.pm/quantum_flow
    ```
 6. Click **Save**
 
@@ -33,7 +33,7 @@ Issues allow users to report bugs and request features.
 
 ### Setup Steps
 
-1. Go to https://github.com/mikkihugo/ex_pgflow/settings
+1. Go to https://github.com/mikkihugo/quantum_flow/settings
 2. Scroll down to **Features** section
 3. Check the **Issues** checkbox (should be enabled by default)
 4. Click **Save**
@@ -51,7 +51,7 @@ Discussions provide a space for Q&A and community discussion:
 - Q&A - Questions about usage and best practices
 - Announcements - Release notes and updates
 - Ideas - Feature requests and suggestions
-- Show and tell - Community projects using ExPgflow
+- Show and tell - Community projects using ExQuantumFlow
 
 ## Repository Topics
 
@@ -65,7 +65,7 @@ Add topics to help discoverability:
    - `workflow`
    - `dag`
    - `task-execution`
-   - `pgflow`
+   - `QuantumFlow`
    - `distributed-systems`
 
 ## Branch Protection Rules (Optional)
@@ -84,7 +84,7 @@ Protect the `main` branch to enforce quality standards:
 
 ## Labels for Issues
 
-GitHub creates default labels. Customize them for ExPgflow:
+GitHub creates default labels. Customize them for ExQuantumFlow:
 
 1. Go to **Issues → Labels**
 2. Keep/customize these labels:
@@ -96,7 +96,7 @@ GitHub creates default labels. Customize them for ExPgflow:
    - `question` - User questions (purple)
    - `test` - Test-related (yellow)
 
-3. Add ExPgflow-specific labels:
+3. Add ExQuantumFlow-specific labels:
    - `migration` - Related to database migrations
    - `performance` - Performance improvements/issues
    - `security` - Security concerns
@@ -154,15 +154,15 @@ jobs:
       - name: Create test database
         run: |
           export PGPASSWORD=postgres
-          psql -h localhost -U postgres -c "CREATE DATABASE ex_pgflow_test;"
-          psql -h localhost -U postgres ex_pgflow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
+          psql -h localhost -U postgres -c "CREATE DATABASE quantum_flow_test;"
+          psql -h localhost -U postgres quantum_flow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
         env:
           PGPASSWORD: postgres
 
       - name: Run tests
         run: mix test
         env:
-          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/ex_pgflow_test"
+          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/quantum_flow_test"
 
       - name: Run code quality checks
         run: |
@@ -180,7 +180,7 @@ When publishing v0.1.0:
    - Go to **Code → Releases**
    - Click **Draft a new release**
    - Tag: `v0.1.0`
-   - Title: `ExPgflow v0.1.0`
+   - Title: `ExQuantumFlow v0.1.0`
    - Description: Copy from CHANGELOG.md
 
 2. **Publish Release**:
@@ -244,7 +244,7 @@ What should happen instead.
 
 - Elixir version: `elixir --version`
 - PostgreSQL version: `psql --version`
-- ExPgflow version: 0.1.0
+- ExQuantumFlow version: 0.1.0
 
 ## Additional context
 
@@ -294,7 +294,7 @@ We will respond within 48 hours and work on a fix in a private security advisory
 
 ## Security Considerations
 
-ExPgflow is designed for internal use cases. Key security aspects:
+ExQuantumFlow is designed for internal use cases. Key security aspects:
 
 - Database connections should use strong credentials
 - pgmq queue should not be publicly accessible

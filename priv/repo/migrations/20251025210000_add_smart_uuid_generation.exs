@@ -1,11 +1,11 @@
-defmodule Pgflow.Repo.Migrations.AddSmartUuidGeneration do
+defmodule QuantumFlow.Repo.Migrations.AddSmartUuidGeneration do
   @moduledoc """
   Creates a smart UUID generation function that uses the best available method.
 
   - PostgreSQL 18+: Uses uuidv7() (time-ordered, built-in)
   - PostgreSQL 13-17: Falls back to gen_random_uuid() (random v4)
 
-  This ensures ex_pgflow works on both old and new PostgreSQL versions.
+  This ensures quantum_flow works on both old and new PostgreSQL versions.
   """
   use Ecto.Migration
 

@@ -75,11 +75,11 @@ defmodule TestAllRootsFlow do
   def s(_input), do: {:ok, %{}}
 end
 
-defmodule Pgflow.DAG.RunInitializerTest do
+defmodule QuantumFlow.DAG.RunInitializerTest do
   use ExUnit.Case, async: false
 
-  alias Pgflow.DAG.{RunInitializer, WorkflowDefinition}
-  alias Pgflow.{WorkflowRun, StepState, StepDependency, Repo}
+  alias QuantumFlow.DAG.{RunInitializer, WorkflowDefinition}
+  alias QuantumFlow.{WorkflowRun, StepState, StepDependency, Repo}
   import Ecto.Query
 
   @moduledoc """
@@ -90,16 +90,16 @@ defmodule Pgflow.DAG.RunInitializerTest do
   - Dependency graph setup
   - Counter initialization
 
-  NOTE: These tests require PostgreSQL with pgflow SQL functions.
+  NOTE: These tests require PostgreSQL with QuantumFlow SQL functions.
   Set DATABASE_URL or start database with migrations.
-  Run with: mix test test/pgflow/dag/run_initializer_test.exs
+  Run with: mix test test/QuantumFlow/dag/run_initializer_test.exs
 
   Tests are tagged :integration and can be skipped if database is unavailable.
   """
 
   setup do
     # Set up sandbox for this test
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Pgflow.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(QuantumFlow.Repo)
     :ok
   end
 

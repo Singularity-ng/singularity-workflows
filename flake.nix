@@ -1,5 +1,5 @@
 {
-  description = "ex_pgflow - Elixir implementation of pgflow";
+  description = "quantum_flow - Elixir implementation of QuantumFlow";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -34,7 +34,7 @@
           shellHook = ''
             # Clear PATH and rebuild with nix packages FIRST (before system paths)
             export PATH="${beamPackages.erlang}/bin:${elixir}/bin:${postgresqlWithExtensions}/bin:${pkgs.nodejs}/bin:${pkgs.yarn}/bin:${pkgs.gh}/bin:$PATH"
-            export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/ex_pgflow"
+            export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/quantum_flow"
             echo "ShellHook PATH: $PATH"
             echo "Elixir location: $(which elixir 2>/dev/null || echo 'not found')"
             echo "Mix location: $(which mix 2>/dev/null || echo 'not found')"
@@ -81,10 +81,10 @@
               fi
 
               # Create database and install extensions if they don't exist
-              if ! psql -lqt | cut -d \| -f 1 | grep -qw ex_pgflow; then
-                echo "Creating ex_pgflow database..."
-                createdb -p 5432 ex_pgflow
-                psql -p 5432 -d ex_pgflow -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
+              if ! psql -lqt | cut -d \| -f 1 | grep -qw quantum_flow; then
+                echo "Creating quantum_flow database..."
+                createdb -p 5432 quantum_flow
+                psql -p 5432 -d quantum_flow -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
                 echo "Database and extensions ready"
               else
                 echo "Database already exists"
@@ -95,8 +95,8 @@
               echo "PostgreSQL already running"
             fi
 
-            echo "ex_pgflow development environment ready!"
-            echo "Database: ex_pgflow on localhost:5432 with pgmq extension"
+            echo "quantum_flow development environment ready!"
+            echo "Database: quantum_flow on localhost:5432 with pgmq extension"
             echo "Run 'mix test' to run tests"
             echo "PostgreSQL will auto-stop when you exit this shell"
           '';

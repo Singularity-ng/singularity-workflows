@@ -1,4 +1,4 @@
-# PostgreSQL 17 Workaround Strategy for ex_pgflow
+# PostgreSQL 17 Workaround Strategy for quantum_flow
 
 ## Problem Statement
 
@@ -34,7 +34,7 @@ Instead of filtering in PostgreSQL WHERE clauses, we will:
 
 ### Before (PostgreSQL 17 - BROKEN)
 ```sql
-CREATE FUNCTION pgflow.create_flow(
+CREATE FUNCTION QuantumFlow.create_flow(
   p_workflow_slug TEXT,
   p_max_attempts INTEGER DEFAULT 3,
   p_timeout INTEGER DEFAULT 60
@@ -53,7 +53,7 @@ $$;
 
 ### After (PostgreSQL 17 - WORKING)
 ```sql
-CREATE FUNCTION pgflow.create_flow(
+CREATE FUNCTION QuantumFlow.create_flow(
   p_workflow_slug TEXT,
   p_max_attempts INTEGER DEFAULT 3,
   p_timeout INTEGER DEFAULT 60
@@ -72,7 +72,7 @@ $$;
 In Elixir:
 ```elixir
 def create_flow(workflow_slug, repo, opts \\ []) do
-  result = repo.query!("SELECT pgflow.create_flow($1, $2, $3)", [workflow_slug, ...])
+  result = repo.query!("SELECT QuantumFlow.create_flow($1, $2, $3)", [workflow_slug, ...])
 
   # Filter to just our workflow (workaround for PostgreSQL 17)
   row = Enum.find(result.rows, fn [slug, _, _, _] -> slug == workflow_slug end)
@@ -122,9 +122,9 @@ end
 
 ## Implementation Notes
 
-- **File**: `packages/ex_pgflow/priv/repo/migrations/20251027_*.exs`
-- **Elixir code**: `packages/ex_pgflow/lib/pgflow/flow_builder.ex`
-- **Tests**: `packages/ex_pgflow/test/pgflow/flow_builder_test.exs`
+- **File**: `packages/quantum_flow/priv/repo/migrations/20251027_*.exs`
+- **Elixir code**: `packages/quantum_flow/lib/QuantumFlow/flow_builder.ex`
+- **Tests**: `packages/quantum_flow/test/QuantumFlow/flow_builder_test.exs`
 
 ---
 

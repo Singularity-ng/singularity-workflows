@@ -1,15 +1,15 @@
-# Getting Started with ExPgflow
+# Getting Started with ExQuantumFlow
 
-ExPgflow is an Elixir implementation of [pgflow](https://github.com/pgflow-dev/pgflow), a database-driven DAG execution engine. This guide walks you through installation, basic setup, and running your first workflow.
+ExQuantumFlow is an Elixir implementation of [QuantumFlow](https://github.com/quantum_flow-dev/QuantumFlow), a database-driven DAG execution engine. This guide walks you through installation, basic setup, and running your first workflow.
 
 ## Installation
 
-Add `ex_pgflow` to your `mix.exs` dependencies:
+Add `quantum_flow` to your `mix.exs` dependencies:
 
 ```elixir
 def deps do
   [
-    {:ex_pgflow, "~> 0.1.0"}
+    {:quantum_flow, "~> 0.1.0"}
   ]
 end
 ```
@@ -22,7 +22,7 @@ mix deps.get
 
 ## Database Setup
 
-ExPgflow requires PostgreSQL 14+ with the `pgmq` extension:
+ExQuantumFlow requires PostgreSQL 14+ with the `pgmq` extension:
 
 ### 1. Create a PostgreSQL Database
 
@@ -30,13 +30,13 @@ ExPgflow requires PostgreSQL 14+ with the `pgmq` extension:
 createdb my_app
 ```
 
-### 2. Add ExPgflow Repository
+### 2. Add ExQuantumFlow Repository
 
-Configure Ecto in your app to include the Pgflow.Repo:
+Configure Ecto in your app to include the QuantumFlow.Repo:
 
 ```elixir
 # config/config.exs
-config :my_app, Pgflow.Repo,
+config :my_app, QuantumFlow.Repo,
   database: "my_app",
   username: "postgres",
   password: "postgres",
@@ -57,8 +57,8 @@ psql my_app -c "CREATE EXTENSION IF NOT EXISTS pgmq"
 ### 4. Run Migrations
 
 ```bash
-# Generate migrations for ExPgflow tables
-mix ecto.gen.migration init_pgflow
+# Generate migrations for ExQuantumFlow tables
+mix ecto.gen.migration init_quantum_flow
 
 # Run all migrations
 mix ecto.migrate
@@ -75,11 +75,11 @@ The migration will create:
 
 ### 1. Define a Workflow
 
-Create a workflow module that implements `Pgflow.Executor.Workflow`:
+Create a workflow module that implements `QuantumFlow.Executor.Workflow`:
 
 ```elixir
 defmodule MyApp.Workflows.HelloWorld do
-  @behaviour Pgflow.Executor.Workflow
+  @behaviour QuantumFlow.Executor.Workflow
 
   @impl true
   def definition do
@@ -126,7 +126,7 @@ alias MyApp.Workflows.HelloWorld
 # Check status
 {:ok, run} = HelloWorld.status(run_id)
 IO.inspect(run)
-# => %Pgflow.WorkflowRun{
+# => %QuantumFlow.WorkflowRun{
 #   id: "...",
 #   workflow_slug: "MyApp.Workflows.HelloWorld",
 #   status: "started",
@@ -140,7 +140,7 @@ IO.inspect(run)
 The workflow engine coordinates task execution via the pgmq queue. To process tasks:
 
 ```elixir
-alias Pgflow.Executor
+alias QuantumFlow.Executor
 
 # Poll the queue and execute pending tasks
 {:ok, executed_count} = Executor.execute_pending_tasks()
@@ -155,11 +155,11 @@ IO.inspect(run.status)  # => "completed"
 
 ## DAG Workflows with Dependencies
 
-ExPgflow supports complex DAG workflows with parallel execution and dependency management:
+ExQuantumFlow supports complex DAG workflows with parallel execution and dependency management:
 
 ```elixir
 defmodule MyApp.Workflows.DataPipeline do
-  @behaviour Pgflow.Executor.Workflow
+  @behaviour QuantumFlow.Executor.Workflow
 
   @impl true
   def definition do
@@ -234,7 +234,7 @@ Execute the same task across multiple items:
 
 ```elixir
 defmodule MyApp.Workflows.ProcessItems do
-  @behaviour Pgflow.Executor.Workflow
+  @behaviour QuantumFlow.Executor.Workflow
 
   @impl true
   def definition do
@@ -278,13 +278,13 @@ end
 
 ## Configuration
 
-ExPgflow respects these environment variables:
+ExQuantumFlow respects these environment variables:
 
 ```bash
 # PostgreSQL connection
 DATABASE_URL=postgres://user:pass@localhost:5432/my_app
 
-# PGMQ queue name (default: pgflow_queue)
+# PGMQ queue name (default: quantum_flow_queue)
 PGFLOW_QUEUE_NAME=my_queue
 
 # Visibility timeout for in-flight tasks (default: 300s = 5 min)
@@ -320,7 +320,7 @@ mix ecto.migrate  # Run all migrations
 Check queue health:
 
 ```elixir
-alias Pgflow.Executor
+alias QuantumFlow.Executor
 
 # See how many tasks are pending
 {:ok, count} = Executor.pending_task_count()
@@ -332,7 +332,7 @@ Executor.execute_pending_tasks()
 
 ### Type errors in custom workflows
 
-ExPgflow uses Dialyzer for type checking. Run:
+ExQuantumFlow uses Dialyzer for type checking. Run:
 
 ```bash
 mix dialyzer

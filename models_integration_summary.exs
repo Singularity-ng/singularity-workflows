@@ -31,7 +31,7 @@ defmodule ModelsIntegrationSummary do
     IO.puts("-" |> String.duplicate(30))
 
     accomplishments = [
-      "✅ Deleted legacy ai-server (TypeScript/pgflow)",
+      "✅ Deleted legacy ai-server (TypeScript/QuantumFlow)",
       "✅ Confirmed ex_llm is fully integrated with Nexus",
       "✅ Created YAML-based model optimization scripts",
       "✅ Demonstrated 1,167+ models across 50+ providers",

@@ -12,7 +12,7 @@ cargo:rerun-if-env-changed=CARGO_CFG_TARGET_OS
 cargo:rerun-if-env-changed=CARGO_CFG_TARGET_ENV
 cargo:rerun-if-env-changed=CARGO_CFG_TARGET_ENDIAN
 OPT_LEVEL = Some(0)
-OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/build/ring-37fa582cbb9d1f86/out)
+OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/quantum_flow/.cargo-build/debug/build/ring-37fa582cbb9d1f86/out)
 TARGET = Some(aarch64-apple-darwin)
 CARGO_ENCODED_RUSTFLAGS = Some(-Clinker=gcc)
 HOST = Some(aarch64-apple-darwin)
@@ -66,7 +66,7 @@ cargo:warning=Warning: supplying the --target arm64-apple-macosx != arm64-apple-
 cargo:warning=Warning: supplying the --target arm64-apple-macosx != arm64-apple-darwin argument to a nix-wrapped compiler may not work correctly - cc-wrapper is currently not designed with multi-target compilers in mind. You may want to use an un-wrapped compiler instead.
 cargo:rustc-link-lib=static=ring_core_0_17_14_
 OPT_LEVEL = Some(0)
-OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/build/ring-37fa582cbb9d1f86/out)
+OUT_DIR = Some(/Users/mhugo/code/singularity-incubation/packages/quantum_flow/.cargo-build/debug/build/ring-37fa582cbb9d1f86/out)
 TARGET = Some(aarch64-apple-darwin)
 CARGO_ENCODED_RUSTFLAGS = Some(-Clinker=gcc)
 HOST = Some(aarch64-apple-darwin)
@@ -97,7 +97,7 @@ cargo:rerun-if-env-changed=CFLAGS_aarch64-apple-darwin
 CFLAGS_aarch64-apple-darwin = None
 cargo:warning=Warning: supplying the --target arm64-apple-macosx != arm64-apple-darwin argument to a nix-wrapped compiler may not work correctly - cc-wrapper is currently not designed with multi-target compilers in mind. You may want to use an un-wrapped compiler instead.
 cargo:rustc-link-lib=static=ring_core_0_17_14__test
-cargo:rustc-link-search=native=/Users/mhugo/code/singularity-incubation/packages/ex_pgflow/.cargo-build/debug/build/ring-37fa582cbb9d1f86/out
+cargo:rustc-link-search=native=/Users/mhugo/code/singularity-incubation/packages/quantum_flow/.cargo-build/debug/build/ring-37fa582cbb9d1f86/out
 cargo:rerun-if-changed=crypto/perlasm/x86_64-xlate.pl
 cargo:rerun-if-changed=crypto/perlasm/x86gas.pl
 cargo:rerun-if-changed=crypto/perlasm/x86nasm.pl

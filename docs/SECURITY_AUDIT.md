@@ -1,4 +1,4 @@
-# Security Audit Report - ex_pgflow
+# Security Audit Report - quantum_flow
 
 **Date:** 2025-10-25
 **Tool:** Sobelow v0.14.1 (Elixir Security Auditing Tool)
@@ -59,7 +59,7 @@ Sobelow scanned for the following vulnerability categories:
 **Example (Safe):**
 ```elixir
 repo.query("""
-  SELECT * FROM pgflow.read_with_poll(
+  SELECT * FROM QuantumFlow.read_with_poll(
     queue_name => $1::text, vt => $2::integer, qty => $3::integer)
 """, [workflow_slug, 30, batch_size])
 ```
@@ -140,17 +140,17 @@ Task.async_stream(tasks, fn task -> ... end,
 
 ---
 
-## Comparison to pgflow (TypeScript)
+## Comparison to QuantumFlow (TypeScript)
 
-| Security Aspect | pgflow | ex_pgflow | Notes |
+| Security Aspect | QuantumFlow | quantum_flow | Notes |
 |----------------|--------|-----------|-------|
 | **SQL Injection** | ✅ Safe (pg parameterization) | ✅ Safe (Ecto parameterization) | Both use driver-level protection |
 | **Type Safety** | ✅ TypeScript | ✅ Dialyzer + @spec | Compile-time checks |
 | **Input Validation** | ✅ Zod schemas | ✅ Pattern matching + guards | Different approaches, same protection |
 | **Error Handling** | ✅ try/catch | ✅ {:ok, _} / {:error, _} | BEAM supervision more robust |
-| **Process Isolation** | ❌ Single-threaded JS | ✅ BEAM process isolation | ex_pgflow has better fault isolation |
+| **Process Isolation** | ❌ Single-threaded JS | ✅ BEAM process isolation | quantum_flow has better fault isolation |
 
-**Verdict:** ex_pgflow has EQUAL or BETTER security than pgflow!
+**Verdict:** quantum_flow has EQUAL or BETTER security than QuantumFlow!
 
 ---
 
@@ -221,7 +221,7 @@ end
 
 ## Conclusion
 
-**ex_pgflow passes the strictest Sobelow security audit with ZERO findings.**
+**quantum_flow passes the strictest Sobelow security audit with ZERO findings.**
 
 The codebase demonstrates:
 - ✅ Secure SQL practices (parameterized queries)

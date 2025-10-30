@@ -1,8 +1,8 @@
-# ex_pgflow Test Suite Investigation Summary
+# quantum_flow Test Suite Investigation Summary
 
 ## Overview
 
-Comprehensive investigation and documentation of the PostgreSQL 17 parser regression affecting the ex_pgflow test suite. This document summarizes the work completed and PostgreSQL bug report filed.
+Comprehensive investigation and documentation of the PostgreSQL 17 parser regression affecting the quantum_flow test suite. This document summarizes the work completed and PostgreSQL bug report filed.
 
 **Status**: Investigation Complete ✅ | Bug Report Filed ✅ | Workaround Not Possible (PostgreSQL parser issue) ⚠️
 
@@ -217,7 +217,7 @@ Since this is a PostgreSQL parser regression, there are **no good SQL-level work
 ### Investigation Files Created
 
 ```
-packages/ex_pgflow/
+packages/quantum_flow/
 ├── POSTGRESQL_BUG_REPORT.md              # Comprehensive bug report (310 lines)
 ├── POSTGRESQL_BUG_REPORT_EMAIL.txt       # Mailing list format
 ├── INVESTIGATION_SUMMARY.md              # This file
@@ -282,7 +282,7 @@ packages/ex_pgflow/
 
 ## Conclusion
 
-The ex_pgflow test suite has encountered a PostgreSQL 17 parser regression affecting RETURNS TABLE functions with parameterized WHERE clauses. Comprehensive investigation with 11 different attempted workarounds definitively proves this is a parser-level issue in PostgreSQL 17, not a code structure or naming problem.
+The quantum_flow test suite has encountered a PostgreSQL 17 parser regression affecting RETURNS TABLE functions with parameterized WHERE clauses. Comprehensive investigation with 11 different attempted workarounds definitively proves this is a parser-level issue in PostgreSQL 17, not a code structure or naming problem.
 
 A detailed bug report has been created and is ready for submission to the PostgreSQL project. Once the PostgreSQL team fixes this regression, the test suite can be restored to full functionality (90/90 tests passing) without requiring any code changes.
 
@@ -298,7 +298,7 @@ A detailed bug report has been created and is ready for submission to the Postgr
 
 - **PostgreSQL Bug Reports**: https://www.postgresql.org/support/
 - **PostgreSQL Mailing Lists**: https://www.postgresql.org/list/pgsql-bugs/
-- **Investigation Repository**: https://github.com/anthropics/singularity-incubation/tree/main/packages/ex_pgflow
+- **Investigation Repository**: https://github.com/anthropics/singularity-incubation/tree/main/packages/quantum_flow
 - **Related Commits**:
   - e8fe69e (complete_task fix)
   - 466e784 (final investigation)

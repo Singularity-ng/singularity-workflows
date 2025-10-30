@@ -1,8 +1,8 @@
-defmodule Pgflow.NotificationsIntegrationTest do
+defmodule QuantumFlow.NotificationsIntegrationTest do
   use ExUnit.Case, async: false
   import ExUnit.CaptureLog
 
-  alias Pgflow.Notifications
+  alias QuantumFlow.Notifications
 
   # Test database setup
   setup do

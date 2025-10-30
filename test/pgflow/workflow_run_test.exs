@@ -1,8 +1,8 @@
-defmodule Pgflow.WorkflowRunTest do
+defmodule QuantumFlow.WorkflowRunTest do
   # async: false - TestClock is shared state (Agent)
   use ExUnit.Case, async: false
 
-  alias Pgflow.WorkflowRun
+  alias QuantumFlow.WorkflowRun
 
   @moduledoc """
   Chicago-style TDD: State-based testing for WorkflowRun schema.
@@ -11,7 +11,7 @@ defmodule Pgflow.WorkflowRunTest do
   not on implementation details or interactions.
   """
 
-  alias Pgflow.TestClock
+  alias QuantumFlow.TestClock
 
   setup do
     # Reset clock for deterministic timestamps

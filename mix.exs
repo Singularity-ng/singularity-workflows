@@ -1,9 +1,9 @@
-defmodule ExPgflow.MixProject do
+defmodule QuantumFlow.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :ex_pgflow,
+      app: :quantum_flow,
       version: "1.0.2",
       elixir: "~> 1.19",
       start_permanent: Mix.env() == :prod,

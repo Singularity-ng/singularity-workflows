@@ -1,8 +1,8 @@
-defmodule Pgflow.Repo.Migrations.CreateWorkersTable do
+defmodule QuantumFlow.Repo.Migrations.CreateWorkersTable do
   @moduledoc """
   Creates workers table for worker heartbeat tracking.
 
-  Matches pgflow's worker registration and heartbeat system. Workers register
+  Matches QuantumFlow's worker registration and heartbeat system. Workers register
   when they start polling and update last_heartbeat_at periodically.
 
   Used for monitoring and debugging worker activity.

@@ -1,9 +1,9 @@
-defmodule Pgflow.Repo.Migrations.CreateWorkflowDefinitionTables do
+defmodule QuantumFlow.Repo.Migrations.CreateWorkflowDefinitionTables do
   @moduledoc """
   Creates tables for storing dynamic workflow definitions.
 
   Enables runtime workflow creation via API (for AI/LLM workflow generation).
-  Matches pgflow's flows, steps, and deps tables.
+  Matches QuantumFlow's flows, steps, and deps tables.
 
   Usage:
     - Code-based workflows: Use __workflow_steps__/0 callback (existing)
@@ -18,11 +18,11 @@ defmodule Pgflow.Repo.Migrations.CreateWorkflowDefinitionTables do
     create table(:workflows, primary_key: false) do
       add :workflow_slug, :text, primary_key: true, null: false
       add :max_attempts, :integer, null: false, default: 3
-      add :timeout, :integer, null: false, default: 60  # Matches pgflow opt_timeout default
+      add :timeout, :integer, null: false, default: 60  # Matches QuantumFlow opt_timeout default
       add :created_at, :utc_datetime, null: false, default: fragment("NOW()")
     end
 
-    create constraint(:workflows, :workflow_slug_is_valid, check: "pgflow.is_valid_slug(workflow_slug)")
+    create constraint(:workflows, :workflow_slug_is_valid, check: "QuantumFlow.is_valid_slug(workflow_slug)")
     create constraint(:workflows, :max_attempts_is_nonnegative, check: "max_attempts >= 0")
     create constraint(:workflows, :timeout_is_positive, check: "timeout > 0")
 
@@ -41,7 +41,7 @@ defmodule Pgflow.Repo.Migrations.CreateWorkflowDefinitionTables do
 
     create unique_index(:workflow_steps, [:workflow_slug, :step_slug], name: :workflow_steps_pkey)
     create unique_index(:workflow_steps, [:workflow_slug, :step_index])
-    create constraint(:workflow_steps, :step_slug_is_valid, check: "pgflow.is_valid_slug(step_slug)")
+    create constraint(:workflow_steps, :step_slug_is_valid, check: "QuantumFlow.is_valid_slug(step_slug)")
     create constraint(:workflow_steps, :step_type_is_valid, check: "step_type IN ('single', 'map')")
     create constraint(:workflow_steps, :deps_count_nonnegative, check: "deps_count >= 0")
     create constraint(:workflow_steps, :initial_tasks_nonnegative, check: "initial_tasks IS NULL OR initial_tasks >= 0")

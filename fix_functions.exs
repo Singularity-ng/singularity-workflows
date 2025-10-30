@@ -5,12 +5,12 @@
   port: 5432,
   username: System.get_env("USER") || "mhugo",
   password: "",
-  database: "ex_pgflow"
+  database: "quantum_flow"
 )
 
 # Fix create_flow function
 create_flow_sql = """
-CREATE OR REPLACE FUNCTION pgflow.create_flow(
+CREATE OR REPLACE FUNCTION QuantumFlow.create_flow(
   p_workflow_slug TEXT,
   p_max_attempts INTEGER DEFAULT 3,
   p_timeout INTEGER DEFAULT 60
@@ -25,14 +25,14 @@ LANGUAGE plpgsql
 SET search_path = 'public'
 AS $$
 BEGIN
-  IF NOT pgflow.is_valid_slug(p_workflow_slug) THEN
+  IF NOT QuantumFlow.is_valid_slug(p_workflow_slug) THEN
     RAISE EXCEPTION 'Invalid workflow_slug: %', p_workflow_slug;
   END IF;
   INSERT INTO workflows (workflow_slug, max_attempts, timeout)
   VALUES (p_workflow_slug, p_max_attempts, p_timeout)
   ON CONFLICT (workflow_slug) DO UPDATE
   SET workflow_slug = workflows.workflow_slug;
-  PERFORM pgflow.ensure_workflow_queue(p_workflow_slug);
+  PERFORM QuantumFlow.ensure_workflow_queue(p_workflow_slug);
   RETURN QUERY
   SELECT w.workflow_slug, w.max_attempts, w.timeout, w.created_at
   FROM workflows w
@@ -46,7 +46,7 @@ IO.puts("Fixed create_flow function")
 
 # Fix add_step function
 add_step_sql = """
-CREATE OR REPLACE FUNCTION pgflow.add_step(
+CREATE OR REPLACE FUNCTION QuantumFlow.add_step(
   p_workflow_slug TEXT,
   p_step_slug TEXT,
   p_depends_on TEXT[] DEFAULT '{}',
@@ -73,11 +73,11 @@ DECLARE
   v_next_index INTEGER;
   v_deps_count INTEGER;
 BEGIN
-  IF NOT pgflow.is_valid_slug(p_workflow_slug) THEN
+  IF NOT QuantumFlow.is_valid_slug(p_workflow_slug) THEN
     RAISE EXCEPTION 'Invalid workflow_slug: %', p_workflow_slug;
   END IF;
   
-  IF NOT pgflow.is_valid_slug(p_step_slug) THEN
+  IF NOT QuantumFlow.is_valid_slug(p_step_slug) THEN
     RAISE EXCEPTION 'Invalid step_slug: %', p_step_slug;
   END IF;
 

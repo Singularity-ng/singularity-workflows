@@ -1,7 +1,7 @@
-defmodule Pgflow.Orchestrator.ConfigTest do
+defmodule QuantumFlow.Orchestrator.ConfigTest do
   use ExUnit.Case, async: true
 
-  alias Pgflow.Orchestrator.Config
+  alias QuantumFlow.Orchestrator.Config
 
   describe "get/2" do
     test "returns configuration value" do

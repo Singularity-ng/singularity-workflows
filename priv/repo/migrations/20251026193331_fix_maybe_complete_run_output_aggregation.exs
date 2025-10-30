@@ -1,6 +1,6 @@
-defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
+defmodule QuantumFlow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
   @moduledoc """
-  Fixes pgflow.maybe_complete_run() to aggregate leaf step outputs into a flat array
+  Fixes QuantumFlow.maybe_complete_run() to aggregate leaf step outputs into a flat array
   instead of nested objects.
 
   Previous version used jsonb_object_agg(step_slug, output) which created:
@@ -13,7 +13,7 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
 
   def up do
     execute("""
-    CREATE OR REPLACE FUNCTION pgflow.maybe_complete_run(p_run_id UUID)
+    CREATE OR REPLACE FUNCTION QuantumFlow.maybe_complete_run(p_run_id UUID)
     RETURNS void
     LANGUAGE plpgsql
     AS $$
@@ -81,15 +81,15 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
     """)
 
     execute("""
-    COMMENT ON FUNCTION pgflow.maybe_complete_run(UUID) IS
-    'Checks if run is complete (all steps done), marks as completed, and aggregates leaf step outputs into a flat array. Matches pgflow implementation.'
+    COMMENT ON FUNCTION QuantumFlow.maybe_complete_run(UUID) IS
+    'Checks if run is complete (all steps done), marks as completed, and aggregates leaf step outputs into a flat array. Matches QuantumFlow implementation.'
     """)
   end
 
   def down do
     # Revert to the previous buggy version that creates nested objects
     execute("""
-    CREATE OR REPLACE FUNCTION pgflow.maybe_complete_run(p_run_id UUID)
+    CREATE OR REPLACE FUNCTION QuantumFlow.maybe_complete_run(p_run_id UUID)
     RETURNS void
     LANGUAGE plpgsql
     AS $$
@@ -134,7 +134,7 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
         AND workflow_runs.status != 'completed'
       RETURNING * INTO v_completed_run;
 
-      -- Log completion (optional: would broadcast event in pgflow)
+      -- Log completion (optional: would broadcast event in QuantumFlow)
       IF v_completed_run.id IS NOT NULL THEN
         RAISE NOTICE 'Run completed: run_id=%, output=%',
           v_completed_run.id, v_completed_run.output;
@@ -144,8 +144,8 @@ defmodule Pgflow.Repo.Migrations.FixMaybeCompleteRunOutputAggregation do
     """)
 
     execute("""
-    COMMENT ON FUNCTION pgflow.maybe_complete_run(UUID) IS
-    'Checks if run is complete (all steps done), marks as completed, and aggregates leaf step outputs. Matches pgflow implementation.'
+    COMMENT ON FUNCTION QuantumFlow.maybe_complete_run(UUID) IS
+    'Checks if run is complete (all steps done), marks as completed, and aggregates leaf step outputs. Matches QuantumFlow implementation.'
     """)
   end
 end

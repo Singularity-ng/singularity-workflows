@@ -1,8 +1,8 @@
-defmodule Pgflow.Repo.Migrations.CreateWorkflowStepTasks do
+defmodule QuantumFlow.Repo.Migrations.CreateWorkflowStepTasks do
   @moduledoc """
   Creates workflow_step_tasks table for tracking individual task executions.
 
-  Matches pgflow's step_tasks table design - the execution layer for DAG workflows.
+  Matches QuantumFlow's step_tasks table design - the execution layer for DAG workflows.
   Each step can have multiple tasks (e.g., map steps with arrays).
   """
   use Ecto.Migration

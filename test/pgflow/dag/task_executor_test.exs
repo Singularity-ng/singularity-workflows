@@ -43,27 +43,27 @@ defmodule TestTaskExecMultiStepWorkflow do
   def step2(input), do: {:ok, Map.put(input, :step2_done, true)}
 end
 
-defmodule Pgflow.DAG.TaskExecutorTest do
+defmodule QuantumFlow.DAG.TaskExecutorTest do
   use ExUnit.Case, async: false
 
-  alias Pgflow.{Executor, WorkflowRun, StepState, StepTask, Repo}
+  alias QuantumFlow.{Executor, WorkflowRun, StepState, StepTask, Repo}
   import Ecto.Query
 
   @moduledoc """
   Comprehensive TaskExecutor tests covering:
   - Chicago-style TDD (state-based testing)
   - Task polling and claiming via pgmq
-  - Execution loop with pgflow PostgreSQL functions
+  - Execution loop with QuantumFlow PostgreSQL functions
   - Error handling and retries
   - Timeout management
   """
 
   setup do
     # Set up sandbox for this test
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Pgflow.Repo)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(QuantumFlow.Repo)
 
     # Allow all processes spawned during this test to use the sandbox connection
-    Ecto.Adapters.SQL.Sandbox.mode(Pgflow.Repo, {:shared, self()})
+    Ecto.Adapters.SQL.Sandbox.mode(QuantumFlow.Repo, {:shared, self()})
 
     # Clean up any existing test data
     Repo.delete_all(StepTask)

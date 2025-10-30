@@ -8,7 +8,7 @@ echo "🔒 Setting up GitHub Protection Rules"
 echo "====================================="
 echo ""
 
-REPO="mikkihugo/ex_pgflow"
+REPO="mikkihugo/quantum_flow"
 
 # Colors for output
 GREEN='\033[0;32m'
