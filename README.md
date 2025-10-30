@@ -551,8 +551,8 @@ spec:
 
 ```bash
 # Clone repository
-git clone https://github.com/your-org/QuantumFlow.git
-cd QuantumFlow
+git clone https://github.com/mikkhugo/singularity-incubation.git
+cd singularity-incubation/packages/singularity-workflows
 
 # Install dependencies
 mix deps.get
@@ -601,10 +601,10 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## 📞 Support
 
-- **Documentation**: [https://hexdocs.pm/QuantumFlow](https://hexdocs.pm/QuantumFlow)
-- **Issues**: [GitHub Issues](https://github.com/your-org/QuantumFlow/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-org/QuantumFlow/discussions)
-- **Email**: support@QuantumFlow.dev
+- **Documentation**: [https://hexdocs.pm/quantum_flow](https://hexdocs.pm/quantum_flow)
+- **Issues**: [GitHub Issues](https://github.com/mikkhugo/singularity-incubation/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/mikkhugo/singularity-incubation/discussions)
+- **Email**: support@singularity.dev
 
 ---
 
