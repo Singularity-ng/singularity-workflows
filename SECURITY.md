@@ -107,7 +107,7 @@ QuantumFlow is designed for workflow orchestration in trusted environments. Here
 
 ## Security Audit
 
-QuantumFlow has been reviewed for common vulnerabilities. See [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) for detailed findings.
+QuantumFlow has been reviewed for common vulnerabilities. See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for detailed findings.
 
 ## Dependencies
 

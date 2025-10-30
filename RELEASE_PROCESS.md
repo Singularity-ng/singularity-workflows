@@ -125,7 +125,6 @@ The Hex package includes only essential files:
 - `.github/` - GitHub Actions workflows
 - `.claude/` - Claude AI files
 - `test/` - Test files
-- `docs/` - Additional documentation
 - `scripts/` - Development scripts
 - `.formatter.exs` - Formatter config
 - `.git/` - Git repository

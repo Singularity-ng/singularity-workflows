@@ -299,7 +299,7 @@ QuantumFlow is designed for internal use cases. Key security aspects:
 - Database connections should use strong credentials
 - pgmq queue should not be publicly accessible
 - Workflow definitions should be validated before execution
-- See [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) for detailed analysis
+- See [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for detailed analysis
 ```
 
 ## Repository Visibility
