@@ -182,7 +182,20 @@ defmodule QuantumFlow.Orchestrator.ExampleDecomposer do
 
         true ->
           # Fallback to simple decomposition
-          simple_decompose(goal)
+          [
+            %{id: "analyze_goal", description: "Analyze goal requirements", depends_on: []},
+            %{
+              id: "plan_execution",
+              description: "Plan execution strategy",
+              depends_on: ["analyze_goal"]
+            },
+            %{id: "execute_plan", description: "Execute the plan", depends_on: ["plan_execution"]},
+            %{
+              id: "verify_completion",
+              description: "Verify goal completion",
+              depends_on: ["execute_plan"]
+            }
+          ]
       end
 
     {:ok, tasks}

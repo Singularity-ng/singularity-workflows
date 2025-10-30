@@ -1,0 +1,9 @@
+{
+  "event_type": "performance",
+  "metrics": {
+    "execution_time": 1500,
+    "success_rate": 0.95
+  },
+  "timestamp": null,
+  "workflow_id": "workflow_789"
+}

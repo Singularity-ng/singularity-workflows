@@ -297,12 +297,12 @@ defmodule QuantumFlow.Notifications do
 
           {:error, reason}
       end
-      rescue
-        error in Postgrex.Error ->
-          if queue_missing?(error) do
-            case ensure_queue(queue_name, repo) do
-              :ok -> do_send(queue_name, json_message, repo, attempts + 1)
-              {:error, reason} -> {:error, reason}
+    rescue
+      error in [Postgrex.Error] ->
+        if queue_missing?(error) do
+          case ensure_queue(queue_name, repo) do
+            :ok -> do_send(queue_name, json_message, repo, attempts + 1)
+            {:error, reason} -> {:error, reason}
           end
         else
           Logger.error("pgmq.send failed",
@@ -324,19 +324,18 @@ defmodule QuantumFlow.Notifications do
     try do
       :ok = Pgmq.create_queue(repo, queue_name)
     rescue
-      %Postgrex.Error{postgres: %{code: :duplicate_table}} ->
-        :ok
+      error in [Postgrex.Error] ->
+        case error.postgres[:code] do
+          :duplicate_table -> :ok
+          :duplicate_object -> :ok
+          _ ->
+            Logger.error("pgmq.create failed",
+              queue: queue_name,
+              error: format_postgrex_error(error)
+            )
 
-      %Postgrex.Error{postgres: %{code: :duplicate_object}} ->
-        :ok
-
-      %Postgrex.Error{} = error ->
-        Logger.error("pgmq.create failed",
-          queue: queue_name,
-          error: format_postgrex_error(error)
-        )
-
-        {:error, error}
+            {:error, error}
+        end
     end
   end
 
@@ -421,17 +420,20 @@ defmodule QuantumFlow.Notifications do
     try do
       {:ok, Pgmq.pop_message(repo, queue)}
     rescue
-      %Postgrex.Error{} = error ->
-        Logger.error("pgmq.pop failed", queue: queue, error: format_postgrex_error(error))
-        {:error, error}
-
       error ->
-        Logger.error("Unexpected error while popping reply message",
-          queue: queue,
-          error: inspect(error)
-        )
+        case error do
+          %Postgrex.Error{} ->
+            Logger.error("pgmq.pop failed", queue: queue, error: format_postgrex_error(error))
+            {:error, error}
 
-        {:error, error}
+          _ ->
+            Logger.error("Unexpected error while popping reply message",
+              queue: queue,
+              error: inspect(error)
+            )
+
+            {:error, error}
+        end
     end
   end
 
@@ -455,19 +457,18 @@ defmodule QuantumFlow.Notifications do
     try do
       :ok = Pgmq.drop_queue(repo, queue)
     rescue
-      %Postgrex.Error{postgres: %{code: :undefined_table}} ->
-        :ok
+      error in [Postgrex.Error] ->
+        case error.postgres[:code] do
+          :undefined_table -> :ok
+          :undefined_object -> :ok
+          _ ->
+            Logger.warning("Failed to drop reply queue",
+              queue: queue,
+              error: format_postgrex_error(error)
+            )
 
-      %Postgrex.Error{postgres: %{code: :undefined_object}} ->
-        :ok
-
-      %Postgrex.Error{} = error ->
-        Logger.warning("Failed to drop reply queue",
-          queue: queue,
-          error: format_postgrex_error(error)
-        )
-
-        :ok
+            :ok
+        end
     end
   end
 end

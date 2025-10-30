@@ -1,0 +1,22 @@
+{
+  "max_attempts": 3,
+  "steps": [
+    {
+      "depends_on": [],
+      "step_slug": "a"
+    },
+    {
+      "depends_on": [],
+      "step_slug": "b"
+    },
+    {
+      "depends_on": [
+        "a",
+        "b"
+      ],
+      "step_slug": "merge"
+    }
+  ],
+  "timeout": 60,
+  "workflow_slug": "test_get_multidep"
+}

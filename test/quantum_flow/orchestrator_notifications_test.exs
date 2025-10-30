@@ -94,10 +94,15 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
   describe "broadcast_performance/3" do
     test "broadcasts performance metrics successfully" do
       Mox.stub(QuantumFlow.Notifications.Mock, :send_with_notify, fn queue, data, repo ->
+        # Focused assertions on critical fields
         assert queue == "htdag:performance"
         assert data.workflow_id == "workflow_789"
         assert data.event_type == "performance"
         assert data.metrics.execution_time == 1500
+
+        # Snapshot the notification payload for structure regression detection
+        QuantumFlow.Test.Snapshot.assert_snapshot(data, "orchestrator_notifications_performance")
+
         {:ok, "message_perf"}
       end)
 

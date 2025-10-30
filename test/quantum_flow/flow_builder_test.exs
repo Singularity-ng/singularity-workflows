@@ -742,8 +742,22 @@ defmodule QuantumFlow.FlowBuilderTest do
 
       {:ok, workflow} = FlowBuilder.get_flow("test_get_multidep", Repo)
 
+      # Focused assertions on critical behavior
       merge = Enum.find(workflow["steps"], &(&1["step_slug"] == "merge"))
       assert Enum.sort(merge["depends_on"]) == ["a", "b"]
+      assert length(workflow["steps"]) == 3
+
+      # Snapshot for complete workflow structure regression detection
+      snapshot_data = %{
+        workflow_slug: workflow["workflow_slug"],
+        max_attempts: workflow["max_attempts"],
+        timeout: workflow["timeout"],
+        steps: Enum.map(workflow["steps"], &%{
+          step_slug: &1["step_slug"],
+          depends_on: &1["depends_on"]
+        })
+      }
+      QuantumFlow.Test.Snapshot.assert_snapshot(snapshot_data, "flow_builder_workflow_with_dependencies")
     end
 
     test "orders steps by step_index" do

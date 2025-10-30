@@ -45,9 +45,13 @@ defmodule QuantumFlow.WorkflowComposerTest do
           QuantumFlow.Repo
         )
 
+      # Focused assertions for critical behavior
       assert result.success == true
       assert result.results["task1"] == "result1"
       assert result.results["task2"] == "result2"
+
+      # Snapshot for execution result structure regression detection
+      QuantumFlow.Test.Snapshot.assert_snapshot(result, "workflow_composer_execution_result")
     end
 
     test "handles decomposition failure" do
