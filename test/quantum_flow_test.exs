@@ -41,7 +41,11 @@ defmodule QuantumFlowTest do
       ]
 
       for function <- expected_functions do
-        assert function_exported?(QuantumFlow, function, :erlang.fun_info(&QuantumFlow.version/0)[:arity])
+        assert function_exported?(
+                 QuantumFlow,
+                 function,
+                 :erlang.fun_info(&QuantumFlow.version/0)[:arity]
+               )
       end
     end
 

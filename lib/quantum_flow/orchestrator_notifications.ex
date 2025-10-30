@@ -277,31 +277,36 @@ defmodule QuantumFlow.OrchestratorNotifications do
   def get_recent_events(event_type \\ nil, limit \\ 100, repo) do
     import Ecto.Query
 
-    base_query = from e in QuantumFlow.Orchestrator.Schemas.Event,
-      order_by: [desc: e.timestamp],
-      limit: ^limit,
-      select: e
+    base_query =
+      from(e in QuantumFlow.Orchestrator.Schemas.Event,
+        order_by: [desc: e.timestamp],
+        limit: ^limit,
+        select: e
+      )
 
-    query = if event_type do
-      from e in base_query,
-        where: e.event_type == ^to_string(event_type)
-    else
-      base_query
-    end
+    query =
+      if event_type do
+        from(e in base_query,
+          where: e.event_type == ^to_string(event_type)
+        )
+      else
+        base_query
+      end
 
     events = repo.all(query)
 
     # Format events for output
-    formatted_events = Enum.map(events, fn event ->
-      %{
-        id: event.id,
-        type: event.event_type,
-        data: event.event_data,
-        timestamp: event.timestamp,
-        execution_id: event.execution_id,
-        task_execution_id: event.task_execution_id
-      }
-    end)
+    formatted_events =
+      Enum.map(events, fn event ->
+        %{
+          id: event.id,
+          type: event.event_type,
+          data: event.event_data,
+          timestamp: event.timestamp,
+          execution_id: event.execution_id,
+          task_execution_id: event.task_execution_id
+        }
+      end)
 
     {:ok, formatted_events}
   rescue

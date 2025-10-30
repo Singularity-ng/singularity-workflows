@@ -158,6 +158,7 @@ defmodule QuantumFlow.DAG.WorkflowDefinitionTest do
         root_steps: definition.root_steps,
         dependencies: definition.dependencies
       }
+
       QuantumFlow.Test.Snapshot.assert_snapshot(snapshot_data, "workflow_definition_parallel_dag")
     end
   end

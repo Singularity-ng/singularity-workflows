@@ -27,7 +27,7 @@ config :quantum_flow, :pgmq,
   port: 5432,
   database: "quantum_flow_dev",
   username: "postgres",
-  password: "postgres",
+  password: System.get_env("QUANTUM_FLOW_DB_PASSWORD", "postgres"),
   pool_size: 10,
   timeout: 30_000
 

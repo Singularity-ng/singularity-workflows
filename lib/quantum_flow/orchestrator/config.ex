@@ -319,16 +319,23 @@ defmodule QuantumFlow.Orchestrator.Config do
         timeout_multiplier_aggressive: 3.0,
         # Retry thresholds for success rates
         retry_thresholds: %{
-          very_unreliable: {0.0, 50.0, 5},    # < 50% success rate: 5 retries
-          somewhat_unreliable: {50.0, 80.0, 3},  # 50-80% success rate: 3 retries
-          mostly_reliable: {80.0, 95.0, 2},      # 80-95% success rate: 2 retries
-          very_reliable: {95.0, 100.0, 1}        # > 95% success rate: 1 retry
+          # < 50% success rate: 5 retries
+          very_unreliable: {0.0, 50.0, 5},
+          # 50-80% success rate: 3 retries
+          somewhat_unreliable: {50.0, 80.0, 3},
+          # 80-95% success rate: 2 retries
+          mostly_reliable: {80.0, 95.0, 2},
+          # > 95% success rate: 1 retry
+          very_reliable: {95.0, 100.0, 1}
         },
         # Execution time brackets for step grouping
         execution_time_brackets: %{
-          fast: 1_000,       # < 1s
-          medium: 10_000,    # 1s - 10s
-          slow: 999_999_999  # > 10s
+          # < 1s
+          fast: 1_000,
+          # 1s - 10s
+          medium: 10_000,
+          # > 10s
+          slow: 999_999_999
         },
         # Batch settings for aggressive optimization
         batch_size: 3,

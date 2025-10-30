@@ -434,10 +434,12 @@ defmodule QuantumFlow.Orchestrator.Executor do
   defp get_task_executions(execution_id, repo) do
     import Ecto.Query
 
-    query = from te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
-      where: te.execution_id == ^execution_id,
-      order_by: [asc: te.inserted_at],
-      select: te
+    query =
+      from(te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
+        where: te.execution_id == ^execution_id,
+        order_by: [asc: te.inserted_at],
+        select: te
+      )
 
     task_executions = repo.all(query)
     {:ok, task_executions}
@@ -470,9 +472,11 @@ defmodule QuantumFlow.Orchestrator.Executor do
     import Ecto.Query
 
     # Update all running tasks to cancelled status
-    query = from te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
-      where: te.execution_id == ^execution_id and te.status == "running",
-      select: te
+    query =
+      from(te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
+        where: te.execution_id == ^execution_id and te.status == "running",
+        select: te
+      )
 
     repo.transaction(fn ->
       # Fetch running tasks
@@ -480,18 +484,20 @@ defmodule QuantumFlow.Orchestrator.Executor do
 
       # Cancel each running task
       Enum.each(running_tasks, fn task ->
-        changeset = QuantumFlow.Orchestrator.Schemas.TaskExecution.task_execution_changeset(
-          task,
-          %{
-            status: "cancelled",
-            completed_at: DateTime.utc_now(),
-            error_message: "Task cancelled by user request"
-          }
-        )
+        changeset =
+          QuantumFlow.Orchestrator.Schemas.TaskExecution.task_execution_changeset(
+            task,
+            %{
+              status: "cancelled",
+              completed_at: DateTime.utc_now(),
+              error_message: "Task cancelled by user request"
+            }
+          )
 
         case repo.update(changeset) do
           {:ok, _} ->
             Logger.info("Cancelled task: #{task.task_id}")
+
           {:error, error} ->
             Logger.error("Failed to cancel task #{task.task_id}: #{inspect(error)}")
             repo.rollback(error)

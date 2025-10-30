@@ -262,9 +262,9 @@ defmodule QuantumFlow.NotificationsTest do
       large_payload = %{
         type: "large_data",
         # 10KB payload
-        data: String.duplicate("x", 10000),
+        data: String.duplicate("x", 10_000),
         metadata: %{
-          size: 10000,
+          size: 10_000,
           timestamp: DateTime.utc_now(),
           source: "test"
         }

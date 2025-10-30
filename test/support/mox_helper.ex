@@ -16,7 +16,9 @@ defmodule QuantumFlow.Test.MoxHelper do
     end
 
     try do
-      Mox.defmock(QuantumFlow.Orchestrator.Repository.Mock, for: QuantumFlow.Orchestrator.Repository.Behaviour)
+      Mox.defmock(QuantumFlow.Orchestrator.Repository.Mock,
+        for: QuantumFlow.Orchestrator.Repository.Behaviour
+      )
     rescue
       _ -> :ok
     end

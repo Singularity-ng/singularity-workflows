@@ -465,10 +465,13 @@ defmodule QuantumFlow.Orchestrator do
       step_function = Map.get(step_functions, task_id)
 
       if step_function do
+        # Safely convert task_id to atom with validation
+        step_name = safe_string_to_atom(task_id)
+
         step_config = %{
-          name: String.to_atom(task_id),
+          name: step_name,
           function: step_function,
-          depends_on: Enum.map(task.depends_on, &String.to_atom/1),
+          depends_on: Enum.map(task.depends_on, &safe_string_to_atom/1),
           max_attempts: retry_attempts,
           timeout: Map.get(task, :timeout, 30_000),
           retry_delay: Map.get(task, :retry_delay, 1_000),
@@ -485,6 +488,17 @@ defmodule QuantumFlow.Orchestrator do
         raise "No step function found for task: #{task_id}"
       end
     end)
+  end
+
+  # Safely convert string to atom with validation to prevent atom exhaustion
+  @spec safe_string_to_atom(String.t()) :: atom()
+  defp safe_string_to_atom(string) when is_binary(string) do
+    # Validate that the string is a safe identifier (alphanumeric, underscore, dash)
+    if Regex.match?(~r/^[a-zA-Z][a-zA-Z0-9_-]*$/, string) and String.length(string) <= 100 do
+      String.to_atom(string)
+    else
+      raise "Invalid task identifier: #{string}. Must be alphanumeric with underscores/dashes, start with letter, max 100 chars."
+    end
   end
 
   defp generate_goal_id(goal) do

@@ -134,10 +134,10 @@ defmodule QuantumFlow.FlowOperations do
 
   defp validate_step_inputs(workflow_slug, step_slug, step_type, depends_on) do
     cond do
-      not is_valid_slug(workflow_slug) ->
+      not valid_slug?(workflow_slug) ->
         {:error, {:invalid_workflow_slug, workflow_slug}}
 
-      not is_valid_slug(step_slug) ->
+      not valid_slug?(step_slug) ->
         {:error, {:invalid_step_slug, step_slug}}
 
       step_type not in ["single", "map"] ->
@@ -151,7 +151,18 @@ defmodule QuantumFlow.FlowOperations do
     end
   end
 
-  defp is_valid_slug(slug) when is_binary(slug) do
+  @spec valid_slug?(String.t()) :: boolean()
+  @doc """
+  Validates if a slug is valid for use as a workflow or step identifier.
+
+  Valid slugs must:
+  - Not be empty
+  - Be no longer than 128 characters
+  - Start with a letter or underscore
+  - Contain only letters, numbers, and underscores
+  - Not be reserved words
+  """
+  def valid_slug?(slug) when is_binary(slug) do
     slug_length = String.length(slug)
 
     cond do
@@ -164,7 +175,7 @@ defmodule QuantumFlow.FlowOperations do
     end
   end
 
-  defp is_valid_slug(_), do: false
+  def valid_slug?(_), do: false
 
   defp validate_workflow_exists(workflow_slug) do
     case Repo.query("SELECT 1 FROM workflows WHERE workflow_slug = $1::text", [workflow_slug]) do

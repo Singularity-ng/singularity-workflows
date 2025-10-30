@@ -304,52 +304,66 @@ defmodule QuantumFlow.WorkflowComposer do
     require Logger
 
     # Get time range from opts (default to last 30 days)
-    since_date = Keyword.get(opts, :since, DateTime.add(DateTime.utc_now(), -30 * 24 * 60 * 60, :second))
+    since_date =
+      Keyword.get(opts, :since, DateTime.add(DateTime.utc_now(), -30 * 24 * 60 * 60, :second))
 
     # Count total workflows
-    total_query = from w in QuantumFlow.Orchestrator.Schemas.Workflow,
-      where: w.inserted_at >= ^since_date,
-      select: count(w.id)
+    total_query =
+      from(w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        where: w.inserted_at >= ^since_date,
+        select: count(w.id)
+      )
 
     total_workflows = repo.one(total_query) || 0
 
     # Count successful compositions
-    success_query = from w in QuantumFlow.Orchestrator.Schemas.Workflow,
-      where: w.inserted_at >= ^since_date and w.status == "completed",
-      select: count(w.id)
+    success_query =
+      from(w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        where: w.inserted_at >= ^since_date and w.status == "completed",
+        select: count(w.id)
+      )
 
     successful_compositions = repo.one(success_query) || 0
 
     # Count failed compositions
-    failed_query = from w in QuantumFlow.Orchestrator.Schemas.Workflow,
-      where: w.inserted_at >= ^since_date and w.status == "failed",
-      select: count(w.id)
+    failed_query =
+      from(w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        where: w.inserted_at >= ^since_date and w.status == "failed",
+        select: count(w.id)
+      )
 
     failed_compositions = repo.one(failed_query) || 0
 
     # Calculate average execution time
-    avg_time_query = from e in QuantumFlow.Orchestrator.Schemas.Execution,
-      join: w in QuantumFlow.Orchestrator.Schemas.Workflow,
-      on: e.workflow_id == w.id,
-      where: w.inserted_at >= ^since_date and e.status == "completed" and not is_nil(e.duration_ms),
-      select: avg(e.duration_ms)
+    avg_time_query =
+      from(e in QuantumFlow.Orchestrator.Schemas.Execution,
+        join: w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        on: e.workflow_id == w.id,
+        where:
+          w.inserted_at >= ^since_date and e.status == "completed" and not is_nil(e.duration_ms),
+        select: avg(e.duration_ms)
+      )
 
     avg_execution_time = repo.one(avg_time_query) || 0
 
     # Find most common goals
-    goals_query = from tg in QuantumFlow.Orchestrator.Schemas.TaskGraph,
-      join: w in QuantumFlow.Orchestrator.Schemas.Workflow,
-      on: w.task_graph_id == tg.id,
-      where: w.inserted_at >= ^since_date,
-      group_by: tg.goal,
-      order_by: [desc: count(tg.id)],
-      limit: 5,
-      select: {tg.goal, count(tg.id)}
+    goals_query =
+      from(tg in QuantumFlow.Orchestrator.Schemas.TaskGraph,
+        join: w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        on: w.task_graph_id == tg.id,
+        where: w.inserted_at >= ^since_date,
+        group_by: tg.goal,
+        order_by: [desc: count(tg.id)],
+        limit: 5,
+        select: {tg.goal, count(tg.id)}
+      )
 
     goal_stats = repo.all(goals_query) || []
-    most_common_goals = Enum.map(goal_stats, fn {goal, count} ->
-      %{goal: goal, count: count}
-    end)
+
+    most_common_goals =
+      Enum.map(goal_stats, fn {goal, count} ->
+        %{goal: goal, count: count}
+      end)
 
     {:ok,
      %{
@@ -408,7 +422,8 @@ defmodule QuantumFlow.WorkflowComposer do
 
       {:error, reason} ->
         Logger.warning("Optimization failed, using original workflow: #{inspect(reason)}")
-        {:ok, workflow}  # Fall back to unoptimized workflow
+        # Fall back to unoptimized workflow
+        {:ok, workflow}
     end
   end
 

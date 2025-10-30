@@ -251,41 +251,50 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     import Ecto.Query
 
     # Get time range from opts
-    since_date = Keyword.get(opts, :since, DateTime.add(DateTime.utc_now(), -30 * 24 * 60 * 60, :second))
+    since_date =
+      Keyword.get(opts, :since, DateTime.add(DateTime.utc_now(), -30 * 24 * 60 * 60, :second))
 
     # Count total optimizations (workflows with multiple versions)
-    total_query = from w in QuantumFlow.Orchestrator.Schemas.Workflow,
-      where: w.inserted_at >= ^since_date,
-      select: count(w.id)
+    total_query =
+      from(w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        where: w.inserted_at >= ^since_date,
+        select: count(w.id)
+      )
 
     total_optimizations = repo.one(total_query) || 0
 
     # Calculate average performance improvement
-    improvement_query = from pm in QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
-      join: w in QuantumFlow.Orchestrator.Schemas.Workflow,
-      on: pm.workflow_id == w.id,
-      where: w.inserted_at >= ^since_date,
-      select: %{
-        avg_improvement: avg(pm.optimization_improvement),
-        success_rate: avg(pm.success_rate)
-      }
+    improvement_query =
+      from(pm in QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
+        join: w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        on: pm.workflow_id == w.id,
+        where: w.inserted_at >= ^since_date,
+        select: %{
+          avg_improvement: avg(pm.optimization_improvement),
+          success_rate: avg(pm.success_rate)
+        }
+      )
 
     metrics = repo.one(improvement_query) || %{avg_improvement: 0.0, success_rate: 0.0}
 
     # Get most optimized workflows
-    most_optimized_query = from w in QuantumFlow.Orchestrator.Schemas.Workflow,
-      left_join: pm in QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
-      on: pm.workflow_id == w.id,
-      where: w.inserted_at >= ^since_date,
-      group_by: w.name,
-      order_by: [desc: count(w.id)],
-      limit: 5,
-      select: {w.name, count(w.id)}
+    most_optimized_query =
+      from(w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        left_join: pm in QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
+        on: pm.workflow_id == w.id,
+        where: w.inserted_at >= ^since_date,
+        group_by: w.name,
+        order_by: [desc: count(w.id)],
+        limit: 5,
+        select: {w.name, count(w.id)}
+      )
 
     most_optimized = repo.all(most_optimized_query) || []
-    most_optimized_workflows = Enum.map(most_optimized, fn {name, count} ->
-      %{workflow: name, optimization_count: count}
-    end)
+
+    most_optimized_workflows =
+      Enum.map(most_optimized, fn {name, count} ->
+        %{workflow: name, optimization_count: count}
+      end)
 
     {:ok,
      %{
@@ -306,27 +315,32 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     import Ecto.Query
 
     # Get workflow history
-    workflow_query = from w in QuantumFlow.Orchestrator.Schemas.Workflow,
-      where: w.name == ^workflow_name,
-      select: w.id
+    workflow_query =
+      from(w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        where: w.name == ^workflow_name,
+        select: w.id
+      )
 
     workflow_ids = repo.all(workflow_query) || []
 
     if Enum.empty?(workflow_ids) do
-      {:ok, %{
-        avg_execution_times: %{},
-        success_rates: %{},
-        failure_patterns: [],
-        resource_usage: %{}
-      }}
+      {:ok,
+       %{
+         avg_execution_times: %{},
+         success_rates: %{},
+         failure_patterns: [],
+         resource_usage: %{}
+       }}
     else
       # Get average execution times per task
-      exec_times_query = from te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
-        join: e in QuantumFlow.Orchestrator.Schemas.Execution,
-        on: te.execution_id == e.id,
-        where: e.workflow_id in ^workflow_ids and te.status == "completed",
-        group_by: te.task_id,
-        select: {te.task_id, avg(te.duration_ms)}
+      exec_times_query =
+        from(te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
+          join: e in QuantumFlow.Orchestrator.Schemas.Execution,
+          on: te.execution_id == e.id,
+          where: e.workflow_id in ^workflow_ids and te.status == "completed",
+          group_by: te.task_id,
+          select: {te.task_id, avg(te.duration_ms)}
+        )
 
       avg_execution_times =
         exec_times_query
@@ -334,14 +348,17 @@ defmodule QuantumFlow.OrchestratorOptimizer do
         |> Map.new()
 
       # Calculate success rates per task
-      success_query = from te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
-        join: e in QuantumFlow.Orchestrator.Schemas.Execution,
-        on: te.execution_id == e.id,
-        where: e.workflow_id in ^workflow_ids,
-        group_by: te.task_id,
-        select: {te.task_id,
-                 sum(fragment("CASE WHEN ? = 'completed' THEN 1 ELSE 0 END", te.status)) /
-                 fragment("NULLIF(COUNT(*), 0)")}
+      success_query =
+        from(te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
+          join: e in QuantumFlow.Orchestrator.Schemas.Execution,
+          on: te.execution_id == e.id,
+          where: e.workflow_id in ^workflow_ids,
+          group_by: te.task_id,
+          select:
+            {te.task_id,
+             sum(fragment("CASE WHEN ? = 'completed' THEN 1 ELSE 0 END", te.status)) /
+               fragment("NULLIF(COUNT(*), 0)")}
+        )
 
       success_rates =
         success_query
@@ -349,35 +366,41 @@ defmodule QuantumFlow.OrchestratorOptimizer do
         |> Map.new(fn {task_id, rate} -> {task_id, Float.round((rate || 0.0) * 100, 2)} end)
 
       # Get common failure patterns
-      failure_query = from te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
-        join: e in QuantumFlow.Orchestrator.Schemas.Execution,
-        on: te.execution_id == e.id,
-        where: e.workflow_id in ^workflow_ids and te.status == "failed",
-        group_by: [te.task_id, te.error_message],
-        order_by: [desc: count(te.id)],
-        limit: 10,
-        select: %{
-          task_id: te.task_id,
-          error: te.error_message,
-          occurrences: count(te.id)
-        }
+      failure_query =
+        from(te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
+          join: e in QuantumFlow.Orchestrator.Schemas.Execution,
+          on: te.execution_id == e.id,
+          where: e.workflow_id in ^workflow_ids and te.status == "failed",
+          group_by: [te.task_id, te.error_message],
+          order_by: [desc: count(te.id)],
+          limit: 10,
+          select: %{
+            task_id: te.task_id,
+            error: te.error_message,
+            occurrences: count(te.id)
+          }
+        )
 
       failure_patterns = repo.all(failure_query) || []
 
       # Get resource usage statistics
-      resource_query = from pm in QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
-        where: pm.workflow_id in ^workflow_ids,
-        select: %{
-          avg_memory: avg(pm.memory_usage),
-          avg_cpu: avg(pm.cpu_usage),
-          avg_duration: avg(pm.execution_time_ms)
-        }
+      resource_query =
+        from(pm in QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
+          where: pm.workflow_id in ^workflow_ids,
+          select: %{
+            avg_memory: avg(pm.memory_usage),
+            avg_cpu: avg(pm.cpu_usage),
+            avg_duration: avg(pm.execution_time_ms)
+          }
+        )
 
-      resource_usage = repo.one(resource_query) || %{
-        avg_memory: 0,
-        avg_cpu: 0.0,
-        avg_duration: 0
-      }
+      resource_usage =
+        repo.one(resource_query) ||
+          %{
+            avg_memory: 0,
+            avg_cpu: 0.0,
+            avg_duration: 0
+          }
 
       {:ok,
        %{
@@ -451,7 +474,7 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     reordered_steps = reorder_steps_for_parallelization(optimized_steps)
 
     Map.put(workflow, :steps, reordered_steps)
-      |> Map.put(:optimization_level, :advanced)
+    |> Map.put(:optimization_level, :advanced)
   end
 
   defp calculate_step_priority(step, performance_data) do
@@ -460,7 +483,8 @@ defmodule QuantumFlow.OrchestratorOptimizer do
 
     cond do
       Map.get(step, :critical, false) -> :high
-      success_rate < 80.0 -> :low  # Unreliable steps get lower priority
+      # Unreliable steps get lower priority
+      success_rate < 80.0 -> :low
       true -> :normal
     end
   end
@@ -506,17 +530,20 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     workflow = apply_advanced_optimizations(workflow, performance_data, opts)
 
     # Aggressive step merging - combine steps with similar resource profiles
-    merged_steps = workflow.steps
+    merged_steps =
+      workflow.steps
       |> group_similar_steps(performance_data)
       |> merge_compatible_steps()
 
     # Aggressive parallelization - maximize parallel execution
-    parallel_steps = merged_steps
+    parallel_steps =
+      merged_steps
       |> identify_all_parallelizable_paths()
       |> restructure_for_maximum_parallelism()
 
     # Predictive optimization - pre-allocate resources based on patterns
-    optimized_steps = parallel_steps
+    optimized_steps =
+      parallel_steps
       |> Enum.map(fn step ->
         step
         |> add_predictive_resource_allocation(performance_data)
@@ -604,7 +631,11 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     success_rate = Map.get(performance_data.success_rates, step_id, 100.0)
 
     Map.put(step, :predicted_resources, %{
-      memory_mb: if(success_rate < cpu_threshold, do: resources.memory_mb_high, else: resources.memory_mb_low),
+      memory_mb:
+        if(success_rate < cpu_threshold,
+          do: resources.memory_mb_high,
+          else: resources.memory_mb_low
+        ),
       cpu_priority: if(success_rate < cpu_threshold, do: :high, else: :normal),
       predicted_duration: Map.get(performance_data.avg_execution_times, step_id, 5000)
     })
@@ -657,7 +688,8 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     avg_time = Map.get(performance_data.avg_execution_times, step_id)
 
     step
-    |> optimize_step_basic()  # Apply basic optimizations first
+    # Apply basic optimizations first
+    |> optimize_step_basic()
     |> then(fn s ->
       # Auto-adjust timeout if we have historical data
       if avg_time do
@@ -682,12 +714,14 @@ defmodule QuantumFlow.OrchestratorOptimizer do
 
   defp preserve_workflow_structure(original_workflow, optimized_workflow) do
     # Automatic structure preservation - keep critical paths intact
-    critical_steps = original_workflow[:steps]
+    critical_steps =
+      original_workflow[:steps]
       |> Enum.filter(&Map.get(&1, :critical, false))
       |> Enum.map(&Map.get(&1, :id))
 
     # Restore original order for critical steps
-    optimized_steps = optimized_workflow[:steps]
+    optimized_steps =
+      optimized_workflow[:steps]
       |> Enum.map(fn step ->
         if Map.get(step, :id) in critical_steps do
           Map.put(step, :preserve_position, true)
@@ -697,14 +731,16 @@ defmodule QuantumFlow.OrchestratorOptimizer do
       end)
 
     Map.put(optimized_workflow, :steps, optimized_steps)
-      |> Map.put(:structure_preserved, true)
+    |> Map.put(:structure_preserved, true)
   end
 
   defp apply_parallelization_limits(workflow, max_parallel) do
     # Automatic parallelization limiting - batch parallel steps
-    max_parallel = max_parallel || 10  # Default to 10 if not specified
+    # Default to 10 if not specified
+    max_parallel = max_parallel || 10
 
-    updated_steps = workflow[:steps]
+    updated_steps =
+      workflow[:steps]
       |> Enum.chunk_every(max_parallel)
       |> Enum.with_index()
       |> Enum.flat_map(fn {chunk, batch_idx} ->
@@ -714,7 +750,7 @@ defmodule QuantumFlow.OrchestratorOptimizer do
       end)
 
     Map.put(workflow, :steps, updated_steps)
-      |> Map.put(:max_parallel_enforced, max_parallel)
+    |> Map.put(:max_parallel_enforced, max_parallel)
   end
 
   defp analyze_workflow_structure(workflow) do
@@ -725,7 +761,8 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     steps = Map.get(workflow, :steps, [])
 
     # Find steps with no dependencies (can start immediately)
-    entry_points = steps
+    entry_points =
+      steps
       |> Enum.filter(fn step ->
         deps = Map.get(step, :depends_on, [])
         Enum.empty?(deps)
@@ -733,7 +770,8 @@ defmodule QuantumFlow.OrchestratorOptimizer do
       |> Enum.map(&Map.get(&1, :id))
 
     # Find steps with many dependencies (potential bottlenecks)
-    bottlenecks = steps
+    bottlenecks =
+      steps
       |> Enum.filter(fn step ->
         deps = Map.get(step, :depends_on, [])
         length(deps) > bottleneck_threshold
@@ -741,7 +779,8 @@ defmodule QuantumFlow.OrchestratorOptimizer do
       |> Enum.map(&Map.get(&1, :id))
 
     # Find parallelization opportunities (steps with same dependencies)
-    parallel_groups = steps
+    parallel_groups =
+      steps
       |> Enum.group_by(&Map.get(&1, :depends_on, []))
       |> Enum.filter(fn {_deps, group} -> length(group) > 1 end)
       |> Enum.map(fn {deps, group} ->
@@ -767,31 +806,34 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     recommendations = []
 
     # Add parallelization recommendations
-    recommendations = recommendations ++
-      Enum.map(structure_analysis.parallelization_opportunities, fn group ->
-        %{
-          type: :parallelization,
-          tasks: group.parallel_steps,
-          suggestion: "These #{length(group.parallel_steps)} tasks can run in parallel",
-          priority: :high,
-          estimated_improvement: "#{length(group.parallel_steps) - 1}x speedup"
-        }
-      end)
+    recommendations =
+      recommendations ++
+        Enum.map(structure_analysis.parallelization_opportunities, fn group ->
+          %{
+            type: :parallelization,
+            tasks: group.parallel_steps,
+            suggestion: "These #{length(group.parallel_steps)} tasks can run in parallel",
+            priority: :high,
+            estimated_improvement: "#{length(group.parallel_steps) - 1}x speedup"
+          }
+        end)
 
     # Add bottleneck recommendations
-    recommendations = recommendations ++
-      Enum.map(structure_analysis.bottleneck_tasks, fn task_id ->
-        %{
-          type: :bottleneck,
-          task: task_id,
-          suggestion: "Consider splitting this task or optimizing dependencies",
-          priority: :medium
-        }
-      end)
+    recommendations =
+      recommendations ++
+        Enum.map(structure_analysis.bottleneck_tasks, fn task_id ->
+          %{
+            type: :bottleneck,
+            task: task_id,
+            suggestion: "Consider splitting this task or optimizing dependencies",
+            priority: :medium
+          }
+        end)
 
     # Add retry recommendations for unreliable tasks
-    recommendations = recommendations ++
-      performance_data.success_rates
+    recommendations =
+      (recommendations ++
+         performance_data.success_rates)
       |> Enum.filter(fn {_task_id, rate} -> rate < 90.0 end)
       |> Enum.map(fn {task_id, rate} ->
         %{
@@ -804,10 +846,12 @@ defmodule QuantumFlow.OrchestratorOptimizer do
       end)
 
     # Add timeout recommendations
-    recommendations = recommendations ++
-      performance_data.avg_execution_times
+    recommendations =
+      (recommendations ++
+         performance_data.avg_execution_times)
       |> Enum.map(fn {task_id, avg_time} ->
-        current_timeout = get_in(workflow, [:steps])
+        current_timeout =
+          get_in(workflow, [:steps])
           |> Enum.find(&(Map.get(&1, :id) == task_id))
           |> Map.get(:timeout, 30_000)
 
@@ -834,13 +878,15 @@ defmodule QuantumFlow.OrchestratorOptimizer do
       timestamp: DateTime.utc_now(),
       patterns: %{
         # Success patterns
-        successful_steps: execution_data
+        successful_steps:
+          execution_data
           |> Map.get(:task_executions, [])
           |> Enum.filter(&(&1.status == "completed"))
           |> Enum.map(&Map.take(&1, [:task_id, :duration_ms])),
 
         # Failure patterns
-        failed_steps: execution_data
+        failed_steps:
+          execution_data
           |> Map.get(:task_executions, [])
           |> Enum.filter(&(&1.status == "failed"))
           |> Enum.map(&Map.take(&1, [:task_id, :error_message, :retry_count])),
@@ -848,7 +894,8 @@ defmodule QuantumFlow.OrchestratorOptimizer do
         # Performance patterns
         performance_metrics: %{
           total_duration: Map.get(execution_data, :duration_ms),
-          parallel_execution_count: execution_data
+          parallel_execution_count:
+            execution_data
             |> Map.get(:task_executions, [])
             |> Enum.group_by(&Map.get(&1, :started_at))
             |> Enum.count(fn {_time, tasks} -> length(tasks) > 1 end),
@@ -883,20 +930,24 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     import Ecto.Query
 
     # Find or create workflow record
-    workflow = from(w in QuantumFlow.Orchestrator.Schemas.Workflow,
-                   where: w.name == ^workflow_name,
-                   limit: 1)
-               |> repo.one()
+    workflow =
+      from(w in QuantumFlow.Orchestrator.Schemas.Workflow,
+        where: w.name == ^workflow_name,
+        limit: 1
+      )
+      |> repo.one()
 
     if workflow do
       # Store patterns as performance metric
       metric_attrs = %{
         workflow_id: workflow.id,
-        execution_time_ms: get_in(patterns, [:patterns, :performance_metrics, :total_duration]) || 0,
+        execution_time_ms:
+          get_in(patterns, [:patterns, :performance_metrics, :total_duration]) || 0,
         success_rate: calculate_pattern_success_rate(patterns),
         memory_usage: get_in(patterns, [:patterns, :resource_usage, :peak_memory_mb]) || 0,
         cpu_usage: get_in(patterns, [:patterns, :resource_usage, :avg_cpu_percent]) || 0.0,
-        optimization_improvement: 0.0,  # Will be calculated on next optimization
+        # Will be calculated on next optimization
+        optimization_improvement: 0.0,
         learning_data: patterns,
         timestamp: DateTime.utc_now()
       }
@@ -908,9 +959,11 @@ defmodule QuantumFlow.OrchestratorOptimizer do
         {:ok, _metric} ->
           Logger.info("Stored learning patterns for workflow: #{workflow_name}")
           :ok
+
         {:error, reason} ->
           Logger.warning("Failed to store learning patterns: #{inspect(reason)}")
-          :ok  # Don't fail the whole operation
+          # Don't fail the whole operation
+          :ok
       end
     else
       Logger.debug("Workflow not found for pattern storage: #{workflow_name}")
@@ -919,7 +972,8 @@ defmodule QuantumFlow.OrchestratorOptimizer do
   rescue
     error ->
       Logger.warning("Error storing learning patterns: #{inspect(error)}")
-      :ok  # Don't fail the whole operation
+      # Don't fail the whole operation
+      :ok
   end
 
   defp calculate_pattern_success_rate(patterns) do
@@ -947,7 +1001,9 @@ defmodule QuantumFlow.OrchestratorOptimizer do
       ],
       1,
       fn threshold_key, _acc ->
-        {min_rate, max_rate, retry_count} = Map.get(retry_thresholds, threshold_key, {0.0, 100.0, 1})
+        {min_rate, max_rate, retry_count} =
+          Map.get(retry_thresholds, threshold_key, {0.0, 100.0, 1})
+
         if success_rate >= min_rate and success_rate < max_rate do
           {:halt, retry_count}
         else

@@ -166,7 +166,7 @@ defmodule QuantumFlow.FlowBuilderTest do
     end
 
     test "rejects non-string workflow slug" do
-      result = FlowBuilder.create_flow(12345, Repo)
+      result = FlowBuilder.create_flow(12_345, Repo)
 
       assert result == {:error, :workflow_slug_must_be_string}
     end
@@ -752,12 +752,20 @@ defmodule QuantumFlow.FlowBuilderTest do
         workflow_slug: workflow["workflow_slug"],
         max_attempts: workflow["max_attempts"],
         timeout: workflow["timeout"],
-        steps: Enum.map(workflow["steps"], &%{
-          step_slug: &1["step_slug"],
-          depends_on: &1["depends_on"]
-        })
+        steps:
+          Enum.map(
+            workflow["steps"],
+            &%{
+              step_slug: &1["step_slug"],
+              depends_on: &1["depends_on"]
+            }
+          )
       }
-      QuantumFlow.Test.Snapshot.assert_snapshot(snapshot_data, "flow_builder_workflow_with_dependencies")
+
+      QuantumFlow.Test.Snapshot.assert_snapshot(
+        snapshot_data,
+        "flow_builder_workflow_with_dependencies"
+      )
     end
 
     test "orders steps by step_index" do
@@ -1044,7 +1052,7 @@ defmodule QuantumFlow.FlowBuilderTest do
 
     test "rejects non-string step slug" do
       {:ok, _} = FlowBuilder.create_flow("test_step_type", Repo)
-      result = FlowBuilder.add_step("test_step_type", 12345, [], Repo)
+      result = FlowBuilder.add_step("test_step_type", 12_345, [], Repo)
 
       assert result == {:error, :step_slug_must_be_string}
     end

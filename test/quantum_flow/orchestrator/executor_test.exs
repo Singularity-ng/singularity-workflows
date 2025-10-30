@@ -37,7 +37,10 @@ if System.get_env("QUANTUM_FLOW_SKIP_DB") != "1" do
         end)
 
         {:ok, result} =
-          Executor.execute_workflow(workflow, context, QuantumFlow.Repo, monitor: true, timeout: 60_000)
+          Executor.execute_workflow(workflow, context, QuantumFlow.Repo,
+            monitor: true,
+            timeout: 60_000
+          )
 
         assert result.success == true
         assert result.results["task1"] == "result1"

@@ -326,8 +326,12 @@ defmodule QuantumFlow.Notifications do
     rescue
       error in [Postgrex.Error] ->
         case error.postgres[:code] do
-          :duplicate_table -> :ok
-          :duplicate_object -> :ok
+          :duplicate_table ->
+            :ok
+
+          :duplicate_object ->
+            :ok
+
           _ ->
             Logger.error("pgmq.create failed",
               queue: queue_name,
@@ -459,8 +463,12 @@ defmodule QuantumFlow.Notifications do
     rescue
       error in [Postgrex.Error] ->
         case error.postgres[:code] do
-          :undefined_table -> :ok
-          :undefined_object -> :ok
+          :undefined_table ->
+            :ok
+
+          :undefined_object ->
+            :ok
+
           _ ->
             Logger.warning("Failed to drop reply queue",
               queue: queue,

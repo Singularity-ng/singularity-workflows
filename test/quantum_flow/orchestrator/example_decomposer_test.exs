@@ -117,9 +117,9 @@ defmodule QuantumFlow.Orchestrator.ExampleDecomposerTest do
 
   describe "module structure" do
     test "has comprehensive module documentation" do
-      {:ok, docs} = Code.fetch_docs(QuantumFlow.Orchestrator.ExampleDecomposer)
-      assert docs != nil
-      {_, _, _, _, mod_docs, _, _} = docs
+      {:docs_v1, _, _, _, mod_docs, _, _} =
+        Code.fetch_docs(QuantumFlow.Orchestrator.ExampleDecomposer)
+
       doc_content = mod_docs["en"]
       assert doc_content != nil
       assert String.contains?(doc_content, "Example decomposer")
