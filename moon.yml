@@ -31,7 +31,7 @@ tasks:
       - '_build/'
 
   test:
-    command: 'nix develop ../../#dev --command bash -lc "MIX_ENV=test QUANTUM_FLOW_SKIP_DB=1 mix test"'
+    command: 'nix develop ../../#dev --command bash -lc "MIX_ENV=test mix test"'
     deps:
       - 'compile'
     inputs:
@@ -39,6 +39,14 @@ tasks:
       - 'lib/**/*.{ex,exs}'
     options:
       runInCI: true
+
+  test-unit:
+    command: 'nix develop ../../#dev --command bash -lc "MIX_ENV=test QUANTUM_FLOW_SKIP_DB=1 mix test"'
+    deps:
+      - 'compile'
+    inputs:
+      - 'test/**/*.{ex,exs}'
+      - 'lib/**/*.{ex,exs}'
 
   # Quality tasks
   format:
