@@ -1,6 +1,6 @@
-# GitHub Repository Setup for ExQuantumFlow
+# GitHub Repository Setup for QuantumFlow
 
-This guide covers configuring the GitHub repository for ExQuantumFlow v0.1.0 release.
+This guide covers configuring the GitHub repository for QuantumFlow v0.1.0 release.
 
 ## Repository Description
 
@@ -51,7 +51,7 @@ Discussions provide a space for Q&A and community discussion:
 - Q&A - Questions about usage and best practices
 - Announcements - Release notes and updates
 - Ideas - Feature requests and suggestions
-- Show and tell - Community projects using ExQuantumFlow
+- Show and tell - Community projects using QuantumFlow
 
 ## Repository Topics
 
@@ -84,7 +84,7 @@ Protect the `main` branch to enforce quality standards:
 
 ## Labels for Issues
 
-GitHub creates default labels. Customize them for ExQuantumFlow:
+GitHub creates default labels. Customize them for QuantumFlow:
 
 1. Go to **Issues → Labels**
 2. Keep/customize these labels:
@@ -96,7 +96,7 @@ GitHub creates default labels. Customize them for ExQuantumFlow:
    - `question` - User questions (purple)
    - `test` - Test-related (yellow)
 
-3. Add ExQuantumFlow-specific labels:
+3. Add QuantumFlow-specific labels:
    - `migration` - Related to database migrations
    - `performance` - Performance improvements/issues
    - `security` - Security concerns
@@ -180,7 +180,7 @@ When publishing v0.1.0:
    - Go to **Code → Releases**
    - Click **Draft a new release**
    - Tag: `v0.1.0`
-   - Title: `ExQuantumFlow v0.1.0`
+   - Title: `QuantumFlow v0.1.0`
    - Description: Copy from CHANGELOG.md
 
 2. **Publish Release**:
@@ -244,7 +244,7 @@ What should happen instead.
 
 - Elixir version: `elixir --version`
 - PostgreSQL version: `psql --version`
-- ExQuantumFlow version: 0.1.0
+- QuantumFlow version: 0.1.0
 
 ## Additional context
 
@@ -294,7 +294,7 @@ We will respond within 48 hours and work on a fix in a private security advisory
 
 ## Security Considerations
 
-ExQuantumFlow is designed for internal use cases. Key security aspects:
+QuantumFlow is designed for internal use cases. Key security aspects:
 
 - Database connections should use strong credentials
 - pgmq queue should not be publicly accessible

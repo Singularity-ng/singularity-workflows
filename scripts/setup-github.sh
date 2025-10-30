@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Setting up GitHub repository for ExQuantumFlow v0.1.0"
+echo "🚀 Setting up GitHub repository for QuantumFlow v0.1.0"
 echo ""
 
 # Check if gh is installed

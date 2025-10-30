@@ -15,36 +15,56 @@ defmodule QuantumFlow.NotificationsIntegrationTest do
     test "complete workflow notification lifecycle" do
       # Test a complete workflow from start to finish
       workflow_id = "integration_test_#{System.unique_integer([:positive])}"
-      
+
       # 1. Start workflow
-      {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-        type: "workflow_started",
-        workflow_id: workflow_id,
-        input: %{test: true}
-      }, TestRepo)
+      {:ok, _} =
+        Notifications.send_with_notify(
+          "workflow_events",
+          %{
+            type: "workflow_started",
+            workflow_id: workflow_id,
+            input: %{test: true}
+          },
+          TestRepo
+        )
 
       # 2. Start tasks
-      {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-        type: "task_started",
-        task_id: "task_1",
-        workflow_id: workflow_id,
-        step_name: "process_data"
-      }, TestRepo)
+      {:ok, _} =
+        Notifications.send_with_notify(
+          "workflow_events",
+          %{
+            type: "task_started",
+            task_id: "task_1",
+            workflow_id: workflow_id,
+            step_name: "process_data"
+          },
+          TestRepo
+        )
 
       # 3. Complete tasks
-      {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-        type: "task_completed",
-        task_id: "task_1",
-        workflow_id: workflow_id,
-        result: %{processed: true}
-      }, TestRepo)
+      {:ok, _} =
+        Notifications.send_with_notify(
+          "workflow_events",
+          %{
+            type: "task_completed",
+            task_id: "task_1",
+            workflow_id: workflow_id,
+            result: %{processed: true}
+          },
+          TestRepo
+        )
 
       # 4. Complete workflow
-      {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-        type: "workflow_completed",
-        workflow_id: workflow_id,
-        final_result: %{success: true}
-      }, TestRepo)
+      {:ok, _} =
+        Notifications.send_with_notify(
+          "workflow_events",
+          %{
+            type: "workflow_completed",
+            workflow_id: workflow_id,
+            final_result: %{success: true}
+          },
+          TestRepo
+        )
 
       # All notifications should be sent successfully
       assert true
@@ -52,44 +72,69 @@ defmodule QuantumFlow.NotificationsIntegrationTest do
 
     test "error handling and recovery flow" do
       workflow_id = "error_test_#{System.unique_integer([:positive])}"
-      
+
       # 1. Start workflow
-      {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-        type: "workflow_started",
-        workflow_id: workflow_id
-      }, TestRepo)
+      {:ok, _} =
+        Notifications.send_with_notify(
+          "workflow_events",
+          %{
+            type: "workflow_started",
+            workflow_id: workflow_id
+          },
+          TestRepo
+        )
 
       # 2. Task fails
-      {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-        type: "task_failed",
-        task_id: "task_1",
-        workflow_id: workflow_id,
-        error: "Connection timeout",
-        retry_count: 1
-      }, TestRepo)
+      {:ok, _} =
+        Notifications.send_with_notify(
+          "workflow_events",
+          %{
+            type: "task_failed",
+            task_id: "task_1",
+            workflow_id: workflow_id,
+            error: "Connection timeout",
+            retry_count: 1
+          },
+          TestRepo
+        )
 
       # 3. Retry task
-      {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-        type: "task_retry",
-        task_id: "task_1",
-        workflow_id: workflow_id,
-        retry_count: 2
-      }, TestRepo)
+      {:ok, _} =
+        Notifications.send_with_notify(
+          "workflow_events",
+          %{
+            type: "task_retry",
+            task_id: "task_1",
+            workflow_id: workflow_id,
+            retry_count: 2
+          },
+          TestRepo
+        )
 
       # 4. Task succeeds on retry
-      {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-        type: "task_completed",
-        task_id: "task_1",
-        workflow_id: workflow_id,
-        result: %{processed: true, retried: true}
-      }, TestRepo)
+      {:ok, _} =
+        Notifications.send_with_notify(
+          "workflow_events",
+          %{
+            type: "task_completed",
+            task_id: "task_1",
+            workflow_id: workflow_id,
+            result: %{processed: true, retried: true}
+          },
+          TestRepo
+        )
 
       # 5. Workflow completes
-      {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-        type: "workflow_completed",
-        workflow_id: workflow_id,
-        final_result: %{success: true, recovered: true}
-      }, TestRepo)
+      {:ok, _} =
+        Notifications.send_with_notify(
+          "workflow_events",
+          %{
+            type: "workflow_completed",
+            workflow_id: workflow_id,
+            final_result: %{success: true, recovered: true}
+          },
+          TestRepo
+        )
 
       assert true
     end
@@ -173,30 +218,38 @@ defmodule QuantumFlow.NotificationsIntegrationTest do
   describe "performance and scalability" do
     test "high-frequency notification handling" do
       # Test sending many notifications quickly
-      events = for i <- 1..1000 do
-        %{
-          type: "test_event",
-          id: i,
-          timestamp: DateTime.utc_now()
-        }
-      end
+      events =
+        for i <- 1..1000 do
+          %{
+            type: "test_event",
+            id: i,
+            timestamp: DateTime.utc_now()
+          }
+        end
 
       start_time = System.monotonic_time()
-      
-      results = for event <- events do
-        Notifications.send_with_notify("test_queue", event, TestRepo)
-      end
-      
+
+      results =
+        for event <- events do
+          Notifications.send_with_notify("test_queue", event, TestRepo)
+        end
+
       end_time = System.monotonic_time()
       duration = System.convert_time_unit(end_time - start_time, :native, :millisecond)
-      
+
       # All should succeed
-      success_count = Enum.count(results, fn {:ok, _} -> true; _ -> false end)
+      success_count =
+        Enum.count(results, fn
+          {:ok, _} -> true
+          _ -> false
+        end)
+
       assert success_count == 1000
-      
+
       # Should be reasonably fast
-      assert duration < 5000  # Less than 5 seconds for 1000 notifications
-      
+      # Less than 5 seconds for 1000 notifications
+      assert duration < 5000
+
       IO.puts("Sent 1000 notifications in #{duration}ms")
     end
 
@@ -205,7 +258,8 @@ defmodule QuantumFlow.NotificationsIntegrationTest do
       large_payloads = [
         %{
           type: "large_data",
-          data: String.duplicate("x", 100_000),  # 100KB
+          # 100KB
+          data: String.duplicate("x", 100_000),
           metadata: %{size: 100_000}
         },
         %{
@@ -226,10 +280,11 @@ defmodule QuantumFlow.NotificationsIntegrationTest do
 
   describe "logging and observability" do
     test "structured logging includes all required fields" do
-      log = capture_log(fn ->
-        Notifications.send_with_notify("test_queue", %{type: "test"}, TestRepo)
-      end)
-      
+      log =
+        capture_log(fn ->
+          Notifications.send_with_notify("test_queue", %{type: "test"}, TestRepo)
+        end)
+
       # Check for structured logging fields
       assert log =~ "queue:"
       assert log =~ "message_id:"
@@ -245,10 +300,11 @@ defmodule QuantumFlow.NotificationsIntegrationTest do
         end
       end
 
-      log = capture_log(fn ->
-        Notifications.send_with_notify("test_queue", %{type: "test"}, FailingRepo)
-      end)
-      
+      log =
+        capture_log(fn ->
+          Notifications.send_with_notify("test_queue", %{type: "test"}, FailingRepo)
+        end)
+
       assert log =~ "PGMQ + NOTIFY send failed"
       assert log =~ "error: :connection_lost"
       assert log =~ "queue: test_queue"
@@ -260,36 +316,52 @@ defmodule QuantumFlow.NotificationsIntegrationTest do
       # Test multiple workflows running concurrently
       workflow_count = 10
       tasks_per_workflow = 5
-      
-      workflows = for i <- 1..workflow_count do
-        workflow_id = "concurrent_workflow_#{i}"
-        
-        # Start workflow
-        {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-          type: "workflow_started",
-          workflow_id: workflow_id
-        }, TestRepo)
-        
-        # Start tasks
-        for j <- 1..tasks_per_workflow do
-          {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-            type: "task_started",
-            task_id: "task_#{j}",
-            workflow_id: workflow_id
-          }, TestRepo)
+
+      workflows =
+        for i <- 1..workflow_count do
+          workflow_id = "concurrent_workflow_#{i}"
+
+          # Start workflow
+          {:ok, _} =
+            Notifications.send_with_notify(
+              "workflow_events",
+              %{
+                type: "workflow_started",
+                workflow_id: workflow_id
+              },
+              TestRepo
+            )
+
+          # Start tasks
+          for j <- 1..tasks_per_workflow do
+            {:ok, _} =
+              Notifications.send_with_notify(
+                "workflow_events",
+                %{
+                  type: "task_started",
+                  task_id: "task_#{j}",
+                  workflow_id: workflow_id
+                },
+                TestRepo
+              )
+          end
+
+          workflow_id
         end
-        
-        workflow_id
-      end
-      
+
       # Complete all workflows
       for workflow_id <- workflows do
-        {:ok, _} = Notifications.send_with_notify("workflow_events", %{
-          type: "workflow_completed",
-          workflow_id: workflow_id
-        }, TestRepo)
+        {:ok, _} =
+          Notifications.send_with_notify(
+            "workflow_events",
+            %{
+              type: "workflow_completed",
+              workflow_id: workflow_id
+            },
+            TestRepo
+          )
       end
-      
+
       assert length(workflows) == workflow_count
     end
   end

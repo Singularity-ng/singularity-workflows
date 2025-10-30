@@ -22,7 +22,7 @@ Include in your report:
 
 ## Security Considerations
 
-ExQuantumFlow is designed for workflow orchestration in trusted environments. Here are important security practices:
+QuantumFlow is designed for workflow orchestration in trusted environments. Here are important security practices:
 
 ### Database Security
 
@@ -107,11 +107,11 @@ ExQuantumFlow is designed for workflow orchestration in trusted environments. He
 
 ## Security Audit
 
-ExQuantumFlow has been reviewed for common vulnerabilities. See [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) for detailed findings.
+QuantumFlow has been reviewed for common vulnerabilities. See [docs/SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) for detailed findings.
 
 ## Dependencies
 
-ExQuantumFlow uses well-maintained Elixir packages. Dependency security is monitored with:
+QuantumFlow uses well-maintained Elixir packages. Dependency security is monitored with:
 - `mix deps.audit` - Check for known vulnerabilities
 - Regular dependency updates
 - GitHub Dependabot alerts
@@ -150,4 +150,4 @@ For security-related questions that aren't vulnerabilities, open an issue with t
 ---
 
 Last Updated: 2025-01-10
-ExQuantumFlow Version: 0.1.0
+QuantumFlow Version: 0.1.0

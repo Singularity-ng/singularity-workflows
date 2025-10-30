@@ -1,6 +1,6 @@
-# Contributing to ExQuantumFlow
+# Contributing to QuantumFlow
 
-Thank you for your interest in ExQuantumFlow! This document provides guidelines for contributing to the project.
+Thank you for your interest in QuantumFlow! This document provides guidelines for contributing to the project.
 
 ## Getting Started
 
@@ -59,7 +59,7 @@ mix test.watch
 
 ### Code Quality
 
-ExQuantumFlow enforces high code quality standards:
+QuantumFlow enforces high code quality standards:
 
 ```bash
 # Run all quality checks (recommended before committing)
@@ -75,7 +75,7 @@ mix deps.audit          # Check dependencies for vulnerabilities
 
 ### Code Style
 
-ExQuantumFlow follows standard Elixir conventions:
+QuantumFlow follows standard Elixir conventions:
 
 1. **Formatting**: Run `mix format` before committing
 2. **Line Length**: Maximum 100 characters (enforced in .formatter.exs)
@@ -138,7 +138,7 @@ All code contributions must include:
 
 ### Database-First Design
 
-ExQuantumFlow uses PostgreSQL as the source of truth. When adding features:
+QuantumFlow uses PostgreSQL as the source of truth. When adding features:
 
 1. **Schema Changes**: Create migrations for all schema additions
 2. **SQL Functions**: Complex logic lives in PostgreSQL functions (for atomicity)
@@ -324,7 +324,7 @@ Reviewers may request changes. Please:
 
 ## Release Process
 
-ExQuantumFlow follows [Semantic Versioning](https://semver.org/):
+QuantumFlow follows [Semantic Versioning](https://semver.org/):
 
 - **0.1.0** (current): Initial release, API may change
 - **0.x.0**: Minor versions (new features, API additions)
@@ -348,4 +348,4 @@ Only maintainers can publish releases:
 - **Architecture questions**: See [ARCHITECTURE.md](ARCHITECTURE.md)
 - **Issue or PR**: Open a GitHub issue
 
-Thank you for contributing to ExQuantumFlow!
+Thank you for contributing to QuantumFlow!

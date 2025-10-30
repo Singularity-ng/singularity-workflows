@@ -70,25 +70,18 @@ config :quantum_flow, dev_routes: true
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
 
-# Set a higher stacktrace during development. Avoid configuring such
-# in production as building large stacktraces may be expensive.
-config :phoenix, :stacktrace_depth, 20
-
-# Initialize plugs at runtime for faster development compilation
-config :phoenix, :plug_init_mode, :runtime
-
 # Orchestrator development configuration
 config :quantum_flow, :orchestrator,
   # Enable debug logging for development
   debug: true,
-  
+
   # More lenient timeouts for development
   timeout: 600_000,
   execution: %{
     timeout: 600_000,
     task_timeout: 60_000
   },
-  
+
   # Enable all features for development
   features: %{
     monitoring: true,
@@ -97,7 +90,7 @@ config :quantum_flow, :orchestrator,
     learning: true,
     real_time: true
   },
-  
+
   # More verbose logging
   notifications: %{
     enabled: true,

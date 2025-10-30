@@ -10,6 +10,7 @@ defmodule QuantumFlow.Orchestrator.Schemas do
     @moduledoc """
     Task Graph schema for storing HTDAG decomposition results.
     """
+    @type t() :: %__MODULE__{}
     use Ecto.Schema
     import Ecto.Changeset
 
@@ -41,6 +42,7 @@ defmodule QuantumFlow.Orchestrator.Schemas do
     @moduledoc """
     Workflow schema for storing HTDAG-generated workflows.
     """
+    @type t() :: %__MODULE__{}
     use Ecto.Schema
     import Ecto.Changeset
 
@@ -55,16 +57,27 @@ defmodule QuantumFlow.Orchestrator.Schemas do
       field :retry_attempts, :integer, default: 3
       field :status, :string, default: "created"
 
-      belongs_to :task_graph, QuantumFlow.Orchestrator.Schemas.TaskGraph, foreign_key: :task_graph_id
+      belongs_to :task_graph, QuantumFlow.Orchestrator.Schemas.TaskGraph,
+        foreign_key: :task_graph_id
+
       has_many :executions, QuantumFlow.Orchestrator.Schemas.Execution, foreign_key: :workflow_id
-      has_many :performance_metrics, QuantumFlow.Orchestrator.Schemas.PerformanceMetric, foreign_key: :workflow_id
+
+      has_many :performance_metrics, QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
+        foreign_key: :workflow_id
 
       timestamps()
     end
 
     def workflow_changeset(workflow, attrs) do
       workflow
-      |> cast(attrs, [:name, :workflow_definition, :step_functions, :max_parallel, :retry_attempts, :status])
+      |> cast(attrs, [
+        :name,
+        :workflow_definition,
+        :step_functions,
+        :max_parallel,
+        :retry_attempts,
+        :status
+      ])
       |> validate_required([:name, :workflow_definition, :step_functions])
       |> validate_length(:name, min: 1, max: 255)
       |> validate_number(:max_parallel, greater_than: 0, less_than: 100)
@@ -77,6 +90,7 @@ defmodule QuantumFlow.Orchestrator.Schemas do
     @moduledoc """
     Execution schema for storing workflow execution instances.
     """
+    @type t() :: %__MODULE__{}
     use Ecto.Schema
     import Ecto.Changeset
 
@@ -94,7 +108,10 @@ defmodule QuantumFlow.Orchestrator.Schemas do
       field :error_message, :string
 
       belongs_to :workflow, QuantumFlow.Orchestrator.Schemas.Workflow, foreign_key: :workflow_id
-      has_many :task_executions, QuantumFlow.Orchestrator.Schemas.TaskExecution, foreign_key: :execution_id
+
+      has_many :task_executions, QuantumFlow.Orchestrator.Schemas.TaskExecution,
+        foreign_key: :execution_id
+
       has_many :events, QuantumFlow.Orchestrator.Schemas.Event, foreign_key: :execution_id
 
       timestamps()
@@ -102,7 +119,16 @@ defmodule QuantumFlow.Orchestrator.Schemas do
 
     def execution_changeset(execution, attrs) do
       execution
-      |> cast(attrs, [:execution_id, :goal_context, :status, :started_at, :completed_at, :duration_ms, :result, :error_message])
+      |> cast(attrs, [
+        :execution_id,
+        :goal_context,
+        :status,
+        :started_at,
+        :completed_at,
+        :duration_ms,
+        :result,
+        :error_message
+      ])
       |> validate_required([:execution_id, :goal_context])
       |> validate_inclusion(:status, ["running", "completed", "failed", "cancelled"])
       |> validate_length(:execution_id, min: 1, max: 255)
@@ -113,6 +139,7 @@ defmodule QuantumFlow.Orchestrator.Schemas do
     @moduledoc """
     Task Execution schema for storing individual task execution instances.
     """
+    @type t() :: %__MODULE__{}
     use Ecto.Schema
     import Ecto.Changeset
 
@@ -138,7 +165,17 @@ defmodule QuantumFlow.Orchestrator.Schemas do
 
     def task_execution_changeset(task_execution, attrs) do
       task_execution
-      |> cast(attrs, [:task_id, :task_name, :status, :started_at, :completed_at, :duration_ms, :result, :error_message, :retry_count])
+      |> cast(attrs, [
+        :task_id,
+        :task_name,
+        :status,
+        :started_at,
+        :completed_at,
+        :duration_ms,
+        :result,
+        :error_message,
+        :retry_count
+      ])
       |> validate_required([:task_id, :task_name])
       |> validate_inclusion(:status, ["pending", "running", "completed", "failed", "cancelled"])
       |> validate_length(:task_id, min: 1, max: 255)
@@ -150,6 +187,7 @@ defmodule QuantumFlow.Orchestrator.Schemas do
     @moduledoc """
     Event schema for storing HTDAG events and notifications.
     """
+    @type t() :: %__MODULE__{}
     use Ecto.Schema
     import Ecto.Changeset
 
@@ -162,7 +200,9 @@ defmodule QuantumFlow.Orchestrator.Schemas do
       field :timestamp, :utc_datetime
 
       belongs_to :execution, QuantumFlow.Orchestrator.Schemas.Execution, foreign_key: :execution_id
-      belongs_to :task_execution, QuantumFlow.Orchestrator.Schemas.TaskExecution, foreign_key: :task_execution_id
+
+      belongs_to :task_execution, QuantumFlow.Orchestrator.Schemas.TaskExecution,
+        foreign_key: :task_execution_id
 
       timestamps()
     end
@@ -172,9 +212,15 @@ defmodule QuantumFlow.Orchestrator.Schemas do
       |> cast(attrs, [:event_type, :event_data, :timestamp])
       |> validate_required([:event_type, :event_data])
       |> validate_inclusion(:event_type, [
-        "decomposition:started", "decomposition:completed", "decomposition:failed",
-        "task:started", "task:completed", "task:failed",
-        "workflow:started", "workflow:completed", "workflow:failed",
+        "decomposition:started",
+        "decomposition:completed",
+        "decomposition:failed",
+        "task:started",
+        "task:completed",
+        "task:failed",
+        "workflow:started",
+        "workflow:completed",
+        "workflow:failed",
         "performance:metrics"
       ])
     end
@@ -184,6 +230,7 @@ defmodule QuantumFlow.Orchestrator.Schemas do
     @moduledoc """
     Performance Metric schema for storing execution metrics.
     """
+    @type t() :: %__MODULE__{}
     use Ecto.Schema
     import Ecto.Changeset
 
@@ -208,8 +255,14 @@ defmodule QuantumFlow.Orchestrator.Schemas do
       |> cast(attrs, [:task_id, :metric_type, :metric_value, :metric_unit, :context, :timestamp])
       |> validate_required([:metric_type, :metric_value])
       |> validate_inclusion(:metric_type, [
-        "execution_time", "success_rate", "error_rate", "resource_usage",
-        "throughput", "latency", "memory_usage", "cpu_usage"
+        "execution_time",
+        "success_rate",
+        "error_rate",
+        "resource_usage",
+        "throughput",
+        "latency",
+        "memory_usage",
+        "cpu_usage"
       ])
       |> validate_number(:metric_value, greater_than_or_equal_to: 0)
     end
@@ -219,6 +272,7 @@ defmodule QuantumFlow.Orchestrator.Schemas do
     @moduledoc """
     Learning Pattern schema for storing optimization patterns.
     """
+    @type t() :: %__MODULE__{}
     use Ecto.Schema
     import Ecto.Changeset
 
@@ -238,14 +292,27 @@ defmodule QuantumFlow.Orchestrator.Schemas do
 
     def learning_pattern_changeset(pattern, attrs) do
       pattern
-      |> cast(attrs, [:workflow_name, :pattern_type, :pattern_data, :confidence_score, :usage_count, :last_used_at])
+      |> cast(attrs, [
+        :workflow_name,
+        :pattern_type,
+        :pattern_data,
+        :confidence_score,
+        :usage_count,
+        :last_used_at
+      ])
       |> validate_required([:workflow_name, :pattern_type, :pattern_data])
       |> validate_length(:workflow_name, min: 1, max: 255)
       |> validate_inclusion(:pattern_type, [
-        "parallelization", "timeout_optimization", "retry_strategy",
-        "resource_allocation", "dependency_optimization"
+        "parallelization",
+        "timeout_optimization",
+        "retry_strategy",
+        "resource_allocation",
+        "dependency_optimization"
       ])
-      |> validate_number(:confidence_score, greater_than_or_equal_to: 0.0, less_than_or_equal_to: 1.0)
+      |> validate_number(:confidence_score,
+        greater_than_or_equal_to: 0.0,
+        less_than_or_equal_to: 1.0
+      )
       |> validate_number(:usage_count, greater_than_or_equal_to: 0)
     end
   end

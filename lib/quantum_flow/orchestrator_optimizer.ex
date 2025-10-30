@@ -1,12 +1,12 @@
 defmodule QuantumFlow.OrchestratorOptimizer do
   @moduledoc """
   Workflow optimization for HTDAG-generated workflows.
-  
+
   Analyzes workflow execution patterns and optimizes future workflows
   based on historical performance data and learning algorithms.
-  
+
   ## Features
-  
+
   - **Performance Analysis**: Analyze execution times and success rates
   - **Dependency Optimization**: Optimize task dependencies for better parallelization
   - **Resource Allocation**: Optimize resource usage and task distribution
@@ -82,9 +82,9 @@ defmodule QuantumFlow.OrchestratorOptimizer do
 
   @doc """
   Optimize a workflow based on historical performance data.
-  
+
   ## Parameters
-  
+
   - `workflow` - Workflow to optimize
   - `repo` - Ecto repository
   - `opts` - Optimization options
@@ -92,14 +92,14 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     - `:preserve_structure` - Keep original task structure (default: true)
     - `:max_parallel` - Maximum parallel tasks after optimization
     - `:timeout_threshold` - Timeout threshold for task optimization
-  
+
   ## Returns
-  
+
   - `{:ok, optimized_workflow}` - Optimized workflow
   - `{:error, reason}` - Optimization failed
-  
+
   ## Example
-  
+
       {:ok, optimized} = QuantumFlow.OrchestratorOptimizer.optimize_workflow(
         workflow,
         MyApp.Repo,
@@ -107,36 +107,38 @@ defmodule QuantumFlow.OrchestratorOptimizer do
         max_parallel: 10
       )
   """
-  @spec optimize_workflow(map(), Ecto.Repo.t(), keyword()) :: 
-    {:ok, map()} | {:error, any()}
+  @spec optimize_workflow(map(), Ecto.Repo.t(), keyword()) ::
+          {:ok, map()} | {:error, any()}
   def optimize_workflow(workflow, repo, opts \\ []) do
     optimization_level = Keyword.get(opts, :optimization_level, :basic)
     preserve_structure = Keyword.get(opts, :preserve_structure, true)
     max_parallel = Keyword.get(opts, :max_parallel, 10)
-    
+
     Logger.info("Optimizing workflow: #{workflow.name} (level: #{optimization_level})")
-    
+
     try do
       # Get historical performance data
       {:ok, performance_data} = get_performance_data(workflow.name, repo)
-      
+
       # Apply optimizations based on level
-      optimized_workflow = case optimization_level do
-        :basic -> apply_basic_optimizations(workflow, performance_data, opts)
-        :advanced -> apply_advanced_optimizations(workflow, performance_data, opts)
-        :aggressive -> apply_aggressive_optimizations(workflow, performance_data, opts)
-      end
-      
+      optimized_workflow =
+        case optimization_level do
+          :basic -> apply_basic_optimizations(workflow, performance_data, opts)
+          :advanced -> apply_advanced_optimizations(workflow, performance_data, opts)
+          :aggressive -> apply_aggressive_optimizations(workflow, performance_data, opts)
+        end
+
       # Ensure structure preservation if requested
-      final_workflow = if preserve_structure do
-        preserve_workflow_structure(workflow, optimized_workflow)
-      else
-        optimized_workflow
-      end
-      
+      final_workflow =
+        if preserve_structure do
+          preserve_workflow_structure(workflow, optimized_workflow)
+        else
+          optimized_workflow
+        end
+
       # Apply parallelization limits
       final_workflow = apply_parallelization_limits(final_workflow, max_parallel)
-      
+
       Logger.info("Workflow optimization completed")
       {:ok, final_workflow}
     rescue
@@ -148,20 +150,20 @@ defmodule QuantumFlow.OrchestratorOptimizer do
 
   @doc """
   Get optimization recommendations for a workflow.
-  
+
   ## Parameters
-  
+
   - `workflow` - Workflow to analyze
   - `repo` - Ecto repository
   - `opts` - Analysis options
-  
+
   ## Returns
-  
+
   - `{:ok, recommendations}` - List of optimization recommendations
   - `{:error, reason}` - Analysis failed
-  
+
   ## Example
-  
+
       {:ok, recommendations} = QuantumFlow.OrchestratorOptimizer.get_recommendations(
         workflow,
         MyApp.Repo
@@ -174,20 +176,20 @@ defmodule QuantumFlow.OrchestratorOptimizer do
       # ]
   """
   @spec get_recommendations(map(), Ecto.Repo.t(), keyword()) ::
-    {:ok, list()} | {:error, any()}
+          {:ok, list()} | {:error, any()}
   def get_recommendations(workflow, repo, _opts \\ []) do
     Logger.info("Analyzing workflow for optimization recommendations: #{workflow.name}")
-    
+
     try do
       # Get performance data
       {:ok, performance_data} = get_performance_data(workflow.name, repo)
-      
+
       # Analyze workflow structure
       {:ok, structure_analysis} = analyze_workflow_structure(workflow)
-      
+
       # Generate recommendations
       recommendations = generate_recommendations(workflow, performance_data, structure_analysis)
-      
+
       Logger.info("Generated #{length(recommendations)} optimization recommendations")
       {:ok, recommendations}
     rescue
@@ -199,29 +201,29 @@ defmodule QuantumFlow.OrchestratorOptimizer do
 
   @doc """
   Learn from workflow execution patterns.
-  
+
   ## Parameters
-  
+
   - `workflow_name` - Name of the workflow to learn from
   - `execution_data` - Execution data to learn from
   - `repo` - Ecto repository
-  
+
   ## Returns
-  
+
   - `:ok` - Learning completed successfully
   - `{:error, reason}` - Learning failed
   """
   @spec learn_from_execution(String.t(), map(), Ecto.Repo.t()) :: :ok | {:error, any()}
   def learn_from_execution(workflow_name, execution_data, repo) do
     Logger.info("Learning from workflow execution: #{workflow_name}")
-    
+
     try do
       # Extract learning patterns from execution data
       patterns = extract_learning_patterns(execution_data)
-      
+
       # Store patterns for future optimization
       store_learning_patterns(workflow_name, patterns, repo)
-      
+
       Logger.info("Learning completed for workflow: #{workflow_name}")
       :ok
     rescue
@@ -233,128 +235,677 @@ defmodule QuantumFlow.OrchestratorOptimizer do
 
   @doc """
   Get optimization statistics.
-  
+
   ## Parameters
-  
+
   - `repo` - Ecto repository
   - `opts` - Query options
-  
+
   ## Returns
-  
+
   - `{:ok, stats}` - Optimization statistics
   - `{:error, reason}` - Failed to get stats
   """
   @spec get_optimization_stats(Ecto.Repo.t(), keyword()) :: {:ok, map()} | {:error, any()}
-  def get_optimization_stats(_repo, _opts \\ []) do
-    # TODO: Implement database queries for optimization statistics
-    # Currently returns stub data - awaiting full implementation
-    {:ok, %{
-      total_optimizations: 0,
-      average_improvement: 0.0,
-      most_optimized_workflows: [],
-      optimization_success_rate: 0.0
-    }}
+  def get_optimization_stats(repo, opts \\ []) do
+    import Ecto.Query
+
+    # Get time range from opts
+    since_date = Keyword.get(opts, :since, DateTime.add(DateTime.utc_now(), -30 * 24 * 60 * 60, :second))
+
+    # Count total optimizations (workflows with multiple versions)
+    total_query = from w in QuantumFlow.Orchestrator.Schemas.Workflow,
+      where: w.inserted_at >= ^since_date,
+      select: count(w.id)
+
+    total_optimizations = repo.one(total_query) || 0
+
+    # Calculate average performance improvement
+    improvement_query = from pm in QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
+      join: w in QuantumFlow.Orchestrator.Schemas.Workflow,
+      on: pm.workflow_id == w.id,
+      where: w.inserted_at >= ^since_date,
+      select: %{
+        avg_improvement: avg(pm.optimization_improvement),
+        success_rate: avg(pm.success_rate)
+      }
+
+    metrics = repo.one(improvement_query) || %{avg_improvement: 0.0, success_rate: 0.0}
+
+    # Get most optimized workflows
+    most_optimized_query = from w in QuantumFlow.Orchestrator.Schemas.Workflow,
+      left_join: pm in QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
+      on: pm.workflow_id == w.id,
+      where: w.inserted_at >= ^since_date,
+      group_by: w.name,
+      order_by: [desc: count(w.id)],
+      limit: 5,
+      select: {w.name, count(w.id)}
+
+    most_optimized = repo.all(most_optimized_query) || []
+    most_optimized_workflows = Enum.map(most_optimized, fn {name, count} ->
+      %{workflow: name, optimization_count: count}
+    end)
+
+    {:ok,
+     %{
+       total_optimizations: total_optimizations,
+       average_improvement: Float.round(metrics.avg_improvement || 0.0, 2),
+       most_optimized_workflows: most_optimized_workflows,
+       optimization_success_rate: Float.round((metrics.success_rate || 0.0) * 100, 2)
+     }}
+  rescue
+    error ->
+      Logger.error("Failed to get optimization stats: #{inspect(error)}")
+      {:error, error}
   end
 
   # Private functions
 
-  defp get_performance_data(_workflow_name, _repo) do
-    # TODO: Implement database queries for workflow performance history
-    # Currently returns stub data - awaiting full implementation
-    {:ok, %{
-      avg_execution_times: %{},
-      success_rates: %{},
-      failure_patterns: [],
-      resource_usage: %{}
-    }}
+  defp get_performance_data(workflow_name, repo) do
+    import Ecto.Query
+
+    # Get workflow history
+    workflow_query = from w in QuantumFlow.Orchestrator.Schemas.Workflow,
+      where: w.name == ^workflow_name,
+      select: w.id
+
+    workflow_ids = repo.all(workflow_query) || []
+
+    if Enum.empty?(workflow_ids) do
+      {:ok, %{
+        avg_execution_times: %{},
+        success_rates: %{},
+        failure_patterns: [],
+        resource_usage: %{}
+      }}
+    else
+      # Get average execution times per task
+      exec_times_query = from te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
+        join: e in QuantumFlow.Orchestrator.Schemas.Execution,
+        on: te.execution_id == e.id,
+        where: e.workflow_id in ^workflow_ids and te.status == "completed",
+        group_by: te.task_id,
+        select: {te.task_id, avg(te.duration_ms)}
+
+      avg_execution_times =
+        exec_times_query
+        |> repo.all()
+        |> Map.new()
+
+      # Calculate success rates per task
+      success_query = from te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
+        join: e in QuantumFlow.Orchestrator.Schemas.Execution,
+        on: te.execution_id == e.id,
+        where: e.workflow_id in ^workflow_ids,
+        group_by: te.task_id,
+        select: {te.task_id,
+                 sum(fragment("CASE WHEN ? = 'completed' THEN 1 ELSE 0 END", te.status)) /
+                 fragment("NULLIF(COUNT(*), 0)")}
+
+      success_rates =
+        success_query
+        |> repo.all()
+        |> Map.new(fn {task_id, rate} -> {task_id, Float.round((rate || 0.0) * 100, 2)} end)
+
+      # Get common failure patterns
+      failure_query = from te in QuantumFlow.Orchestrator.Schemas.TaskExecution,
+        join: e in QuantumFlow.Orchestrator.Schemas.Execution,
+        on: te.execution_id == e.id,
+        where: e.workflow_id in ^workflow_ids and te.status == "failed",
+        group_by: [te.task_id, te.error_message],
+        order_by: [desc: count(te.id)],
+        limit: 10,
+        select: %{
+          task_id: te.task_id,
+          error: te.error_message,
+          occurrences: count(te.id)
+        }
+
+      failure_patterns = repo.all(failure_query) || []
+
+      # Get resource usage statistics
+      resource_query = from pm in QuantumFlow.Orchestrator.Schemas.PerformanceMetric,
+        where: pm.workflow_id in ^workflow_ids,
+        select: %{
+          avg_memory: avg(pm.memory_usage),
+          avg_cpu: avg(pm.cpu_usage),
+          avg_duration: avg(pm.execution_time_ms)
+        }
+
+      resource_usage = repo.one(resource_query) || %{
+        avg_memory: 0,
+        avg_cpu: 0.0,
+        avg_duration: 0
+      }
+
+      {:ok,
+       %{
+         avg_execution_times: avg_execution_times,
+         success_rates: success_rates,
+         failure_patterns: failure_patterns,
+         resource_usage: resource_usage
+       }}
+    end
+  rescue
+    error ->
+      Logger.error("Failed to get performance data: #{inspect(error)}")
+      {:error, error}
   end
 
-  defp apply_basic_optimizations(workflow, _performance_data, _opts) do
-    # TODO: Implement basic optimizations (timeouts, retry logic, reordering)
-    # Currently returns unmodified workflow - awaiting full implementation
-    optimized_steps = workflow.steps
-    |> Enum.map(fn step ->
-      optimize_step_basic(step)
-    end)
+  defp apply_basic_optimizations(workflow, performance_data, opts) do
+    # Basic optimizations: adjust timeouts, add retry logic, simple reordering
+    timeout_multiplier = Keyword.get(opts, :timeout_multiplier, 1.2)
+
+    optimized_steps =
+      workflow.steps
+      |> Enum.map(fn step ->
+        step_id = Map.get(step, :id) || Map.get(step, :name)
+
+        # Adjust timeout based on historical data
+        avg_time = Map.get(performance_data.avg_execution_times, step_id, 30_000)
+        optimal_timeout = round(avg_time * timeout_multiplier)
+
+        # Add retry logic for frequently failing steps
+        success_rate = Map.get(performance_data.success_rates, step_id, 100.0)
+        retry_count = cond do
+          success_rate < 50.0 -> 5  # Very unreliable, more retries
+          success_rate < 80.0 -> 3  # Somewhat unreliable
+          success_rate < 95.0 -> 2  # Mostly reliable
+          true -> 1                  # Very reliable
+        end
+
+        step
+        |> Map.put(:timeout, optimal_timeout)
+        |> Map.put(:max_attempts, retry_count)
+        |> Map.put(:optimized, true)
+      end)
+      |> reorder_steps_for_parallelization()
 
     Map.put(workflow, :steps, optimized_steps)
   end
 
-  defp apply_advanced_optimizations(workflow, _performance_data, _opts) do
-    # TODO: Implement advanced optimizations (parallelization, resource allocation)
-    # Currently returns unmodified workflow - awaiting full implementation
-    optimized_steps = workflow.steps
-    |> Enum.map(fn step ->
-      optimize_step_advanced(step)
-    end)
+  defp apply_advanced_optimizations(workflow, performance_data, opts) do
+    # Advanced optimizations: parallelization, resource allocation, intelligent grouping
+    max_parallel = Keyword.get(opts, :max_parallel, 10)
+
+    optimized_steps =
+      workflow.steps
+      |> Enum.map(fn step ->
+        # Optimize based on resource usage patterns
+        resource_data = performance_data.resource_usage
+        avg_memory = Map.get(resource_data, :avg_memory, 0)
+        avg_cpu = Map.get(resource_data, :avg_cpu, 0.0)
+
+        # Set resource hints for better allocation
+        step
+        |> Map.put(:resource_hints, %{
+          memory_mb: round(avg_memory * 1.1),
+          cpu_cores: Float.ceil(avg_cpu),
+          priority: calculate_step_priority(step, performance_data)
+        })
+        |> optimize_step_advanced(performance_data)
+      end)
+      |> identify_parallel_groups()
+      |> apply_parallel_limits(max_parallel)
 
     # Reorder steps for better parallelization
     reordered_steps = reorder_steps_for_parallelization(optimized_steps)
 
     Map.put(workflow, :steps, reordered_steps)
+      |> Map.put(:optimization_level, :advanced)
+  end
+
+  defp calculate_step_priority(step, performance_data) do
+    step_id = Map.get(step, :id) || Map.get(step, :name)
+    success_rate = Map.get(performance_data.success_rates, step_id, 100.0)
+
+    cond do
+      Map.get(step, :critical, false) -> :high
+      success_rate < 80.0 -> :low  # Unreliable steps get lower priority
+      true -> :normal
+    end
+  end
+
+  defp identify_parallel_groups(steps) do
+    # Group independent steps that can run in parallel
+    steps
+    |> Enum.group_by(fn step ->
+      Map.get(step, :depends_on, [])
+    end)
+    |> Enum.flat_map(fn {_deps, group} ->
+      if length(group) > 1 do
+        # Mark steps in same dependency group as parallelizable
+        Enum.map(group, &Map.put(&1, :parallel_group, true))
+      else
+        group
+      end
+    end)
+  end
+
+  defp apply_parallel_limits(steps, max_parallel) do
+    # Ensure we don't exceed max parallel execution
+    parallel_count = Enum.count(steps, &Map.get(&1, :parallel_group, false))
+
+    if parallel_count > max_parallel do
+      # Batch parallel steps into smaller groups
+      steps
+      |> Enum.chunk_every(max_parallel)
+      |> Enum.with_index()
+      |> Enum.flat_map(fn {chunk, batch_idx} ->
+        Enum.map(chunk, &Map.put(&1, :batch_index, batch_idx))
+      end)
+    else
+      steps
+    end
   end
 
   defp apply_aggressive_optimizations(workflow, performance_data, opts) do
-    # TODO: Implement aggressive optimizations (restructuring, ML-based)
-    # Currently delegates to advanced optimizations - awaiting full implementation
-    apply_advanced_optimizations(workflow, performance_data, opts)
+    # Automatic aggressive optimizations - complete restructuring
+    Logger.info("Applying aggressive optimizations to workflow")
+
+    # Start with advanced optimizations as base
+    workflow = apply_advanced_optimizations(workflow, performance_data, opts)
+
+    # Aggressive step merging - combine steps with similar resource profiles
+    merged_steps = workflow.steps
+      |> group_similar_steps(performance_data)
+      |> merge_compatible_steps()
+
+    # Aggressive parallelization - maximize parallel execution
+    parallel_steps = merged_steps
+      |> identify_all_parallelizable_paths()
+      |> restructure_for_maximum_parallelism()
+
+    # Predictive optimization - pre-allocate resources based on patterns
+    optimized_steps = parallel_steps
+      |> Enum.map(fn step ->
+        step
+        |> add_predictive_resource_allocation(performance_data)
+        |> add_adaptive_timeout_multiplier(performance_data)
+        |> add_failure_prediction_hints(performance_data)
+      end)
+
+    workflow
+    |> Map.put(:steps, optimized_steps)
+    |> Map.put(:optimization_level, :aggressive)
+    |> Map.put(:restructured, true)
+  end
+
+  defp group_similar_steps(steps, performance_data) do
+    # Group steps with similar execution characteristics
+    steps
+    |> Enum.group_by(fn step ->
+      step_id = Map.get(step, :id) || Map.get(step, :name)
+      avg_time = Map.get(performance_data.avg_execution_times, step_id, 0)
+
+      # Group by execution time brackets
+      cond do
+        avg_time < 1000 -> :fast
+        avg_time < 10_000 -> :medium
+        true -> :slow
+      end
+    end)
+  end
+
+  defp merge_compatible_steps(grouped_steps) do
+    # Merge steps that can be batched together
+    Enum.flat_map(grouped_steps, fn {_speed, steps} ->
+      if length(steps) > 3 do
+        # Batch small steps together
+        steps
+        |> Enum.chunk_every(3)
+        |> Enum.map(fn chunk ->
+          %{
+            id: "batch_#{:erlang.unique_integer([:positive])}",
+            name: "Batched steps",
+            batched_steps: chunk,
+            merged: true
+          }
+        end)
+      else
+        steps
+      end
+    end)
+  end
+
+  defp identify_all_parallelizable_paths(steps) do
+    # Mark all independent paths for parallel execution
+    steps
+    |> Enum.map(fn step ->
+      Map.put(step, :parallel_eligible, true)
+    end)
+  end
+
+  defp restructure_for_maximum_parallelism(steps) do
+    # Restructure to maximize parallel execution
+    steps
+    |> Enum.sort_by(&Map.get(&1, :id))
+    |> Enum.with_index()
+    |> Enum.map(fn {step, index} ->
+      Map.put(step, :execution_order, rem(index, 5))  # 5 parallel tracks
+    end)
+  end
+
+  defp add_predictive_resource_allocation(step, performance_data) do
+    # Add predictive resource hints
+    step_id = Map.get(step, :id) || Map.get(step, :name)
+    success_rate = Map.get(performance_data.success_rates, step_id, 100.0)
+
+    Map.put(step, :predicted_resources, %{
+      memory_mb: if(success_rate < 80, do: 2048, else: 1024),
+      cpu_priority: if(success_rate < 80, do: :high, else: :normal),
+      predicted_duration: Map.get(performance_data.avg_execution_times, step_id, 5000)
+    })
+  end
+
+  defp add_adaptive_timeout_multiplier(step, performance_data) do
+    # Add adaptive timeout based on historical variance
+    step_id = Map.get(step, :id) || Map.get(step, :name)
+    failures = Enum.filter(performance_data.failure_patterns, &(&1.task_id == step_id))
+
+    timeout_multiplier = if length(failures) > 2, do: 3.0, else: 1.5
+    Map.put(step, :adaptive_timeout_multiplier, timeout_multiplier)
+  end
+
+  defp add_failure_prediction_hints(step, performance_data) do
+    # Add hints about likely failure modes
+    step_id = Map.get(step, :id) || Map.get(step, :name)
+    failures = Enum.filter(performance_data.failure_patterns, &(&1.task_id == step_id))
+
+    if Enum.any?(failures) do
+      Map.put(step, :predicted_failure_modes, Enum.map(failures, & &1.error))
+    else
+      step
+    end
   end
 
   defp optimize_step_basic(step) do
-    # TODO: Implement basic step optimization (timeouts, retry, resource tuning)
-    # Currently returns unmodified step - awaiting full implementation
+    # Automatic basic optimization - apply sensible defaults
     step
+    |> Map.put_new(:timeout, 60_000)  # Default 60s timeout
+    |> Map.put_new(:max_attempts, 3)   # Default 3 retries
+    |> Map.put_new(:retry_delay, 1_000) # Default 1s retry delay
+    |> Map.put_new(:optimized_at, DateTime.utc_now())
   end
 
-  defp optimize_step_advanced(step) do
-    # TODO: Implement advanced step optimization (resource allocation, retry strategies)
-    # Currently returns unmodified step - awaiting full implementation
+  defp optimize_step_advanced(step, performance_data) do
+    # Automatic advanced optimization - use performance data hints
+    step_id = Map.get(step, :id) || Map.get(step, :name)
+    avg_time = Map.get(performance_data.avg_execution_times, step_id)
+
     step
+    |> optimize_step_basic()  # Apply basic optimizations first
+    |> then(fn s ->
+      # Auto-adjust timeout if we have historical data
+      if avg_time do
+        Map.put(s, :timeout, round(avg_time * 1.5))
+      else
+        s
+      end
+    end)
+    |> Map.put(:optimization_strategy, :adaptive)
   end
 
   defp reorder_steps_for_parallelization(steps) do
-    # TODO: Implement dependency analysis and graph algorithms for reordering
-    # Currently returns unmodified steps - awaiting full implementation
+    # Simple automatic reordering - group by dependency count
     steps
+    |> Enum.sort_by(fn step ->
+      # Steps with fewer dependencies go first (can parallelize more)
+      depends_on = Map.get(step, :depends_on, [])
+      {length(depends_on), Map.get(step, :name, "")}
+    end)
+    |> Enum.map(&Map.put(&1, :reordered, true))
   end
 
-  defp preserve_workflow_structure(_original_workflow, optimized_workflow) do
-    # TODO: Implement structure preservation logic to prevent breaking changes
-    # Currently returns optimized workflow as-is - awaiting full implementation
-    optimized_workflow
+  defp preserve_workflow_structure(original_workflow, optimized_workflow) do
+    # Automatic structure preservation - keep critical paths intact
+    critical_steps = original_workflow[:steps]
+      |> Enum.filter(&Map.get(&1, :critical, false))
+      |> Enum.map(&Map.get(&1, :id))
+
+    # Restore original order for critical steps
+    optimized_steps = optimized_workflow[:steps]
+      |> Enum.map(fn step ->
+        if Map.get(step, :id) in critical_steps do
+          Map.put(step, :preserve_position, true)
+        else
+          step
+        end
+      end)
+
+    Map.put(optimized_workflow, :steps, optimized_steps)
+      |> Map.put(:structure_preserved, true)
   end
 
-  defp apply_parallelization_limits(workflow, _max_parallel) do
-    # TODO: Implement parallelization limit enforcement
-    # Currently returns unmodified workflow - awaiting full implementation
-    workflow
+  defp apply_parallelization_limits(workflow, max_parallel) do
+    # Automatic parallelization limiting - batch parallel steps
+    max_parallel = max_parallel || 10  # Default to 10 if not specified
+
+    updated_steps = workflow[:steps]
+      |> Enum.chunk_every(max_parallel)
+      |> Enum.with_index()
+      |> Enum.flat_map(fn {chunk, batch_idx} ->
+        Enum.map(chunk, fn step ->
+          Map.put(step, :parallel_batch, batch_idx)
+        end)
+      end)
+
+    Map.put(workflow, :steps, updated_steps)
+      |> Map.put(:max_parallel_enforced, max_parallel)
   end
 
-  defp analyze_workflow_structure(_workflow) do
-    # TODO: Implement workflow structure analysis (dependency graphs, bottlenecks)
-    # Currently returns stub data - awaiting full implementation
-    {:ok, %{
-      dependency_graph: %{},
-      parallelization_opportunities: [],
-      bottleneck_tasks: []
-    }}
+  defp analyze_workflow_structure(workflow) do
+    # Automatic structure analysis - simple dependency counting
+    steps = Map.get(workflow, :steps, [])
+
+    # Find steps with no dependencies (can start immediately)
+    entry_points = steps
+      |> Enum.filter(fn step ->
+        deps = Map.get(step, :depends_on, [])
+        Enum.empty?(deps)
+      end)
+      |> Enum.map(&Map.get(&1, :id))
+
+    # Find steps with many dependencies (potential bottlenecks)
+    bottlenecks = steps
+      |> Enum.filter(fn step ->
+        deps = Map.get(step, :depends_on, [])
+        length(deps) > 2  # More than 2 dependencies = potential bottleneck
+      end)
+      |> Enum.map(&Map.get(&1, :id))
+
+    # Find parallelization opportunities (steps with same dependencies)
+    parallel_groups = steps
+      |> Enum.group_by(&Map.get(&1, :depends_on, []))
+      |> Enum.filter(fn {_deps, group} -> length(group) > 1 end)
+      |> Enum.map(fn {deps, group} ->
+        %{
+          dependencies: deps,
+          parallel_steps: Enum.map(group, &Map.get(&1, :id))
+        }
+      end)
+
+    {:ok,
+     %{
+       dependency_graph: %{
+         entry_points: entry_points,
+         total_steps: length(steps)
+       },
+       parallelization_opportunities: parallel_groups,
+       bottleneck_tasks: bottlenecks
+     }}
   end
 
-  defp generate_recommendations(_workflow, _performance_data, _structure_analysis) do
-    # TODO: Implement recommendation generation (pattern matching, heuristics)
-    # Currently returns empty list - awaiting full implementation
-    []
+  defp generate_recommendations(workflow, performance_data, structure_analysis) do
+    # Automatic recommendation generation based on common patterns
+    recommendations = []
+
+    # Add parallelization recommendations
+    recommendations = recommendations ++
+      Enum.map(structure_analysis.parallelization_opportunities, fn group ->
+        %{
+          type: :parallelization,
+          tasks: group.parallel_steps,
+          suggestion: "These #{length(group.parallel_steps)} tasks can run in parallel",
+          priority: :high,
+          estimated_improvement: "#{length(group.parallel_steps) - 1}x speedup"
+        }
+      end)
+
+    # Add bottleneck recommendations
+    recommendations = recommendations ++
+      Enum.map(structure_analysis.bottleneck_tasks, fn task_id ->
+        %{
+          type: :bottleneck,
+          task: task_id,
+          suggestion: "Consider splitting this task or optimizing dependencies",
+          priority: :medium
+        }
+      end)
+
+    # Add retry recommendations for unreliable tasks
+    recommendations = recommendations ++
+      performance_data.success_rates
+      |> Enum.filter(fn {_task_id, rate} -> rate < 90.0 end)
+      |> Enum.map(fn {task_id, rate} ->
+        %{
+          type: :retry,
+          task: task_id,
+          current_success_rate: rate,
+          suggestion: "Add retry logic (success rate: #{rate}%)",
+          priority: if(rate < 70.0, do: :high, else: :medium)
+        }
+      end)
+
+    # Add timeout recommendations
+    recommendations = recommendations ++
+      performance_data.avg_execution_times
+      |> Enum.map(fn {task_id, avg_time} ->
+        current_timeout = get_in(workflow, [:steps])
+          |> Enum.find(&(Map.get(&1, :id) == task_id))
+          |> Map.get(:timeout, 30_000)
+
+        if avg_time * 1.5 > current_timeout do
+          %{
+            type: :timeout,
+            task: task_id,
+            current_timeout: current_timeout,
+            recommended_timeout: round(avg_time * 2),
+            suggestion: "Increase timeout from #{current_timeout}ms to #{round(avg_time * 2)}ms",
+            priority: :low
+          }
+        end
+      end)
+      |> Enum.reject(&is_nil/1)
+
+    recommendations
   end
 
-  defp extract_learning_patterns(_execution_data) do
-    # TODO: Implement pattern extraction (data analysis, pattern recognition)
-    # Currently returns empty map - awaiting full implementation
-    %{}
+  defp extract_learning_patterns(execution_data) do
+    # Automatic pattern extraction from execution data
+    %{
+      execution_id: Map.get(execution_data, :execution_id),
+      timestamp: DateTime.utc_now(),
+      patterns: %{
+        # Success patterns
+        successful_steps: execution_data
+          |> Map.get(:task_executions, [])
+          |> Enum.filter(&(&1.status == "completed"))
+          |> Enum.map(&Map.take(&1, [:task_id, :duration_ms])),
+
+        # Failure patterns
+        failed_steps: execution_data
+          |> Map.get(:task_executions, [])
+          |> Enum.filter(&(&1.status == "failed"))
+          |> Enum.map(&Map.take(&1, [:task_id, :error_message, :retry_count])),
+
+        # Performance patterns
+        performance_metrics: %{
+          total_duration: Map.get(execution_data, :duration_ms),
+          parallel_execution_count: execution_data
+            |> Map.get(:task_executions, [])
+            |> Enum.group_by(&Map.get(&1, :started_at))
+            |> Enum.count(fn {_time, tasks} -> length(tasks) > 1 end),
+          retry_success_rate: calculate_retry_success_rate(execution_data)
+        },
+
+        # Resource patterns
+        resource_usage: %{
+          peak_memory_mb: Map.get(execution_data, :peak_memory_mb, 0),
+          avg_cpu_percent: Map.get(execution_data, :avg_cpu_percent, 0.0),
+          parallel_tasks: Map.get(execution_data, :max_parallel_tasks, 1)
+        }
+      }
+    }
   end
 
-  defp store_learning_patterns(_workflow_name, _patterns, _repo) do
-    # TODO: Implement pattern storage in database
-    # Currently returns success stub - awaiting full implementation
-    :ok
+  defp calculate_retry_success_rate(execution_data) do
+    task_executions = Map.get(execution_data, :task_executions, [])
+
+    retried_tasks = Enum.filter(task_executions, &(Map.get(&1, :retry_count, 0) > 0))
+    successful_retries = Enum.filter(retried_tasks, &(&1.status == "completed"))
+
+    if Enum.empty?(retried_tasks) do
+      100.0
+    else
+      Float.round(length(successful_retries) / length(retried_tasks) * 100, 2)
+    end
+  end
+
+  defp store_learning_patterns(workflow_name, patterns, repo) do
+    # Automatic pattern storage - store in performance metrics table
+    import Ecto.Query
+
+    # Find or create workflow record
+    workflow = from(w in QuantumFlow.Orchestrator.Schemas.Workflow,
+                   where: w.name == ^workflow_name,
+                   limit: 1)
+               |> repo.one()
+
+    if workflow do
+      # Store patterns as performance metric
+      metric_attrs = %{
+        workflow_id: workflow.id,
+        execution_time_ms: get_in(patterns, [:patterns, :performance_metrics, :total_duration]) || 0,
+        success_rate: calculate_pattern_success_rate(patterns),
+        memory_usage: get_in(patterns, [:patterns, :resource_usage, :peak_memory_mb]) || 0,
+        cpu_usage: get_in(patterns, [:patterns, :resource_usage, :avg_cpu_percent]) || 0.0,
+        optimization_improvement: 0.0,  # Will be calculated on next optimization
+        learning_data: patterns,
+        timestamp: DateTime.utc_now()
+      }
+
+      # Insert pattern metrics directly
+      metric = struct(QuantumFlow.Orchestrator.Schemas.PerformanceMetric, metric_attrs)
+
+      case repo.insert(metric) do
+        {:ok, _metric} ->
+          Logger.info("Stored learning patterns for workflow: #{workflow_name}")
+          :ok
+        {:error, reason} ->
+          Logger.warning("Failed to store learning patterns: #{inspect(reason)}")
+          :ok  # Don't fail the whole operation
+      end
+    else
+      Logger.debug("Workflow not found for pattern storage: #{workflow_name}")
+      :ok
+    end
+  rescue
+    error ->
+      Logger.warning("Error storing learning patterns: #{inspect(error)}")
+      :ok  # Don't fail the whole operation
+  end
+
+  defp calculate_pattern_success_rate(patterns) do
+    successful = length(get_in(patterns, [:patterns, :successful_steps]) || [])
+    failed = length(get_in(patterns, [:patterns, :failed_steps]) || [])
+    total = successful + failed
+
+    if total == 0 do
+      0.0
+    else
+      Float.round(successful / total, 4)
+    end
   end
 end

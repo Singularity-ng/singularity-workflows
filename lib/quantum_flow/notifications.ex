@@ -111,7 +111,8 @@ defmodule QuantumFlow.Notifications do
         queue: queue_name,
         message_id: message_id,
         duration_ms: System.convert_time_unit(duration, :native, :millisecond),
-        message_type: Map.get(enriched_message, :type, Map.get(enriched_message, "type", "unknown")),
+        message_type:
+          Map.get(enriched_message, :type, Map.get(enriched_message, "type", "unknown")),
         expect_reply: expect_reply?
       )
 
@@ -122,7 +123,8 @@ defmodule QuantumFlow.Notifications do
         Logger.error("PGMQ + NOTIFY send failed",
           queue: queue_name,
           error: inspect(reason),
-          message_type: Map.get(enriched_message, :type, Map.get(enriched_message, "type", "unknown"))
+          message_type:
+            Map.get(enriched_message, :type, Map.get(enriched_message, "type", "unknown"))
         )
 
         cleanup_reply_queue(expect_reply?, reply_queue, repo)
@@ -153,7 +155,7 @@ defmodule QuantumFlow.Notifications do
   @spec listen(String.t(), Ecto.Repo.t()) :: {:ok, pid()} | {:error, any()}
   def listen(queue_name, repo) do
     channel = "pgmq_#{queue_name}"
-    
+
     case Postgrex.Notifications.listen(repo, channel) do
       {:ok, pid} ->
         Logger.info("PGMQ NOTIFY listener started",
@@ -161,14 +163,16 @@ defmodule QuantumFlow.Notifications do
           channel: channel,
           listener_pid: inspect(pid)
         )
+
         {:ok, pid}
-      
+
       {:error, reason} ->
         Logger.error("PGMQ NOTIFY listener failed to start",
           queue: queue_name,
           channel: channel,
           error: inspect(reason)
         )
+
         {:error, reason}
     end
   end
@@ -197,13 +201,15 @@ defmodule QuantumFlow.Notifications do
         Logger.info("PGMQ NOTIFY listener stopped",
           listener_pid: inspect(pid)
         )
+
         :ok
-      
+
       {:error, reason} ->
         Logger.error("PGMQ NOTIFY listener stop failed",
           listener_pid: inspect(pid),
           error: inspect(reason)
         )
+
         {:error, reason}
     end
   end
@@ -236,14 +242,16 @@ defmodule QuantumFlow.Notifications do
           channel: channel,
           payload: payload
         )
+
         :ok
-      
+
       {:error, reason} ->
         Logger.error("NOTIFY send failed",
           channel: channel,
           payload: payload,
           error: inspect(reason)
         )
+
         {:error, reason}
     end
   end
@@ -262,7 +270,11 @@ defmodule QuantumFlow.Notifications do
         {:ok, json}
 
       {:error, reason} ->
-        Logger.error("Failed to encode pgmq message", error: inspect(reason), payload: inspect(message))
+        Logger.error("Failed to encode pgmq message",
+          error: inspect(reason),
+          payload: inspect(message)
+        )
+
         {:error, reason}
     end
   end
@@ -338,7 +350,7 @@ defmodule QuantumFlow.Notifications do
   # Private: Trigger PostgreSQL NOTIFY after PGMQ send
   defp trigger_notify(queue_name, message_id, repo) do
     channel = "pgmq_#{queue_name}"
-    
+
     case repo.query("SELECT pg_notify($1, $2)", [channel, message_id]) do
       {:ok, _} ->
         Logger.debug("NOTIFY triggered",
@@ -346,8 +358,9 @@ defmodule QuantumFlow.Notifications do
           channel: channel,
           message_id: message_id
         )
+
         :ok
-      
+
       {:error, reason} ->
         Logger.error("NOTIFY trigger failed",
           queue: queue_name,
@@ -355,6 +368,7 @@ defmodule QuantumFlow.Notifications do
           message_id: message_id,
           error: inspect(reason)
         )
+
         {:error, reason}
     end
   end
@@ -438,7 +452,9 @@ defmodule QuantumFlow.Notifications do
 
   defp decode_message_payload(msg) when is_binary(msg) do
     case Jason.decode(msg) do
-      {:ok, decoded} -> {:ok, decoded}
+      {:ok, decoded} ->
+        {:ok, decoded}
+
       {:error, reason} ->
         Logger.error("Failed to decode reply message", error: inspect(reason), payload: msg)
         {:error, reason}
@@ -467,6 +483,7 @@ defmodule QuantumFlow.Notifications do
   end
 
   defp normalize_msg_id(id) when is_integer(id), do: id
+
   defp normalize_msg_id(id) when is_binary(id) do
     case Integer.parse(id) do
       {int, _} -> int
@@ -499,6 +516,7 @@ defmodule QuantumFlow.Notifications do
 
   defp extract_msg_id(%{"msg_id" => msg_id}), do: msg_id
   defp extract_msg_id(%{msg_id: msg_id}), do: msg_id
+
   defp extract_msg_id(other) do
     Logger.warning("Unable to extract msg_id from reply row", row: inspect(other))
     nil

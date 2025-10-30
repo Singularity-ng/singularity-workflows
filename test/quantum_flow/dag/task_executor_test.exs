@@ -47,6 +47,7 @@ defmodule QuantumFlow.DAG.TaskExecutorTest do
   use ExUnit.Case, async: false
 
   alias QuantumFlow.{Executor, WorkflowRun, StepState, StepTask, Repo}
+  alias QuantumFlow.DAG.{TaskExecutor, RunInitializer, WorkflowDefinition}
   import Ecto.Query
 
   @moduledoc """
@@ -765,11 +766,12 @@ defmodule QuantumFlow.DAG.TaskExecutorTest do
   describe "Concurrent Execution" do
     test "multiple workers can execute the same run without race conditions" do
       # Multiple workers claiming tasks from same queue should not double-execute
-      {:ok, run_id} = Executor.start_run(TestTaskExecSimpleWorkflow, %{}, Repo)
+      {:ok, definition} = WorkflowDefinition.parse(TestTaskExecSimpleWorkflow)
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # Simulate two workers executing simultaneously
-      worker1_result = TaskExecutor.execute_run(run_id, TestTaskExecSimpleWorkflow.definition, Repo, worker_id: "worker1")
-      worker2_result = TaskExecutor.execute_run(run_id, TestTaskExecSimpleWorkflow.definition, Repo, worker_id: "worker2")
+      worker1_result = TaskExecutor.execute_run(run_id, definition, Repo, worker_id: "worker1")
+      worker2_result = TaskExecutor.execute_run(run_id, definition, Repo, worker_id: "worker2")
 
       # Both results should succeed (one completes run, one finds no tasks)
       assert match?({:ok, _}, worker1_result) or match?({:ok, _}, worker2_result)
@@ -779,76 +781,84 @@ defmodule QuantumFlow.DAG.TaskExecutorTest do
       assert run.status == "completed"
 
       # All tasks should have correct status
-      from(t in Task, where: t.run_id == ^run_id)
+      from(t in StepTask, where: t.run_id == ^run_id)
       |> Repo.all()
       |> Enum.each(fn task ->
-        assert task.status in ["success", "skipped"]
+        assert task.status in ["completed", "skipped"]
       end)
     end
 
     test "task claims are row-level locked to prevent double-execution" do
       # PostgreSQL row-level locking ensures only one worker can claim a task
-      {:ok, run_id} = Executor.start_run(TestTaskExecMultiStepWorkflow, %{}, Repo)
+      {:ok, definition} = WorkflowDefinition.parse(TestTaskExecMultiStepWorkflow)
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # Start execution and collect task IDs
-      task1_result = TaskExecutor.execute_run(run_id, TestTaskExecMultiStepWorkflow.definition, Repo,
-        worker_id: "worker1",
-        batch_size: 1
-      )
+      task1_result =
+        TaskExecutor.execute_run(run_id, definition, Repo,
+          worker_id: "worker1",
+          batch_size: 1
+        )
 
       assert match?({:ok, _}, task1_result)
 
       # Verify tasks are marked as started/claimed
-      started_tasks = from(t in Task, where: t.run_id == ^run_id and t.status == "success") |> Repo.all()
+      started_tasks =
+        from(t in StepTask, where: t.run_id == ^run_id and t.status == "completed") |> Repo.all()
+
       assert length(started_tasks) > 0
     end
 
     test "partial batch failure doesn't prevent other tasks from executing" do
       # Create workflow with multiple steps where one fails
       # Other steps should still execute in next batch
-      {:ok, run_id} = Executor.start_run(TestTaskExecPartialFailWorkflow, %{}, Repo)
+      {:ok, definition} = WorkflowDefinition.parse(TestTaskExecPartialFailWorkflow)
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # Execute first batch (contains failing step)
-      result1 = TaskExecutor.execute_run(run_id, TestTaskExecPartialFailWorkflow.definition, Repo)
+      result1 = TaskExecutor.execute_run(run_id, definition, Repo)
 
       # Verify partial completion: some tasks succeeded, some may have failed
-      tasks = from(t in Task, where: t.run_id == ^run_id) |> Repo.all()
-      successful = Enum.filter(tasks, &(&1.status == "success"))
-      assert length(successful) > 0  # At least some tasks succeeded
+      tasks = from(t in StepTask, where: t.run_id == ^run_id) |> Repo.all()
+      successful = Enum.filter(tasks, &(&1.status == "completed"))
+      # At least some tasks succeeded
+      assert length(successful) > 0
     end
 
     test "worker recovery after crash preserves task state" do
       # If a worker crashes while task is in progress, task should timeout
       # and be retryable by another worker
-      {:ok, run_id} = Executor.start_run(TestTaskExecSimpleWorkflow, %{}, Repo)
+      {:ok, definition} = WorkflowDefinition.parse(TestTaskExecSimpleWorkflow)
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # Start execution
-      _result = TaskExecutor.execute_run(run_id, TestTaskExecSimpleWorkflow.definition, Repo,
-        worker_id: "worker_crash",
-        timeout: 5000
-      )
+      _result =
+        TaskExecutor.execute_run(run_id, definition, Repo,
+          worker_id: "worker_crash",
+          timeout: 5000
+        )
 
       # Run should complete normally (workers can recover)
       run = Repo.get!(WorkflowRun, run_id)
-      assert run.status in ["completed", "started"]  # Started if timeout, completed if finished
+      # Started if timeout, completed if finished
+      assert run.status in ["completed", "started"]
     end
 
     test "concurrent task execution maintains step dependencies" do
       # Multiple workers shouldn't violate dependency ordering
-      {:ok, run_id} = Executor.start_run(TestTaskExecMultiStepWorkflow, %{}, Repo)
+      {:ok, definition} = WorkflowDefinition.parse(TestTaskExecMultiStepWorkflow)
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # Execute with multiple workers
-      task1 = Task.async(fn ->
-        TaskExecutor.execute_run(run_id, TestTaskExecMultiStepWorkflow.definition, Repo,
-          worker_id: "worker_dep_1"
-        )
-      end)
+      task1 =
+        Task.async(fn ->
+          TaskExecutor.execute_run(run_id, definition, Repo, worker_id: "worker_dep_1")
+        end)
 
-      task2 = Task.async(fn ->
-        TaskExecutor.execute_run(run_id, TestTaskExecMultiStepWorkflow.definition, Repo,
-          worker_id: "worker_dep_2"
-        )
-      end)
+      task2 =
+        Task.async(fn ->
+          TaskExecutor.execute_run(run_id, definition, Repo, worker_id: "worker_dep_2")
+        end)
 
       _result1 = Task.await(task1, 30_000)
       _result2 = Task.await(task2, 30_000)
@@ -869,19 +879,23 @@ defmodule QuantumFlow.DAG.TaskExecutorTest do
 
     test "batch processing with multiple concurrent tasks" do
       # Test parallel execution of tasks within a batch
-      {:ok, run_id} = Executor.start_run(TestTaskExecMultiStepWorkflow, %{}, Repo)
+      {:ok, definition} = WorkflowDefinition.parse(TestTaskExecMultiStepWorkflow)
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # Execute with larger batch size for parallel task processing
-      result = TaskExecutor.execute_run(run_id, TestTaskExecMultiStepWorkflow.definition, Repo,
-        worker_id: "batch_worker",
-        batch_size: 5,  # Process up to 5 tasks concurrently
-        poll_interval: 100
-      )
+      result =
+        TaskExecutor.execute_run(run_id, definition, Repo,
+          worker_id: "batch_worker",
+          # Process up to 5 tasks concurrently
+          batch_size: 5,
+          poll_interval: 100
+        )
 
       assert match?({:ok, _}, result)
 
       # All tasks should be completed
-      tasks = from(t in Task, where: t.run_id == ^run_id) |> Repo.all()
+      tasks = from(t in StepTask, where: t.run_id == ^run_id) |> Repo.all()
+
       Enum.each(tasks, fn task ->
         assert task.status in ["success", "skipped", "failed"]
       end)
@@ -889,13 +903,16 @@ defmodule QuantumFlow.DAG.TaskExecutorTest do
 
     test "task execution respects configurable timeout per worker" do
       # Different workers can have different timeouts
-      {:ok, run_id} = Executor.start_run(TestTaskExecSimpleWorkflow, %{}, Repo)
+      {:ok, definition} = WorkflowDefinition.parse(TestTaskExecSimpleWorkflow)
+      {:ok, run_id} = RunInitializer.initialize(definition, %{}, Repo)
 
       # Execute with custom task timeout
-      result = TaskExecutor.execute_run(run_id, TestTaskExecSimpleWorkflow.definition, Repo,
-        worker_id: "timeout_worker",
-        task_timeout_ms: 10_000  # 10 second per-task timeout
-      )
+      result =
+        TaskExecutor.execute_run(run_id, definition, Repo,
+          worker_id: "timeout_worker",
+          # 10 second per-task timeout
+          task_timeout_ms: 10_000
+        )
 
       assert match?({:ok, _}, result)
 

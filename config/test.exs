@@ -8,18 +8,13 @@ config :quantum_flow, :clock, QuantumFlow.TestClock
 
 # Configure your database
 config :quantum_flow, QuantumFlow.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
+  username: System.get_env("PGUSER") || System.get_env("USER"),
+  password: System.get_env("PGPASSWORD") || "",
+  hostname: System.get_env("PGHOST") || "localhost",
   database: "quantum_flow_test#{System.get_env("MIX_TEST_PARTITION")}",
+  adapter: Ecto.Adapters.Postgres,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
-
-# We use a file-based database for testing
-config :quantum_flow, QuantumFlow.Repo,
-  adapter: Ecto.Adapters.Postgres,
-  database: "quantum_flow_test#{System.get_env("MIX_TEST_PARTITION")}",
-  pool: Ecto.Adapters.SQL.Sandbox
 
 # Orchestrator test configuration
 config :quantum_flow, :orchestrator,
@@ -31,7 +26,7 @@ config :quantum_flow, :orchestrator,
     learning: false,
     real_time: false
   },
-  
+
   # Fast timeouts for tests
   timeout: 5_000,
   execution: %{
@@ -39,7 +34,7 @@ config :quantum_flow, :orchestrator,
     task_timeout: 1_000,
     retry_attempts: 1
   },
-  
+
   # Disable notifications for tests
   notifications: %{
     enabled: false,
@@ -48,7 +43,7 @@ config :quantum_flow, :orchestrator,
     queue_prefix: "orchestrator_test",
     timeout: 1_000
   },
-  
+
   # Minimal decomposer configs for tests
   decomposers: %{
     simple: %{

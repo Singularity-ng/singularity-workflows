@@ -161,6 +161,7 @@ defmodule QuantumFlow.DAG.TaskExecutor do
           elapsed_ms: elapsed,
           timeout_ms: timeout
         )
+
         check_run_status(run_id, repo)
 
       true ->
@@ -330,8 +331,10 @@ defmodule QuantumFlow.DAG.TaskExecutor do
             # Check for execution or worker failures (not task function failures, which are handled)
             failed =
               Enum.filter(results, fn
-                {:ok, {:error, _}} -> true  # Task execution or DB call failed
-                {:exit, _} -> true           # Worker process exited
+                # Task execution or DB call failed
+                {:ok, {:error, _}} -> true
+                # Worker process exited
+                {:exit, _} -> true
                 _ -> false
               end)
 
@@ -341,6 +344,7 @@ defmodule QuantumFlow.DAG.TaskExecutor do
                 workflow_slug: workflow_slug,
                 failed_count: length(failed)
               )
+
               # Return error only if significant portion of batch failed (>50%)
               # This allows for occasional worker failures without cascading retry loops
               if length(failed) * 2 > length(tasks) do

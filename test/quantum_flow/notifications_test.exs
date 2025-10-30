@@ -25,22 +25,24 @@ defmodule QuantumFlow.NotificationsTest do
   describe "send_with_notify/3" do
     test "sends message via PGMQ and triggers NOTIFY with logging" do
       assert function_exported?(Notifications, :send_with_notify, 3)
-      
+
       # Test that it returns a message ID
-      {:ok, message_id} = Notifications.send_with_notify(
-        "test_queue", 
-        %{type: "test", content: "hello"}, 
-        TestRepo
-      )
-      
+      {:ok, message_id} =
+        Notifications.send_with_notify(
+          "test_queue",
+          %{type: "test", content: "hello"},
+          TestRepo
+        )
+
       assert is_binary(message_id)
     end
 
     test "logs successful send with structured data" do
-      log = capture_log(fn ->
-        Notifications.send_with_notify("test_queue", %{type: "test"}, TestRepo)
-      end)
-      
+      log =
+        capture_log(fn ->
+          Notifications.send_with_notify("test_queue", %{type: "test"}, TestRepo)
+        end)
+
       assert log =~ "PGMQ + NOTIFY sent successfully"
       assert log =~ "queue: test_queue"
       assert log =~ "message_type: test"
@@ -63,18 +65,21 @@ defmodule QuantumFlow.NotificationsTest do
   describe "listen/2" do
     test "starts listening for NOTIFY events with logging" do
       # Mock Postgrex.Notifications
-      original_notifications = Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+      original_notifications =
+        Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+
       Application.put_env(:quantum_flow, :notifications_module, MockNotifications)
-      
+
       on_exit(fn ->
         Application.put_env(:quantum_flow, :notifications_module, original_notifications)
       end)
 
-      log = capture_log(fn ->
-        {:ok, pid} = Notifications.listen("test_queue", TestRepo)
-        assert is_pid(pid)
-      end)
-      
+      log =
+        capture_log(fn ->
+          {:ok, pid} = Notifications.listen("test_queue", TestRepo)
+          assert is_pid(pid)
+        end)
+
       assert log =~ "PGMQ NOTIFY listener started"
       assert log =~ "queue: test_queue"
       assert log =~ "channel: pgmq_test_queue"
@@ -88,18 +93,21 @@ defmodule QuantumFlow.NotificationsTest do
         end
       end
 
-      original_notifications = Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+      original_notifications =
+        Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+
       Application.put_env(:quantum_flow, :notifications_module, FailingNotifications)
-      
+
       on_exit(fn ->
         Application.put_env(:quantum_flow, :notifications_module, original_notifications)
       end)
 
-      log = capture_log(fn ->
-        {:error, reason} = Notifications.listen("test_queue", TestRepo)
-        assert reason == :connection_failed
-      end)
-      
+      log =
+        capture_log(fn ->
+          {:error, reason} = Notifications.listen("test_queue", TestRepo)
+          assert reason == :connection_failed
+        end)
+
       assert log =~ "PGMQ NOTIFY listener failed to start"
       assert log =~ "error: :connection_failed"
     end
@@ -108,17 +116,20 @@ defmodule QuantumFlow.NotificationsTest do
   describe "unlisten/2" do
     test "stops listening for notifications with logging" do
       # Mock Postgrex.Notifications
-      original_notifications = Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+      original_notifications =
+        Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+
       Application.put_env(:quantum_flow, :notifications_module, MockNotifications)
-      
+
       on_exit(fn ->
         Application.put_env(:quantum_flow, :notifications_module, original_notifications)
       end)
 
-      log = capture_log(fn ->
-        :ok = Notifications.unlisten(self(), TestRepo)
-      end)
-      
+      log =
+        capture_log(fn ->
+          :ok = Notifications.unlisten(self(), TestRepo)
+        end)
+
       assert log =~ "PGMQ NOTIFY listener stopped"
       assert log =~ "listener_pid:"
     end
@@ -131,18 +142,21 @@ defmodule QuantumFlow.NotificationsTest do
         end
       end
 
-      original_notifications = Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+      original_notifications =
+        Application.get_env(:quantum_flow, :notifications_module, Postgrex.Notifications)
+
       Application.put_env(:quantum_flow, :notifications_module, FailingUnlisten)
-      
+
       on_exit(fn ->
         Application.put_env(:quantum_flow, :notifications_module, original_notifications)
       end)
 
-      log = capture_log(fn ->
-        {:error, reason} = Notifications.unlisten(self(), TestRepo)
-        assert reason == :not_found
-      end)
-      
+      log =
+        capture_log(fn ->
+          {:error, reason} = Notifications.unlisten(self(), TestRepo)
+          assert reason == :not_found
+        end)
+
       assert log =~ "PGMQ NOTIFY listener stop failed"
       assert log =~ "error: :not_found"
     end
@@ -150,10 +164,11 @@ defmodule QuantumFlow.NotificationsTest do
 
   describe "notify_only/3" do
     test "sends NOTIFY without PGMQ with logging" do
-      log = capture_log(fn ->
-        :ok = Notifications.notify_only("test_channel", "test_payload", TestRepo)
-      end)
-      
+      log =
+        capture_log(fn ->
+          :ok = Notifications.notify_only("test_channel", "test_payload", TestRepo)
+        end)
+
       assert log =~ "NOTIFY sent"
       assert log =~ "channel: test_channel"
       assert log =~ "payload: test_payload"
@@ -167,11 +182,12 @@ defmodule QuantumFlow.NotificationsTest do
         end
       end
 
-      log = capture_log(fn ->
-        {:error, reason} = Notifications.notify_only("test_channel", "test_payload", FailingRepo)
-        assert reason == :connection_lost
-      end)
-      
+      log =
+        capture_log(fn ->
+          {:error, reason} = Notifications.notify_only("test_channel", "test_payload", FailingRepo)
+          assert reason == :connection_lost
+        end)
+
       assert log =~ "NOTIFY send failed"
       assert log =~ "error: :connection_lost"
     end
@@ -224,23 +240,29 @@ defmodule QuantumFlow.NotificationsTest do
   describe "performance and reliability" do
     test "handles high-frequency notifications" do
       # Test sending many notifications quickly
-      events = for i <- 1..100 do
-        %{type: "test_event", id: i, timestamp: DateTime.utc_now()}
-      end
+      events =
+        for i <- 1..100 do
+          %{type: "test_event", id: i, timestamp: DateTime.utc_now()}
+        end
 
-      results = for event <- events do
-        Notifications.send_with_notify("test_queue", event, TestRepo)
-      end
+      results =
+        for event <- events do
+          Notifications.send_with_notify("test_queue", event, TestRepo)
+        end
 
       # All should succeed
-      assert Enum.all?(results, fn {:ok, _} -> true; _ -> false end)
+      assert Enum.all?(results, fn
+               {:ok, _} -> true
+               _ -> false
+             end)
     end
 
     test "handles large payloads" do
       # Test with large message payload
       large_payload = %{
         type: "large_data",
-        data: String.duplicate("x", 10000),  # 10KB payload
+        # 10KB payload
+        data: String.duplicate("x", 10000),
         metadata: %{
           size: 10000,
           timestamp: DateTime.utc_now(),
@@ -269,10 +291,11 @@ defmodule QuantumFlow.NotificationsTest do
     end
 
     test "structured logging includes required fields" do
-      log = capture_log(fn ->
-        Notifications.send_with_notify("test_queue", %{type: "test"}, TestRepo)
-      end)
-      
+      log =
+        capture_log(fn ->
+          Notifications.send_with_notify("test_queue", %{type: "test"}, TestRepo)
+        end)
+
       # Check for structured logging fields
       assert log =~ "queue:"
       assert log =~ "message_id:"

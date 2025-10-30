@@ -13,7 +13,7 @@ config :quantum_flow, :orchestrator,
   timeout: 300_000,
   max_parallel: 20,
   retry_attempts: 3,
-  
+
   # Production execution settings
   execution: %{
     timeout: 300_000,
@@ -23,7 +23,7 @@ config :quantum_flow, :orchestrator,
     task_timeout: 60_000,
     monitor: true
   },
-  
+
   # Enable optimization for production
   optimization: %{
     enabled: true,
@@ -34,7 +34,7 @@ config :quantum_flow, :orchestrator,
     learning_enabled: true,
     pattern_confidence_threshold: 0.8
   },
-  
+
   # Production notification settings
   notifications: %{
     enabled: true,
@@ -43,7 +43,7 @@ config :quantum_flow, :orchestrator,
     queue_prefix: "orchestrator_prod",
     timeout: 5_000
   },
-  
+
   # Enable all features for production
   features: %{
     monitoring: true,
@@ -52,7 +52,7 @@ config :quantum_flow, :orchestrator,
     learning: true,
     real_time: true
   },
-  
+
   # Production performance thresholds
   performance_thresholds: %{
     execution_time: %{
@@ -68,11 +68,13 @@ config :quantum_flow, :orchestrator,
       critical: 0.3
     },
     memory_usage: %{
-      warning: 500_000_000,  # 500MB
-      critical: 2_000_000_000  # 2GB
+      # 500MB
+      warning: 500_000_000,
+      # 2GB
+      critical: 2_000_000_000
     }
   },
-  
+
   # Production decomposer configs
   decomposers: %{
     simple: %{

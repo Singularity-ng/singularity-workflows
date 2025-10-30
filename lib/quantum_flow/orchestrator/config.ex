@@ -37,18 +37,18 @@ defmodule QuantumFlow.Orchestrator.Config do
 
   @doc """
   Get HTDAG configuration with defaults.
-  
+
   ## Parameters
-  
+
   - `key` - Configuration key (atom or list of atoms for nested access)
   - `opts` - Options to override defaults
-  
+
   ## Returns
-  
+
   - Configuration value
-  
+
   ## Example
-  
+
       # Get default max depth
       max_depth = QuantumFlow.Orchestrator.Config.get(:max_depth)
       
@@ -62,7 +62,7 @@ defmodule QuantumFlow.Orchestrator.Config do
   def get(key, opts \\ []) do
     config = get_htdag_config()
     value = get_in(config, List.wrap(key))
-    
+
     # Override with options if provided
     case key do
       :max_depth -> Keyword.get(opts, :max_depth, value)
@@ -75,24 +75,24 @@ defmodule QuantumFlow.Orchestrator.Config do
 
   @doc """
   Get decomposer configuration.
-  
+
   ## Parameters
-  
+
   - `decomposer_type` - Type of decomposer (:simple, :microservices, :data_pipeline, :ml_pipeline)
   - `opts` - Options to override defaults
-  
+
   ## Returns
-  
+
   - Decomposer configuration
-  
+
   ## Example
-  
+
       config = QuantumFlow.Orchestrator.Config.get_decomposer_config(:microservices, max_depth: 4)
   """
   @spec get_decomposer_config(atom(), keyword()) :: map()
   def get_decomposer_config(decomposer_type, opts \\ []) do
     base_config = get([:decomposers, decomposer_type])
-    
+
     # Override with options
     Enum.reduce(opts, base_config, fn {key, value}, acc ->
       Map.put(acc, key, value)
@@ -101,23 +101,23 @@ defmodule QuantumFlow.Orchestrator.Config do
 
   @doc """
   Get execution configuration.
-  
+
   ## Parameters
-  
+
   - `opts` - Options to override defaults
-  
+
   ## Returns
-  
+
   - Execution configuration
-  
+
   ## Example
-  
+
       config = QuantumFlow.Orchestrator.Config.get_execution_config(timeout: 600_000)
   """
   @spec get_execution_config(keyword()) :: map()
   def get_execution_config(opts \\ []) do
     base_config = get(:execution)
-    
+
     # Override with options
     Enum.reduce(opts, base_config, fn {key, value}, acc ->
       Map.put(acc, key, value)
@@ -126,23 +126,23 @@ defmodule QuantumFlow.Orchestrator.Config do
 
   @doc """
   Get optimization configuration.
-  
+
   ## Parameters
-  
+
   - `opts` - Options to override defaults
-  
+
   ## Returns
-  
+
   - Optimization configuration
-  
+
   ## Example
-  
+
       config = QuantumFlow.Orchestrator.Config.get_optimization_config(level: :aggressive)
   """
   @spec get_optimization_config(keyword()) :: map()
   def get_optimization_config(opts \\ []) do
     base_config = get(:optimization)
-    
+
     # Override with options
     Enum.reduce(opts, base_config, fn {key, value}, acc ->
       Map.put(acc, key, value)
@@ -151,23 +151,23 @@ defmodule QuantumFlow.Orchestrator.Config do
 
   @doc """
   Get notification configuration.
-  
+
   ## Parameters
-  
+
   - `opts` - Options to override defaults
-  
+
   ## Returns
-  
+
   - Notification configuration
-  
+
   ## Example
-  
+
       config = QuantumFlow.Orchestrator.Config.get_notification_config(enabled: true)
   """
   @spec get_notification_config(keyword()) :: map()
   def get_notification_config(opts \\ []) do
     base_config = get(:notifications)
-    
+
     # Override with options
     Enum.reduce(opts, base_config, fn {key, value}, acc ->
       Map.put(acc, key, value)
@@ -176,18 +176,18 @@ defmodule QuantumFlow.Orchestrator.Config do
 
   @doc """
   Check if a feature is enabled.
-  
+
   ## Parameters
-  
+
   - `feature` - Feature name
   - `opts` - Options to override defaults
-  
+
   ## Returns
-  
+
   - `true` if feature is enabled, `false` otherwise
-  
+
   ## Example
-  
+
       enabled = QuantumFlow.Orchestrator.Config.feature_enabled?(:monitoring)
       enabled = QuantumFlow.Orchestrator.Config.feature_enabled?(:optimization, level: :basic)
   """
@@ -205,24 +205,24 @@ defmodule QuantumFlow.Orchestrator.Config do
 
   @doc """
   Get performance thresholds.
-  
+
   ## Parameters
-  
+
   - `metric_type` - Type of metric (:execution_time, :success_rate, :error_rate, etc.)
   - `opts` - Options to override defaults
-  
+
   ## Returns
-  
+
   - Performance threshold configuration
-  
+
   ## Example
-  
+
       threshold = QuantumFlow.Orchestrator.Config.get_performance_threshold(:execution_time)
   """
   @spec get_performance_threshold(atom(), keyword()) :: map()
   def get_performance_threshold(metric_type, opts \\ []) do
     base_config = get([:performance_thresholds, metric_type])
-    
+
     # Override with options
     Enum.reduce(opts, base_config, fn {key, value}, acc ->
       Map.put(acc, key, value)
@@ -231,18 +231,18 @@ defmodule QuantumFlow.Orchestrator.Config do
 
   @doc """
   Validate configuration.
-  
+
   ## Parameters
-  
+
   - `config` - Configuration to validate
-  
+
   ## Returns
-  
+
   - `:ok` if configuration is valid
   - `{:error, reason}` if configuration is invalid
-  
+
   ## Example
-  
+
       :ok = QuantumFlow.Orchestrator.Config.validate_config(config)
   """
   @spec validate_config(map()) :: :ok | {:error, any()}
@@ -269,7 +269,7 @@ defmodule QuantumFlow.Orchestrator.Config do
       timeout: 300_000,
       max_parallel: 10,
       retry_attempts: 3,
-      
+
       # Decomposer configurations
       decomposers: %{
         simple: %{
@@ -293,7 +293,7 @@ defmodule QuantumFlow.Orchestrator.Config do
           parallel_threshold: 2
         }
       },
-      
+
       # Execution settings
       execution: %{
         timeout: 300_000,
@@ -303,7 +303,7 @@ defmodule QuantumFlow.Orchestrator.Config do
         task_timeout: 30_000,
         monitor: true
       },
-      
+
       # Optimization settings
       optimization: %{
         enabled: true,
@@ -314,7 +314,7 @@ defmodule QuantumFlow.Orchestrator.Config do
         learning_enabled: true,
         pattern_confidence_threshold: 0.7
       },
-      
+
       # Notification settings
       notifications: %{
         enabled: true,
@@ -323,7 +323,7 @@ defmodule QuantumFlow.Orchestrator.Config do
         queue_prefix: "htdag",
         timeout: 5_000
       },
-      
+
       # Feature flags
       features: %{
         monitoring: true,
@@ -332,7 +332,7 @@ defmodule QuantumFlow.Orchestrator.Config do
         learning: true,
         real_time: true
       },
-      
+
       # Performance thresholds
       performance_thresholds: %{
         execution_time: %{
@@ -348,8 +348,10 @@ defmodule QuantumFlow.Orchestrator.Config do
           critical: 0.5
         },
         memory_usage: %{
-          warning: 100_000_000,  # 100MB
-          critical: 500_000_000  # 500MB
+          # 100MB
+          warning: 100_000_000,
+          # 500MB
+          critical: 500_000_000
         }
       }
     }
@@ -357,11 +359,12 @@ defmodule QuantumFlow.Orchestrator.Config do
 
   defp validate_required_fields(config) do
     required_fields = [:max_depth, :timeout, :max_parallel, :retry_attempts]
-    
-    missing_fields = Enum.filter(required_fields, fn field ->
-      not Map.has_key?(config, field)
-    end)
-    
+
+    missing_fields =
+      Enum.filter(required_fields, fn field ->
+        not Map.has_key?(config, field)
+      end)
+
     if length(missing_fields) > 0 do
       {:error, "Missing required fields: #{inspect(missing_fields)}"}
     else
@@ -380,7 +383,7 @@ defmodule QuantumFlow.Orchestrator.Config do
       {config.retry_attempts, &is_integer/1, "retry_attempts must be an integer"},
       {config.retry_attempts, &(&1 >= 0 and &1 < 10), "retry_attempts must be between 0 and 9"}
     ]
-    
+
     Enum.find_value(validations, :ok, fn {value, validator, message} ->
       if validator.(value) do
         nil

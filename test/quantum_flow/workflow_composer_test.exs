@@ -3,15 +3,18 @@ defmodule QuantumFlow.WorkflowComposerTest do
 
   alias QuantumFlow.WorkflowComposer
 
+  import Mox
+
   setup :verify_on_exit!
 
   describe "compose_from_goal/5" do
     test "composes and executes workflow successfully" do
       decomposer = fn goal ->
-        {:ok, [
-          %{id: "task1", description: "Task 1", depends_on: []},
-          %{id: "task2", description: "Task 2", depends_on: ["task1"]}
-        ]}
+        {:ok,
+         [
+           %{id: "task1", description: "Task 1", depends_on: []},
+           %{id: "task2", description: "Task 2", depends_on: ["task1"]}
+         ]}
       end
 
       step_functions = %{
@@ -32,12 +35,13 @@ defmodule QuantumFlow.WorkflowComposerTest do
         {:ok, %{success: true, results: %{"task1" => "result1", "task2" => "result2"}}}
       end)
 
-      {:ok, result} = WorkflowComposer.compose_from_goal(
-        "Build auth system",
-        decomposer,
-        step_functions,
-        %Ecto.Repo{}
-      )
+      {:ok, result} =
+        WorkflowComposer.compose_from_goal(
+          "Build auth system",
+          decomposer,
+          step_functions,
+          QuantumFlow.Repo
+        )
 
       assert result.success == true
       assert result.results["task1"] == "result1"
@@ -52,12 +56,13 @@ defmodule QuantumFlow.WorkflowComposerTest do
         {:error, :decomposition_failed}
       end)
 
-      {:error, :decomposition_failed} = WorkflowComposer.compose_from_goal(
-        "Invalid goal",
-        decomposer,
-        step_functions,
-        %Ecto.Repo{}
-      )
+      {:error, :decomposition_failed} =
+        WorkflowComposer.compose_from_goal(
+          "Invalid goal",
+          decomposer,
+          step_functions,
+          QuantumFlow.Repo
+        )
     end
 
     test "handles workflow creation failure" do
@@ -75,12 +80,13 @@ defmodule QuantumFlow.WorkflowComposerTest do
         {:error, :workflow_creation_failed}
       end)
 
-      {:error, :workflow_creation_failed} = WorkflowComposer.compose_from_goal(
-        "Test goal",
-        decomposer,
-        step_functions,
-        %Ecto.Repo{}
-      )
+      {:error, :workflow_creation_failed} =
+        WorkflowComposer.compose_from_goal(
+          "Test goal",
+          decomposer,
+          step_functions,
+          QuantumFlow.Repo
+        )
     end
 
     test "respects optimization and monitoring options" do
@@ -109,7 +115,7 @@ defmodule QuantumFlow.WorkflowComposerTest do
         "Test goal",
         decomposer,
         step_functions,
-        %Ecto.Repo{},
+        QuantumFlow.Repo,
         optimize: true,
         monitor: true
       )
@@ -139,11 +145,12 @@ defmodule QuantumFlow.WorkflowComposerTest do
         {:ok, %{success: true}}
       end)
 
-      {:ok, result} = WorkflowComposer.compose_from_task_graph(
-        task_graph,
-        step_functions,
-        %Ecto.Repo{}
-      )
+      {:ok, result} =
+        WorkflowComposer.compose_from_task_graph(
+          task_graph,
+          step_functions,
+          QuantumFlow.Repo
+        )
 
       assert result.success == true
     end
@@ -152,12 +159,21 @@ defmodule QuantumFlow.WorkflowComposerTest do
   describe "compose_multiple_workflows/5" do
     test "composes multiple workflows from complex goal" do
       decomposer = fn _goal ->
-        {:ok, [
-          %{tasks: %{"task1" => %{id: "task1", description: "Task 1", depends_on: []}}, 
-            root_tasks: [], max_depth: 1, created_at: DateTime.utc_now()},
-          %{tasks: %{"task2" => %{id: "task2", description: "Task 2", depends_on: []}}, 
-            root_tasks: [], max_depth: 1, created_at: DateTime.utc_now()}
-        ]}
+        {:ok,
+         [
+           %{
+             tasks: %{"task1" => %{id: "task1", description: "Task 1", depends_on: []}},
+             root_tasks: [],
+             max_depth: 1,
+             created_at: DateTime.utc_now()
+           },
+           %{
+             tasks: %{"task2" => %{id: "task2", description: "Task 2", depends_on: []}},
+             root_tasks: [],
+             max_depth: 1,
+             created_at: DateTime.utc_now()
+           }
+         ]}
       end
 
       step_functions = %{
@@ -173,12 +189,13 @@ defmodule QuantumFlow.WorkflowComposerTest do
         {:ok, %{success: true}}
       end)
 
-      {:ok, results} = WorkflowComposer.compose_multiple_workflows(
-        "Complex goal",
-        decomposer,
-        step_functions,
-        %Ecto.Repo{}
-      )
+      {:ok, results} =
+        WorkflowComposer.compose_multiple_workflows(
+          "Complex goal",
+          decomposer,
+          step_functions,
+          QuantumFlow.Repo
+        )
 
       assert length(results) == 2
       assert Enum.all?(results, &(&1.success == true))
@@ -186,12 +203,21 @@ defmodule QuantumFlow.WorkflowComposerTest do
 
     test "handles partial workflow failures" do
       decomposer = fn _goal ->
-        {:ok, [
-          %{tasks: %{"task1" => %{id: "task1", description: "Task 1", depends_on: []}}, 
-            root_tasks: [], max_depth: 1, created_at: DateTime.utc_now()},
-          %{tasks: %{"task2" => %{id: "task2", description: "Task 2", depends_on: []}}, 
-            root_tasks: [], max_depth: 1, created_at: DateTime.utc_now()}
-        ]}
+        {:ok,
+         [
+           %{
+             tasks: %{"task1" => %{id: "task1", description: "Task 1", depends_on: []}},
+             root_tasks: [],
+             max_depth: 1,
+             created_at: DateTime.utc_now()
+           },
+           %{
+             tasks: %{"task2" => %{id: "task2", description: "Task 2", depends_on: []}},
+             root_tasks: [],
+             max_depth: 1,
+             created_at: DateTime.utc_now()
+           }
+         ]}
       end
 
       step_functions = %{
@@ -207,26 +233,27 @@ defmodule QuantumFlow.WorkflowComposerTest do
         {:error, :execution_failed}
       end)
 
-      {:error, :workflow_execution_failed} = WorkflowComposer.compose_multiple_workflows(
-        "Complex goal",
-        decomposer,
-        step_functions,
-        %Ecto.Repo{}
-      )
+      {:error, :workflow_execution_failed} =
+        WorkflowComposer.compose_multiple_workflows(
+          "Complex goal",
+          decomposer,
+          step_functions,
+          QuantumFlow.Repo
+        )
     end
   end
 
   describe "get_composition_stats/2" do
     test "returns composition statistics" do
-      {:ok, stats} = WorkflowComposer.get_composition_stats(%Ecto.Repo{})
+      {:ok, stats} = WorkflowComposer.get_composition_stats(QuantumFlow.Repo)
 
       assert %{
-        total_workflows: total,
-        successful_compositions: successful,
-        failed_compositions: failed,
-        avg_execution_time: avg_time,
-        most_common_goals: common_goals
-      } = stats
+               total_workflows: total,
+               successful_compositions: successful,
+               failed_compositions: failed,
+               avg_execution_time: avg_time,
+               most_common_goals: common_goals
+             } = stats
 
       assert is_integer(total)
       assert is_integer(successful)
@@ -236,8 +263,10 @@ defmodule QuantumFlow.WorkflowComposerTest do
     end
 
     test "filters statistics by workflow name" do
-      {:ok, stats} = WorkflowComposer.get_composition_stats(%Ecto.Repo{}, 
-        workflow_name: "test_workflow")
+      {:ok, stats} =
+        WorkflowComposer.get_composition_stats(QuantumFlow.Repo,
+          workflow_name: "test_workflow"
+        )
 
       assert is_map(stats)
     end

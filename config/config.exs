@@ -38,7 +38,7 @@ config :quantum_flow, :orchestrator,
   timeout: 300_000,
   max_parallel: 10,
   retry_attempts: 3,
-  
+
   # Decomposer configurations
   decomposers: %{
     simple: %{
@@ -62,7 +62,7 @@ config :quantum_flow, :orchestrator,
       parallel_threshold: 2
     }
   },
-  
+
   # Execution settings
   execution: %{
     timeout: 300_000,
@@ -72,7 +72,7 @@ config :quantum_flow, :orchestrator,
     task_timeout: 30_000,
     monitor: true
   },
-  
+
   # Optimization settings
   optimization: %{
     enabled: true,
@@ -83,7 +83,7 @@ config :quantum_flow, :orchestrator,
     learning_enabled: true,
     pattern_confidence_threshold: 0.7
   },
-  
+
   # Notification settings
   notifications: %{
     enabled: true,
@@ -92,7 +92,7 @@ config :quantum_flow, :orchestrator,
     queue_prefix: "orchestrator",
     timeout: 5_000
   },
-  
+
   # Feature flags
   features: %{
     monitoring: true,
@@ -101,7 +101,7 @@ config :quantum_flow, :orchestrator,
     learning: true,
     real_time: true
   },
-  
+
   # Performance thresholds
   performance_thresholds: %{
     execution_time: %{
@@ -117,8 +117,10 @@ config :quantum_flow, :orchestrator,
       critical: 0.5
     },
     memory_usage: %{
-      warning: 100_000_000,  # 100MB
-      critical: 500_000_000  # 500MB
+      # 100MB
+      warning: 100_000_000,
+      # 500MB
+      critical: 500_000_000
     }
   }
 

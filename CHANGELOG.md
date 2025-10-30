@@ -10,14 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Initial release of ExQuantumFlow - Elixir implementation of QuantumFlow's database-driven DAG execution
+- Initial release of QuantumFlow - Elixir implementation of QuantumFlow's database-driven DAG execution
 - Complete feature parity with QuantumFlow including:
   - **DAG Workflow Support**: Define workflows with explicit dependencies between steps
   - **Parallel Execution**: Automatically execute independent steps in parallel
   - **Map Steps**: Execute the same step across multiple items (map/reduce pattern)
   - **Dependency Merging**: Steps can depend on multiple other steps
   - **Database-First Coordination**: PostgreSQL + pgmq for reliable task coordination
-  - **Multi-Instance Scaling**: Multiple ExQuantumFlow instances can safely execute the same workflows
+  - **Multi-Instance Scaling**: Multiple QuantumFlow instances can safely execute the same workflows
   - **Visibility Timeout Pattern**: Automatic retry if task executor crashes
   - **Comprehensive Testing**: 160+ tests covering all execution paths
 

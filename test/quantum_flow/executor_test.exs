@@ -366,7 +366,9 @@ defmodule QuantumFlow.ExecutorTest do
       # Create workflow with more steps than functions provided
       {:ok, _} = QuantumFlow.FlowBuilder.create_flow("test_dynamic_missing", Repo)
       {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic_missing", "step_a", [], Repo)
-      {:ok, _} = QuantumFlow.FlowBuilder.add_step("test_dynamic_missing", "step_b", ["step_a"], Repo)
+
+      {:ok, _} =
+        QuantumFlow.FlowBuilder.add_step("test_dynamic_missing", "step_b", ["step_a"], Repo)
 
       # Only provide step_a function, missing step_b
       step_functions = %{

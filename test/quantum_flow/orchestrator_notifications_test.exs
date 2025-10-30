@@ -6,6 +6,7 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
 
   setup :set_mox_global
   setup :verify_on_exit!
+
   setup do
     Application.put_env(:quantum_flow, :notifications_impl, QuantumFlow.Notifications.Mock)
     :ok
@@ -22,12 +23,13 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
         {:ok, "message_123"}
       end)
 
-      {:ok, message_id} = OrchestratorNotifications.broadcast_decomposition(
-        "goal_123",
-        :started,
-        %{goal: "Build auth system"},
-        :mock_repo
-      )
+      {:ok, message_id} =
+        OrchestratorNotifications.broadcast_decomposition(
+          "goal_123",
+          :started,
+          %{goal: "Build auth system"},
+          :mock_repo
+        )
 
       assert message_id == "message_123"
     end
@@ -37,12 +39,13 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
         {:error, :network_error}
       end)
 
-      {:error, :network_error} = OrchestratorNotifications.broadcast_decomposition(
-        "goal_123",
-        :started,
-        %{goal: "Build auth system"},
-        :mock_repo
-      )
+      {:error, :network_error} =
+        OrchestratorNotifications.broadcast_decomposition(
+          "goal_123",
+          :started,
+          %{goal: "Build auth system"},
+          :mock_repo
+        )
     end
   end
 
@@ -56,12 +59,13 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
         {:ok, "message_456"}
       end)
 
-      {:ok, message_id} = OrchestratorNotifications.broadcast_task(
-        "task_456",
-        :completed,
-        %{result: %{success: true}},
-        :mock_repo
-      )
+      {:ok, message_id} =
+        OrchestratorNotifications.broadcast_task(
+          "task_456",
+          :completed,
+          %{result: %{success: true}},
+          :mock_repo
+        )
 
       assert message_id == "message_456"
     end
@@ -77,12 +81,13 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
         {:ok, "message_789"}
       end)
 
-      {:ok, message_id} = OrchestratorNotifications.broadcast_workflow(
-        "workflow_789",
-        :started,
-        %{workflow_name: "test_workflow"},
-        :mock_repo
-      )
+      {:ok, message_id} =
+        OrchestratorNotifications.broadcast_workflow(
+          "workflow_789",
+          :started,
+          %{workflow_name: "test_workflow"},
+          :mock_repo
+        )
 
       assert message_id == "message_789"
     end
@@ -98,11 +103,12 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
         {:ok, "message_perf"}
       end)
 
-      {:ok, message_id} = OrchestratorNotifications.broadcast_performance(
-        "workflow_789",
-        %{execution_time: 1500, success_rate: 0.95},
-        :mock_repo
-      )
+      {:ok, message_id} =
+        OrchestratorNotifications.broadcast_performance(
+          "workflow_789",
+          %{execution_time: 1500, success_rate: 0.95},
+          :mock_repo
+        )
 
       assert message_id == "message_perf"
     end
@@ -110,8 +116,10 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
 
   describe "listen/3" do
     test "starts event listener successfully" do
-      {:ok, pid} = OrchestratorNotifications.listen("test_workflow", :mock_repo, 
-        event_types: [:decomposition, :task])
+      {:ok, pid} =
+        OrchestratorNotifications.listen("test_workflow", :mock_repo,
+          event_types: [:decomposition, :task]
+        )
 
       assert is_pid(pid)
       assert Process.alive?(pid)
@@ -128,9 +136,9 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
   describe "stop_listening/2" do
     test "stops event listener successfully" do
       {:ok, pid} = OrchestratorNotifications.listen("test_workflow", :mock_repo)
-      
+
       :ok = OrchestratorNotifications.stop_listening(pid, :mock_repo)
-      
+
       # Process should be terminated
       refute Process.alive?(pid)
     end
@@ -139,13 +147,13 @@ defmodule QuantumFlow.OrchestratorNotificationsTest do
   describe "get_recent_events/3" do
     test "returns recent events" do
       {:ok, events} = OrchestratorNotifications.get_recent_events(:decomposition, 10, :mock_repo)
-      
+
       assert is_list(events)
     end
 
     test "returns all events when no event type specified" do
       {:ok, events} = OrchestratorNotifications.get_recent_events(nil, 50, :mock_repo)
-      
+
       assert is_list(events)
     end
   end

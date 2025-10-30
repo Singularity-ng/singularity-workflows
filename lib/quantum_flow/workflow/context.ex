@@ -1,4 +1,4 @@
-defmodule QuantumFlow.WorkflowAPI.Context do
+defmodule QuantumFlow.Workflow.Context do
   @moduledoc """
   Lightweight workflow context struct used when invoking QuantumFlow workflow
   steps outside of the orchestration runtime.
@@ -19,13 +19,13 @@ end
 
 defmodule QuantumFlow.WorkflowContext do
   @moduledoc """
-  CamelCase alias of `QuantumFlow.WorkflowAPI.Context` provided for backwards
+  CamelCase alias of `QuantumFlow.Workflow.Context` provided for backwards
   compatibility with modules that still reference the legacy `QuantumFlow`
   namespace.
   """
 
   @doc false
-  defdelegate __struct__(), to: QuantumFlow.WorkflowAPI.Context
+  defdelegate __struct__(), to: QuantumFlow.Workflow.Context
   @doc false
-  defdelegate __struct__(kv), to: QuantumFlow.WorkflowAPI.Context, as: :__struct__
+  defdelegate __struct__(kv), to: QuantumFlow.Workflow.Context, as: :__struct__
 end

@@ -279,13 +279,13 @@ defmodule QuantumFlow.FlowOperations do
           depends_on
           |> Enum.reduce_while(:ok, fn dep_slug, :ok ->
             case Repo.query(
-              """
-              INSERT INTO workflow_step_dependencies_def (workflow_slug, dep_slug, step_slug)
-              VALUES ($1::text, $2::text, $3::text)
-              ON CONFLICT DO NOTHING
-              """,
-              [workflow_slug, dep_slug, step_slug]
-            ) do
+                   """
+                   INSERT INTO workflow_step_dependencies_def (workflow_slug, dep_slug, step_slug)
+                   VALUES ($1::text, $2::text, $3::text)
+                   ON CONFLICT DO NOTHING
+                   """,
+                   [workflow_slug, dep_slug, step_slug]
+                 ) do
               {:ok, _} -> {:cont, :ok}
               {:error, reason} -> {:halt, {:error, reason}}
             end
@@ -309,6 +309,7 @@ defmodule QuantumFlow.FlowOperations do
               step_slug: step_slug,
               error: inspect(error)
             )
+
             error
         end
 

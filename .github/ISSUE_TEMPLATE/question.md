@@ -1,13 +1,13 @@
 ---
 name: Question
-about: Ask a question about ExQuantumFlow
+about: Ask a question about QuantumFlow
 title: "[QUESTION] "
 labels: question
 ---
 
 ## Question
 
-What would you like to know about ExQuantumFlow?
+What would you like to know about QuantumFlow?
 
 ## Context
 

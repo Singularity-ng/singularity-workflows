@@ -84,7 +84,7 @@ mix compile
 ### **3. Test Configuration**
 ```elixir
 # config/test.exs needs proper database URL
-config :quantum_flow, ExQuantumFlow.Repo,
+config :quantum_flow, QuantumFlow.Repo,
   url: "postgres://localhost/quantum_flow_test"
 ```
 

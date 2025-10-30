@@ -253,7 +253,8 @@ defmodule QuantumFlow.Orchestrator.SchemasTest do
         context: %{workflow_id: "workflow_123"}
       }
 
-      changeset = Schemas.PerformanceMetric.performance_metric_changeset(%Schemas.PerformanceMetric{}, attrs)
+      changeset =
+        Schemas.PerformanceMetric.performance_metric_changeset(%Schemas.PerformanceMetric{}, attrs)
 
       assert changeset.valid?
       assert changeset.changes.metric_type == "execution_time"
@@ -264,7 +265,8 @@ defmodule QuantumFlow.Orchestrator.SchemasTest do
     test "invalid changeset with missing required fields" do
       attrs = %{task_id: "task_123"}
 
-      changeset = Schemas.PerformanceMetric.performance_metric_changeset(%Schemas.PerformanceMetric{}, attrs)
+      changeset =
+        Schemas.PerformanceMetric.performance_metric_changeset(%Schemas.PerformanceMetric{}, attrs)
 
       refute changeset.valid?
       assert "can't be blank" in errors_on(changeset).metric_type
@@ -277,7 +279,8 @@ defmodule QuantumFlow.Orchestrator.SchemasTest do
         metric_value: 1500.0
       }
 
-      changeset = Schemas.PerformanceMetric.performance_metric_changeset(%Schemas.PerformanceMetric{}, attrs)
+      changeset =
+        Schemas.PerformanceMetric.performance_metric_changeset(%Schemas.PerformanceMetric{}, attrs)
 
       refute changeset.valid?
       assert "is invalid" in errors_on(changeset).metric_type
@@ -289,7 +292,8 @@ defmodule QuantumFlow.Orchestrator.SchemasTest do
         metric_value: -100.0
       }
 
-      changeset = Schemas.PerformanceMetric.performance_metric_changeset(%Schemas.PerformanceMetric{}, attrs)
+      changeset =
+        Schemas.PerformanceMetric.performance_metric_changeset(%Schemas.PerformanceMetric{}, attrs)
 
       refute changeset.valid?
       assert "must be greater than or equal to 0" in errors_on(changeset).metric_value
@@ -306,7 +310,8 @@ defmodule QuantumFlow.Orchestrator.SchemasTest do
         usage_count: 5
       }
 
-      changeset = Schemas.LearningPattern.learning_pattern_changeset(%Schemas.LearningPattern{}, attrs)
+      changeset =
+        Schemas.LearningPattern.learning_pattern_changeset(%Schemas.LearningPattern{}, attrs)
 
       assert changeset.valid?
       assert changeset.changes.workflow_name == "test_workflow"
@@ -318,7 +323,8 @@ defmodule QuantumFlow.Orchestrator.SchemasTest do
     test "invalid changeset with missing required fields" do
       attrs = %{workflow_name: "test_workflow"}
 
-      changeset = Schemas.LearningPattern.learning_pattern_changeset(%Schemas.LearningPattern{}, attrs)
+      changeset =
+        Schemas.LearningPattern.learning_pattern_changeset(%Schemas.LearningPattern{}, attrs)
 
       refute changeset.valid?
       assert "can't be blank" in errors_on(changeset).pattern_type
@@ -333,7 +339,8 @@ defmodule QuantumFlow.Orchestrator.SchemasTest do
         confidence_score: 1.5
       }
 
-      changeset = Schemas.LearningPattern.learning_pattern_changeset(%Schemas.LearningPattern{}, attrs)
+      changeset =
+        Schemas.LearningPattern.learning_pattern_changeset(%Schemas.LearningPattern{}, attrs)
 
       refute changeset.valid?
       assert "must be less than or equal to 1" in errors_on(changeset).confidence_score
@@ -346,7 +353,8 @@ defmodule QuantumFlow.Orchestrator.SchemasTest do
         pattern_data: %{tasks: ["task1", "task2"]}
       }
 
-      changeset = Schemas.LearningPattern.learning_pattern_changeset(%Schemas.LearningPattern{}, attrs)
+      changeset =
+        Schemas.LearningPattern.learning_pattern_changeset(%Schemas.LearningPattern{}, attrs)
 
       refute changeset.valid?
       assert "is invalid" in errors_on(changeset).pattern_type

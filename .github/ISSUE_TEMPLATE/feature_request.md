@@ -1,6 +1,6 @@
 ---
 name: Feature Request
-about: Suggest an idea for improving ExQuantumFlow
+about: Suggest an idea for improving QuantumFlow
 title: "[FEATURE] "
 labels: enhancement
 ---

@@ -32,7 +32,7 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
   describe "get_decomposer_config/2" do
     test "returns decomposer configuration" do
       config = Config.get_decomposer_config(:simple)
-      
+
       assert config.max_depth == 3
       assert config.timeout == 30_000
       assert config.parallel_threshold == 2
@@ -40,7 +40,7 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
 
     test "overrides with options" do
       config = Config.get_decomposer_config(:simple, max_depth: 5, timeout: 60_000)
-      
+
       assert config.max_depth == 5
       assert config.timeout == 60_000
       assert config.parallel_threshold == 2
@@ -62,7 +62,7 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
   describe "get_execution_config/1" do
     test "returns execution configuration" do
       config = Config.get_execution_config()
-      
+
       assert config.timeout == 300_000
       assert config.max_parallel == 10
       assert config.retry_attempts == 3
@@ -73,7 +73,7 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
 
     test "overrides with options" do
       config = Config.get_execution_config(timeout: 600_000, max_parallel: 20)
-      
+
       assert config.timeout == 600_000
       assert config.max_parallel == 20
       assert config.retry_attempts == 3
@@ -83,7 +83,7 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
   describe "get_optimization_config/1" do
     test "returns optimization configuration" do
       config = Config.get_optimization_config()
-      
+
       assert config.enabled == true
       assert config.level == :basic
       assert config.preserve_structure == true
@@ -95,7 +95,7 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
 
     test "overrides with options" do
       config = Config.get_optimization_config(level: :aggressive, max_parallel: 20)
-      
+
       assert config.enabled == true
       assert config.level == :aggressive
       assert config.max_parallel == 20
@@ -115,7 +115,7 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
 
     test "overrides with options" do
       config = Config.get_notification_config(enabled: false, timeout: 10_000)
-      
+
       assert config.enabled == false
       assert config.timeout == 10_000
       assert config.real_time == true
@@ -160,7 +160,7 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
 
     test "overrides with options" do
       threshold = Config.get_performance_threshold(:execution_time, warning: 120_000)
-      
+
       assert threshold.warning == 120_000
       assert threshold.critical == 300_000
     end
@@ -198,13 +198,14 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
         # Missing max_parallel and retry_attempts
       }
 
-      {:error, "Missing required fields: [:max_parallel, :retry_attempts]"} = 
+      {:error, "Missing required fields: [:max_parallel, :retry_attempts]"} =
         Config.validate_config(config)
     end
 
     test "fails validation for invalid value ranges" do
       config = %{
-        max_depth: 0,  # Invalid: must be > 0
+        # Invalid: must be > 0
+        max_depth: 0,
         timeout: 300_000,
         max_parallel: 10,
         retry_attempts: 3
@@ -217,7 +218,8 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
       config = %{
         max_depth: 5,
         timeout: 300_000,
-        max_parallel: 0,  # Invalid: must be > 0
+        # Invalid: must be > 0
+        max_parallel: 0,
         retry_attempts: 3
       }
 
@@ -229,7 +231,8 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
         max_depth: 5,
         timeout: 300_000,
         max_parallel: 10,
-        retry_attempts: 10  # Invalid: must be < 10
+        # Invalid: must be < 10
+        retry_attempts: 10
       }
 
       {:error, "retry_attempts must be between 0 and 9"} = Config.validate_config(config)
@@ -242,10 +245,11 @@ defmodule QuantumFlow.Orchestrator.ConfigTest do
         max_parallel: 10,
         retry_attempts: 3,
         optimization: %{enabled: true},
-        features: %{optimization: false}  # Conflict: optimization enabled but feature disabled
+        # Conflict: optimization enabled but feature disabled
+        features: %{optimization: false}
       }
 
-      {:error, "Optimization is enabled but feature flag is disabled"} = 
+      {:error, "Optimization is enabled but feature flag is disabled"} =
         Config.validate_config(config)
     end
   end

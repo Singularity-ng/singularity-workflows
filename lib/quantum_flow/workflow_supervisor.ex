@@ -53,8 +53,10 @@ defmodule QuantumFlow.WorkflowSupervisor do
 
     children = [
       %{
-        id: {QuantumFlow.Workflow, workflow_module},
-        start: {QuantumFlow.Workflow, :start_link, [workflow_name, workflow_module, [repo: repo]]},
+        id: {QuantumFlow.Runtime.Workflow, workflow_module},
+        start:
+          {QuantumFlow.Runtime.Workflow, :start_link,
+           [workflow_name, workflow_module, [repo: repo]]},
         restart: :permanent,
         shutdown: 15_000,
         type: :worker
@@ -73,7 +75,7 @@ defmodule QuantumFlow.WorkflowSupervisor do
     ensure_registry_started()
     workflow_name = Keyword.get(opts, :workflow_name, default_workflow_name(workflow_module))
     repo = resolve_repo(opts, workflow_module)
-    QuantumFlow.WorkflowAPI.start_link(workflow_name, workflow_module, repo: repo)
+    QuantumFlow.Runtime.Workflow.start_link(workflow_name, workflow_module, repo: repo)
   end
 
   @doc """
@@ -99,9 +101,14 @@ defmodule QuantumFlow.WorkflowSupervisor do
     case Process.whereis(QuantumFlow.WorkflowRegistry) do
       nil ->
         case Registry.start_link(keys: :unique, name: QuantumFlow.WorkflowRegistry) do
-          {:ok, _pid} -> :ok
-          {:error, {:already_started, _pid}} -> :ok
-          {:error, reason} -> raise "Failed to start QuantumFlow.WorkflowRegistry: #{inspect(reason)}"
+          {:ok, _pid} ->
+            :ok
+
+          {:error, {:already_started, _pid}} ->
+            :ok
+
+          {:error, reason} ->
+            raise "Failed to start QuantumFlow.WorkflowRegistry: #{inspect(reason)}"
         end
 
       _pid ->

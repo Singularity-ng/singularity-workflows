@@ -3,16 +3,19 @@ defmodule QuantumFlow.OrchestratorTest do
 
   alias QuantumFlow.Orchestrator
 
+  import Mox
+
   setup :verify_on_exit!
 
   describe "decompose_goal/3" do
     test "decomposes goal successfully" do
       decomposer = fn goal ->
-        {:ok, [
-          %{id: "task1", description: "Analyze requirements", depends_on: []},
-          %{id: "task2", description: "Design architecture", depends_on: ["task1"]},
-          %{id: "task3", description: "Implement solution", depends_on: ["task2"]}
-        ]}
+        {:ok,
+         [
+           %{id: "task1", description: "Analyze requirements", depends_on: []},
+           %{id: "task2", description: "Design architecture", depends_on: ["task1"]},
+           %{id: "task3", description: "Implement solution", depends_on: ["task2"]}
+         ]}
       end
 
       {:ok, task_graph} = Orchestrator.decompose_goal("Build auth system", decomposer)
@@ -40,16 +43,18 @@ defmodule QuantumFlow.OrchestratorTest do
     test "handles decomposer exceptions" do
       decomposer = fn _goal -> raise "Decomposer error" end
 
-      {:error, %RuntimeError{message: "Decomposer error"}} = Orchestrator.decompose_goal("Invalid goal", decomposer)
+      {:error, %RuntimeError{message: "Decomposer error"}} =
+        Orchestrator.decompose_goal("Invalid goal", decomposer)
     end
 
     test "respects max_depth option" do
       decomposer = fn goal ->
-        {:ok, [
-          %{id: "task1", description: "Task 1", depends_on: []},
-          %{id: "task2", description: "Task 2", depends_on: ["task1"]},
-          %{id: "task3", description: "Task 3", depends_on: ["task2"]}
-        ]}
+        {:ok,
+         [
+           %{id: "task1", description: "Task 1", depends_on: []},
+           %{id: "task2", description: "Task 2", depends_on: ["task1"]},
+           %{id: "task3", description: "Task 3", depends_on: ["task2"]}
+         ]}
       end
 
       {:ok, task_graph} = Orchestrator.decompose_goal("Test goal", decomposer, max_depth: 2)
@@ -129,10 +134,11 @@ defmodule QuantumFlow.OrchestratorTest do
   describe "execute_goal/5" do
     test "executes goal successfully" do
       decomposer = fn goal ->
-        {:ok, [
-          %{id: "task1", description: "Task 1", depends_on: []},
-          %{id: "task2", description: "Task 2", depends_on: ["task1"]}
-        ]}
+        {:ok,
+         [
+           %{id: "task1", description: "Task 1", depends_on: []},
+           %{id: "task2", description: "Task 2", depends_on: ["task1"]}
+         ]}
       end
 
       step_functions = %{
@@ -145,7 +151,8 @@ defmodule QuantumFlow.OrchestratorTest do
         {:ok, %{success: true, results: %{"task1" => "result1", "task2" => "result2"}}}
       end)
 
-      {:ok, result} = Orchestrator.execute_goal("Test goal", decomposer, step_functions, %Ecto.Repo{})
+      {:ok, result} =
+        Orchestrator.execute_goal("Test goal", decomposer, step_functions, QuantumFlow.Repo)
 
       assert result.success == true
       assert result.results["task1"] == "result1"
@@ -156,7 +163,8 @@ defmodule QuantumFlow.OrchestratorTest do
       decomposer = fn _goal -> {:error, :decomposition_failed} end
       step_functions = %{}
 
-      {:error, :decomposition_failed} = Orchestrator.execute_goal("Invalid goal", decomposer, step_functions, %Ecto.Repo{})
+      {:error, :decomposition_failed} =
+        Orchestrator.execute_goal("Invalid goal", decomposer, step_functions, QuantumFlow.Repo)
     end
 
     test "handles workflow creation failure" do
@@ -164,15 +172,17 @@ defmodule QuantumFlow.OrchestratorTest do
         {:ok, [%{id: "task1", description: "Task 1", depends_on: []}]}
       end
 
-      step_functions = %{}  # Missing step function
+      # Missing step function
+      step_functions = %{}
 
-      {:error, %RuntimeError{}} = Orchestrator.execute_goal("Test goal", decomposer, step_functions, %Ecto.Repo{})
+      {:error, %RuntimeError{}} =
+        Orchestrator.execute_goal("Test goal", decomposer, step_functions, QuantumFlow.Repo)
     end
   end
 
   describe "get_execution_stats/2" do
     test "returns execution statistics" do
-      {:ok, stats} = Orchestrator.get_execution_stats("test_workflow", %Ecto.Repo{})
+      {:ok, stats} = Orchestrator.get_execution_stats("test_workflow", QuantumFlow.Repo)
 
       assert %{total_executions: total, success_rate: rate, avg_duration: duration} = stats
       assert is_integer(total)

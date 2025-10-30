@@ -1,6 +1,6 @@
-# ExQuantumFlow Architecture
+# QuantumFlow Architecture
 
-ExQuantumFlow is an Elixir implementation of QuantumFlow's database-driven DAG execution engine. This document explains the internal architecture, design decisions, and how components interact.
+QuantumFlow is an Elixir implementation of QuantumFlow's database-driven DAG execution engine. This document explains the internal architecture, design decisions, and how components interact.
 
 ## Architecture Overview
 
@@ -29,7 +29,7 @@ graph TB
 
 ### Layer Stack
 
-ExQuantumFlow is organized into three layers:
+QuantumFlow is organized into three layers:
 
 1. **Application Layer** - Workflow definitions, user code entry points
 2. **Orchestration Layer** - DAG parsing/validation and task execution coordination
@@ -198,7 +198,7 @@ sequenceDiagram
 
 ### Counter-Based Coordination
 
-ExQuantumFlow uses two counters to track completion:
+QuantumFlow uses two counters to track completion:
 
 ```mermaid
 %%{init: {'theme':'dark'}}%%
@@ -534,7 +534,7 @@ Workflows implement `QuantumFlow.Executor.Workflow` behavior with callbacks:
 
 ## Comparison with QuantumFlow (Python)
 
-ExQuantumFlow is a faithful Elixir port of QuantumFlow with identical execution semantics:
+QuantumFlow is a faithful Elixir port of QuantumFlow with identical execution semantics:
 
 ```mermaid
 %%{init: {'theme':'dark'}}%%
@@ -546,7 +546,7 @@ graph TB
         PDB["PostgreSQL<br/>same schema"]
     end
 
-    subgraph "ExQuantumFlow (Elixir)"
+    subgraph "QuantumFlow (Elixir)"
         EL["Elixir<br/>BEAM VM"]
         EDAG["Module parsing<br/>DFS validation"]
         EQ["Postgrex<br/>driver"]
@@ -580,7 +580,7 @@ graph TB
 
 ### Feature Comparison
 
-| Feature | QuantumFlow | ExQuantumFlow |
+| Feature | QuantumFlow | QuantumFlow |
 |---------|--------|----------|
 | **DAG Parsing** | JSON parsing | Module parsing + JSON |
 | **Cycle Detection** | DFS | DFS (identical algorithm) |
@@ -592,7 +592,7 @@ graph TB
 | **Error Handling** | try/except | {:ok, result} \| {:error, reason} |
 | **Type Safety** | Type hints | Dialyzer/specs |
 
-### Why ExQuantumFlow Over QuantumFlow?
+### Why QuantumFlow Over QuantumFlow?
 
 ✅ **BEAM advantages:**
 - Lightweight processes (millions possible)
@@ -621,7 +621,7 @@ graph TB
 - **Bottleneck**: PostgreSQL connection pool, pgmq queue throughput
 
 ### Scalability
-- **Horizontal**: Add more ExQuantumFlow instances polling same pgmq queue
+- **Horizontal**: Add more QuantumFlow instances polling same pgmq queue
 - **Vertical**: Increase PostgreSQL resources (CPU, RAM, I/O)
 - **Maximum**: Limited by PostgreSQL capacity (10K+ tasks/second possible)
 
@@ -639,7 +639,7 @@ Possible enhancements without breaking the core architecture:
 
 ## Testing Strategy
 
-ExQuantumFlow uses:
+QuantumFlow uses:
 - **Unit tests**: SQL logic, cycle detection algorithm
 - **Integration tests**: Full workflow execution end-to-end
 - **Mock workflows**: Deterministic testing without external dependencies

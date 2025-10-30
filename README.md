@@ -1,9 +1,9 @@
-# QuantumFlow (Hex package: ex_quantum_flow)
+# QuantumFlow (Hex package: quantum_flow)
 
-[![Hex.pm](https://img.shields.io/hexpm/v/ex_quantum_flow.svg)](https://hex.pm/packages/ex_quantum_flow)
-[![Hex.pm](https://img.shields.io/hexpm/dt/ex_quantum_flow.svg)](https://hex.pm/packages/ex_quantum_flow)
-[![Build Status](https://img.shields.io/travis/your-org/ex_quantum_flow.svg)](https://travis-ci.org/your-org/ex_quantum_flow)
-[![Coverage Status](https://img.shields.io/coveralls/your-org/ex_quantum_flow.svg)](https://coveralls.io/github/your-org/ex_quantum_flow)
+[![Hex.pm](https://img.shields.io/hexpm/v/quantum_flow.svg)](https://hex.pm/packages/quantum_flow)
+[![Hex.pm](https://img.shields.io/hexpm/dt/quantum_flow.svg)](https://hex.pm/packages/quantum_flow)
+[![Build Status](https://img.shields.io/travis/your-org/quantum_flow.svg)](https://travis-ci.org/your-org/quantum_flow)
+[![Coverage Status](https://img.shields.io/coveralls/your-org/quantum_flow.svg)](https://coveralls.io/github/your-org/quantum_flow)
 
 **Elixir implementation of QuantumFlow's database-driven DAG execution with 100% feature parity.**
 

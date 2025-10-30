@@ -1,6 +1,6 @@
-# Getting Started with ExQuantumFlow
+# Getting Started with QuantumFlow
 
-ExQuantumFlow is an Elixir implementation of [QuantumFlow](https://github.com/quantum_flow-dev/QuantumFlow), a database-driven DAG execution engine. This guide walks you through installation, basic setup, and running your first workflow.
+QuantumFlow is an Elixir implementation of [QuantumFlow](https://github.com/quantum_flow-dev/QuantumFlow), a database-driven DAG execution engine. This guide walks you through installation, basic setup, and running your first workflow.
 
 ## Installation
 
@@ -22,7 +22,7 @@ mix deps.get
 
 ## Database Setup
 
-ExQuantumFlow requires PostgreSQL 14+ with the `pgmq` extension:
+QuantumFlow requires PostgreSQL 14+ with the `pgmq` extension:
 
 ### 1. Create a PostgreSQL Database
 
@@ -30,7 +30,7 @@ ExQuantumFlow requires PostgreSQL 14+ with the `pgmq` extension:
 createdb my_app
 ```
 
-### 2. Add ExQuantumFlow Repository
+### 2. Add QuantumFlow Repository
 
 Configure Ecto in your app to include the QuantumFlow.Repo:
 
@@ -57,7 +57,7 @@ psql my_app -c "CREATE EXTENSION IF NOT EXISTS pgmq"
 ### 4. Run Migrations
 
 ```bash
-# Generate migrations for ExQuantumFlow tables
+# Generate migrations for QuantumFlow tables
 mix ecto.gen.migration init_quantum_flow
 
 # Run all migrations
@@ -155,7 +155,7 @@ IO.inspect(run.status)  # => "completed"
 
 ## DAG Workflows with Dependencies
 
-ExQuantumFlow supports complex DAG workflows with parallel execution and dependency management:
+QuantumFlow supports complex DAG workflows with parallel execution and dependency management:
 
 ```elixir
 defmodule MyApp.Workflows.DataPipeline do
@@ -278,7 +278,7 @@ end
 
 ## Configuration
 
-ExQuantumFlow respects these environment variables:
+QuantumFlow respects these environment variables:
 
 ```bash
 # PostgreSQL connection
@@ -332,7 +332,7 @@ Executor.execute_pending_tasks()
 
 ### Type errors in custom workflows
 
-ExQuantumFlow uses Dialyzer for type checking. Run:
+QuantumFlow uses Dialyzer for type checking. Run:
 
 ```bash
 mix dialyzer

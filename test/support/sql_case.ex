@@ -47,7 +47,9 @@ defmodule QuantumFlow.SqlCase do
 
           {:error, _} ->
             Process.exit(conn, :normal)
-            {:skip, "Database query failed; ensure DATABASE_URL points to a migrated QuantumFlow DB"}
+
+            {:skip,
+             "Database query failed; ensure DATABASE_URL points to a migrated QuantumFlow DB"}
         end
 
       {:error, reason} ->
