@@ -6,6 +6,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Comprehensive HTDAG/Orchestrator Documentation** - Previously undocumented goal-driven workflow features now fully documented:
+  - `docs/HTDAG_ORCHESTRATOR_GUIDE.md` - Complete guide to goal decomposition, optimization, and notifications
+  - Updated README.md with HTDAG features overview
+  - Updated GETTING_STARTED.md with HTDAG examples and patterns
+  - Updated ARCHITECTURE.md with Layer 3 HTDAG documentation
+
+### Documentation
+
+- `docs/HTDAG_ORCHESTRATOR_GUIDE.md` - Complete HTDAG orchestration guide with examples
+- Enhanced README.md with HTDAG feature descriptions
+- Enhanced GETTING_STARTED.md with goal-driven workflow section
+- Enhanced ARCHITECTURE.md with Layer 3 documentation
+
 ## [1.0.1] - 2025-10-27
 
 ### Added

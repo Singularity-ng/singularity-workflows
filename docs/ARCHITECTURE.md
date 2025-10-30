@@ -412,6 +412,203 @@ graph LR
     style Complete fill:#388e3c,color:#fff
 ```
 
+## Layer 3: HTDAG Orchestration (Goal-Driven Workflows)
+
+QuantumFlow includes an optional **Hierarchical Task DAG (HTDAG)** layer for goal-driven workflow composition:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│           Application Layer (Your Code)                  │
+├─────────────────────────────────────────────────────────┤
+│  WorkflowComposer (High-level API)                       │
+│  ┌─────────────────────────────────────────────────────┐
+│  │ compose_from_goal(goal, decomposer, steps, repo)    │
+│  │ compose_from_task_graph(graph, steps, repo)         │
+│  │ compose_multiple_workflows(goals, decomposer, ...)  │
+│  └─────────────────────────────────────────────────────┘
+├─────────────────────────────────────────────────────────┤
+│  Orchestrator (Goal Decomposition)                       │
+│  ┌─────────────────────────────────────────────────────┐
+│  │ decompose_goal/3 → Task Graph (JSON)                │
+│  │ create_workflow/3 → FlowBuilder workflow             │
+│  │ execute_goal/5 → Full decompose + execute           │
+│  └─────────────────────────────────────────────────────┘
+├─────────────────────────────────────────────────────────┤
+│  OrchestratorOptimizer (Learning & Optimization)        │
+│  ┌─────────────────────────────────────────────────────┐
+│  │ optimize_workflow/3 → Apply learned patterns         │
+│  │ :basic/:advanced/:aggressive optimization levels    │
+│  │ Learns from execution metrics for future workflows  │
+│  └─────────────────────────────────────────────────────┘
+├─────────────────────────────────────────────────────────┤
+│  OrchestratorNotifications (Event Broadcasting)         │
+│  ┌─────────────────────────────────────────────────────┐
+│  │ listen/2, unlisten/2 → Subscribe to events          │
+│  │ get_recent_events/3 → Query execution history       │
+│  │ Events: decomposition_*, execution_*, task_*        │
+│  └─────────────────────────────────────────────────────┘
+├─────────────────────────────────────────────────────────┤
+│  Core: DAG Execution (Layers 1-2 above)                 │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Key Components
+
+| Component | Purpose | Input | Output |
+|-----------|---------|-------|--------|
+| **Decomposer Function** | Custom goal → task graph logic | Goal (string) | Task Graph (JSON) |
+| **Orchestrator** | Converts task graphs to executable workflows | Task Graph | QuantumFlow Workflow |
+| **OrchestratorOptimizer** | Learns from execution patterns | Workflow + Metrics | Optimized Workflow |
+| **WorkflowComposer** | Unified high-level API | Goal + Decomposer + Steps | Execution Result |
+
+### Data Flow: Goal to Execution
+
+```
+1. User provides goal string
+   ↓
+2. Decomposer function (custom logic) breaks goal into tasks
+   ↓
+3. Orchestrator creates task graph with dependencies
+   ↓
+4. FlowBuilder converts task graph to quantum_flow workflow
+   ↓
+5. OrchestratorOptimizer applies learned optimizations
+   ↓
+6. Executor runs optimized workflow with parallel task execution
+   ↓
+7. OrchestratorNotifications broadcasts real-time events
+   ↓
+8. Metrics stored for learning and future optimizations
+```
+
+### Design Patterns
+
+#### Pattern 1: Stateless Decomposer
+
+```elixir
+defmodule MyApp.RuleBasedDecomposer do
+  def decompose(goal) do
+    cond do
+      String.contains?(goal, "auth") -> {:ok, auth_tasks()}
+      String.contains?(goal, "payment") -> {:ok, payment_tasks()}
+      true -> {:error, :unknown_goal_type}
+    end
+  end
+end
+```
+
+**Pros**: Simple, fast, deterministic
+**Cons**: No learning, limited flexibility
+
+#### Pattern 2: LLM-Based Decomposer
+
+```elixir
+defmodule MyApp.LLMDecomposer do
+  def decompose(goal) do
+    {:ok, response} = ExLLM.chat(:claude, [
+      %{role: "user", content: "Break down: #{goal}"}
+    ])
+    {:ok, parse_task_graph(response.content)}
+  end
+end
+```
+
+**Pros**: Flexible, learns domain knowledge
+**Cons**: Non-deterministic, requires LLM API
+
+#### Pattern 3: Hybrid Decomposer
+
+```elixir
+defmodule MyApp.HybridDecomposer do
+  def decompose(goal) do
+    if known_pattern?(goal) do
+      get_cached_decomposition(goal)
+    else
+      MyApp.LLMDecomposer.decompose(goal)
+    end
+  end
+end
+```
+
+**Pros**: Best of both worlds
+**Cons**: More complex
+
+### Optimization Learning System
+
+OrchestratorOptimizer learns from execution patterns:
+
+```
+Execute Workflow #1
+  ↓
+Track execution metrics (timing, success rate, resource use)
+  ↓
+Store patterns in database
+  ↓
+Execute Workflow #2
+  ↓
+Apply patterns from Workflow #1 if confidence > threshold
+  ↓
+Compare results → feedback loop
+  ↓
+Workflow #3 uses combined learnings from #1 and #2
+```
+
+**Three optimization levels:**
+
+- **:basic** - Simple timeout adjustments, basic retry logic
+- **:advanced** - Dynamic parallelization, intelligent retries, resource allocation
+- **:aggressive** - Complete restructuring, ML-based optimization (needs 100+ executions)
+
+### Integration with Core Layers
+
+HTDAG layer sits above the core execution layers:
+
+```
+HTDAG Layer
+  ↓ calls FlowBuilder.create_flow/2
+  ↓
+Dynamic Workflows (Layer 2)
+  ↓ calls Executor.execute_dynamic/5
+  ↓
+DAG Execution (Layers 1-2 above)
+  ↓
+Database + pgmq (Foundation)
+```
+
+This design allows:
+- ✅ Use core DAG execution alone (without HTDAG)
+- ✅ Use HTDAG for goal-driven workflows
+- ✅ Mix both approaches in same application
+- ✅ Start simple, add HTDAG complexity as needed
+
+### Configuration
+
+All HTDAG behavior is configurable in `config.exs`:
+
+```elixir
+config :quantum_flow,
+  orchestrator: %{
+    # Decomposition settings
+    max_depth: 10,
+    timeout: 60_000,
+
+    # Optimization
+    optimization: %{
+      enabled: true,
+      level: :advanced,
+      preserve_structure: true
+    },
+
+    # Notifications
+    notifications: %{
+      enabled: true,
+      real_time: true
+    }
+  }
+```
+
+See [HTDAG_ORCHESTRATOR_GUIDE.md](./HTDAG_ORCHESTRATOR_GUIDE.md) for complete configuration reference.
+
 ## Key Design Decisions
 
 ### 1. Database-First Architecture
