@@ -41,9 +41,11 @@ defmodule QuantumFlow.MessagingTest do
 
   describe "module structure" do
     test "has comprehensive module documentation" do
-      docs = Code.get_docs(QuantumFlow.Messaging, :moduledoc)
+      {:ok, docs} = Code.fetch_docs(QuantumFlow.Messaging)
       assert docs != nil
-      {_, doc_content} = docs
+      {_, _, _, _, mod_docs, _, _} = docs
+      doc_content = mod_docs["en"]
+      assert doc_content != nil
       assert String.contains?(doc_content, "Messaging")
       assert String.contains?(doc_content, "PGMQ")
     end

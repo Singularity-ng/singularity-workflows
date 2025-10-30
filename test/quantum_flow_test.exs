@@ -46,9 +46,11 @@ defmodule QuantumFlowTest do
     end
 
     test "has comprehensive module documentation" do
-      docs = Code.get_docs(QuantumFlow, :moduledoc)
+      {:ok, docs} = Code.fetch_docs(QuantumFlow)
       assert docs != nil
-      {_, doc_content} = docs
+      {_, _, _, _, mod_docs, _, _} = docs
+      doc_content = mod_docs["en"]
+      assert doc_content != nil
       assert String.contains?(doc_content, "QuantumFlow")
       assert String.contains?(doc_content, "workflow orchestration")
       assert String.contains?(doc_content, "PGMQ")

@@ -146,11 +146,19 @@ defmodule QuantumFlow.DAG.WorkflowDefinitionTest do
     test "handles multiple dependencies" do
       {:ok, definition} = WorkflowDefinition.parse(ParallelDAGWorkflow)
 
-      # Save depends on both analyze and summarize
+      # Focused assertions for critical properties
       deps = definition.dependencies[:save]
       assert :analyze in deps
       assert :summarize in deps
       assert length(deps) == 2
+
+      # Snapshot for complete DAG structure regression detection
+      snapshot_data = %{
+        steps: Map.keys(definition.steps),
+        root_steps: definition.root_steps,
+        dependencies: definition.dependencies
+      }
+      QuantumFlow.Test.Snapshot.assert_snapshot(snapshot_data, "workflow_definition_parallel_dag")
     end
   end
 

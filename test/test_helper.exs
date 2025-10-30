@@ -7,6 +7,7 @@ Application.put_all_env(test_config)
 # Load support helpers
 Code.require_file("support/mox_helper.ex", __DIR__)
 Code.require_file("support/sql_case.ex", __DIR__)
+Code.require_file("support/snapshot.ex", __DIR__)
 
 # Start Ecto Repo for integration tests unless explicitly skipped
 if System.get_env("QUANTUM_FLOW_SKIP_DB") != "1" do

@@ -35,6 +35,9 @@ defmodule QuantumFlow.MixProject do
       # Development and testing
       {:mox, "~> 1.2", only: :test},
 
+      # pgmq client
+      {:pgmq, "~> 0.4"},
+
       # Code quality and security (dev only)
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},

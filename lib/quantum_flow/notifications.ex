@@ -55,6 +55,8 @@ defmodule QuantumFlow.Notifications do
 
   @behaviour QuantumFlow.Notifications.Behaviour
   require Logger
+  alias Pgmq
+  alias Pgmq.Message
 
   @doc """
   Send a message via PGMQ with PostgreSQL NOTIFY for real-time delivery.
@@ -282,23 +284,25 @@ defmodule QuantumFlow.Notifications do
   defp do_send(queue_name, json_message, repo, attempts \\ 0)
 
   defp do_send(queue_name, json_message, repo, attempts) when attempts < 2 do
-    case repo.query("SELECT pgmq.send($1, $2::jsonb)", [queue_name, json_message]) do
-      {:ok, %{rows: [[msg_id]]}} ->
-        {:ok, msg_id}
+    try do
+      case Pgmq.send_message(repo, queue_name, json_message) do
+        {:ok, msg_id} ->
+          {:ok, msg_id}
 
-      {:ok, result} ->
-        Logger.error("pgmq.send returned unexpected result",
-          queue: queue_name,
-          result: inspect(result)
-        )
+        {:error, reason} ->
+          Logger.error("pgmq.send returned error",
+            queue: queue_name,
+            error: inspect(reason)
+          )
 
-        {:error, :unexpected_result}
-
-      {:error, %Postgrex.Error{} = error} ->
-        if queue_missing?(error) do
-          case ensure_queue(queue_name, repo) do
-            :ok -> do_send(queue_name, json_message, repo, attempts + 1)
-            {:error, reason} -> {:error, reason}
+          {:error, reason}
+      end
+      rescue
+        error in Postgrex.Error ->
+          if queue_missing?(error) do
+            case ensure_queue(queue_name, repo) do
+              :ok -> do_send(queue_name, json_message, repo, attempts + 1)
+              {:error, reason} -> {:error, reason}
           end
         else
           Logger.error("pgmq.send failed",
@@ -308,14 +312,6 @@ defmodule QuantumFlow.Notifications do
 
           {:error, error}
         end
-
-      {:error, reason} ->
-        Logger.error("pgmq.send failed",
-          queue: queue_name,
-          error: inspect(reason)
-        )
-
-        {:error, reason}
     end
   end
 
@@ -325,25 +321,22 @@ defmodule QuantumFlow.Notifications do
   end
 
   defp ensure_queue(queue_name, repo) do
-    case repo.query("SELECT pgmq.create($1)", [queue_name]) do
-      {:ok, _} ->
+    try do
+      :ok = Pgmq.create_queue(repo, queue_name)
+    rescue
+      %Postgrex.Error{postgres: %{code: :duplicate_table}} ->
         :ok
 
-      {:error, %Postgrex.Error{} = error} ->
+      %Postgrex.Error{postgres: %{code: :duplicate_object}} ->
+        :ok
+
+      %Postgrex.Error{} = error ->
         Logger.error("pgmq.create failed",
           queue: queue_name,
           error: format_postgrex_error(error)
         )
 
         {:error, error}
-
-      {:error, reason} ->
-        Logger.error("pgmq.create failed",
-          queue: queue_name,
-          error: inspect(reason)
-        )
-
-        {:error, reason}
     end
   end
 
@@ -407,8 +400,8 @@ defmodule QuantumFlow.Notifications do
   end
 
   defp do_wait_for_reply(queue, repo, deadline, poll_interval) do
-    case repo.query("SELECT msg_id, msg FROM pgmq.read($1, NULL, 1)", [queue]) do
-      {:ok, %{rows: []}} ->
+    case pop_reply_message(queue, repo) do
+      {:ok, nil} ->
         if System.monotonic_time(:millisecond) >= deadline do
           {:error, :timeout}
         else
@@ -416,37 +409,29 @@ defmodule QuantumFlow.Notifications do
           do_wait_for_reply(queue, repo, deadline, poll_interval)
         end
 
-      {:ok, %{rows: [[msg_id, payload]]}} ->
-        handle_reply_payload(queue, repo, msg_id, payload)
-
-      {:ok, %{rows: [%{"msg_id" => msg_id, "msg" => payload}]}} ->
-        handle_reply_payload(queue, repo, msg_id, payload)
-
-      {:ok, %{rows: [%{"msg_id" => msg_id, "msg_body" => payload}]}} ->
-        handle_reply_payload(queue, repo, msg_id, payload)
-
-      {:ok, %{rows: [%{msg_id: msg_id, msg: payload}]}} ->
-        handle_reply_payload(queue, repo, msg_id, payload)
-
-      {:ok, %{rows: [%{msg_id: msg_id, msg_body: payload}]}} ->
-        handle_reply_payload(queue, repo, msg_id, payload)
-
-      {:ok, %{rows: [row | _]}} ->
-        handle_reply_payload(queue, repo, extract_msg_id(row), extract_msg_body(row))
+      {:ok, %Message{body: payload}} ->
+        decode_message_payload(payload)
 
       {:error, reason} ->
         {:error, reason}
     end
   end
 
-  defp handle_reply_payload(_queue, _repo, nil, _payload), do: {:error, :invalid_message}
+  defp pop_reply_message(queue, repo) do
+    try do
+      {:ok, Pgmq.pop_message(repo, queue)}
+    rescue
+      %Postgrex.Error{} = error ->
+        Logger.error("pgmq.pop failed", queue: queue, error: format_postgrex_error(error))
+        {:error, error}
 
-  defp handle_reply_payload(queue, repo, msg_id, payload) do
-    with {:ok, decoded} <- decode_message_payload(payload),
-         :ok <- acknowledge_message(queue, msg_id, repo) do
-      {:ok, decoded}
-    else
-      {:error, reason} -> {:error, reason}
+      error ->
+        Logger.error("Unexpected error while popping reply message",
+          queue: queue,
+          error: inspect(error)
+        )
+
+        {:error, error}
     end
   end
 
@@ -464,67 +449,25 @@ defmodule QuantumFlow.Notifications do
   defp decode_message_payload(%{} = msg), do: {:ok, msg}
   defp decode_message_payload(other), do: {:ok, other}
 
-  defp acknowledge_message(queue, msg_id, repo) do
-    normalized_id = normalize_msg_id(msg_id)
-
-    case repo.query("SELECT pgmq.delete($1, $2)", [queue, normalized_id]) do
-      {:ok, _} ->
-        :ok
-
-      {:error, reason} ->
-        Logger.warning("Failed to acknowledge pgmq message",
-          queue: queue,
-          message_id: normalized_id,
-          error: inspect(reason)
-        )
-
-        {:error, reason}
-    end
-  end
-
-  defp normalize_msg_id(id) when is_integer(id), do: id
-
-  defp normalize_msg_id(id) when is_binary(id) do
-    case Integer.parse(id) do
-      {int, _} -> int
-      :error -> raise ArgumentError, "Unable to parse msg_id #{inspect(id)}"
-    end
-  end
-
-  defp normalize_msg_id(id) when is_float(id), do: trunc(id)
-  defp normalize_msg_id(id), do: id
-
   defp cleanup_reply_queue(false, _queue, _repo), do: :ok
 
   defp cleanup_reply_queue(true, queue, repo) do
-    case repo.query("SELECT pgmq.drop_queue($1)", [queue]) do
-      {:ok, _} ->
+    try do
+      :ok = Pgmq.drop_queue(repo, queue)
+    rescue
+      %Postgrex.Error{postgres: %{code: :undefined_table}} ->
         :ok
 
-      {:error, %Postgrex.Error{postgres: %{code: :undefined_table}}} ->
+      %Postgrex.Error{postgres: %{code: :undefined_object}} ->
         :ok
 
-      {:error, reason} ->
+      %Postgrex.Error{} = error ->
         Logger.warning("Failed to drop reply queue",
           queue: queue,
-          error: inspect(reason)
+          error: format_postgrex_error(error)
         )
 
         :ok
     end
   end
-
-  defp extract_msg_id(%{"msg_id" => msg_id}), do: msg_id
-  defp extract_msg_id(%{msg_id: msg_id}), do: msg_id
-
-  defp extract_msg_id(other) do
-    Logger.warning("Unable to extract msg_id from reply row", row: inspect(other))
-    nil
-  end
-
-  defp extract_msg_body(%{"msg" => msg}), do: msg
-  defp extract_msg_body(%{"msg_body" => msg}), do: msg
-  defp extract_msg_body(%{msg: msg}), do: msg
-  defp extract_msg_body(%{msg_body: msg}), do: msg
-  defp extract_msg_body(_), do: nil
 end

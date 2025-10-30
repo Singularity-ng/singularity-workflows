@@ -22,12 +22,16 @@ defmodule QuantumFlow.OrchestratorTest do
 
       {:ok, task_graph} = Orchestrator.decompose_goal("Build auth system", decomposer)
 
+      # Focused assertions for critical properties
       assert %{tasks: tasks, root_tasks: root_tasks} = task_graph
       assert map_size(tasks) == 3
       assert length(root_tasks) == 1
       assert tasks["task1"].description == "Analyze requirements"
       assert tasks["task2"].depends_on == ["task1"]
       assert tasks["task3"].depends_on == ["task2"]
+
+      # Snapshot for complete structure regression detection
+      QuantumFlow.Test.Snapshot.assert_snapshot(task_graph, "orchestrator_decompose_goal_linear")
     end
 
     test "handles decomposer errors" do
