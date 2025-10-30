@@ -62,12 +62,7 @@ mix test  # 336/413 passing (82%)
 - `QuantumFlow.create_flow()` - Parser ambiguity in RETURNS TABLE
 - `QuantumFlow.add_step()` - Same parser ambiguity issue
 - Workaround not available (parser-level issue in PostgreSQL 17)
-
-**Investigation**: See [POSTGRESQL_BUG_REPORT.md](POSTGRESQL_BUG_REPORT.md) for:
-- Detailed root cause analysis
-- 11 attempted workarounds (all failed)
-- Evidence this is a PostgreSQL 17 regression
-- Comprehensive bug report ready for PostgreSQL team
+- This is a PostgreSQL regression in v17 affecting table functions
 
 ### PostgreSQL 18: ✅ Fully Supported
 ```bash
@@ -375,12 +370,9 @@ mix test --trace --verbose
 **Options**:
 1. Use PostgreSQL 16 or 18 for full test coverage
 2. Use `mix test --exclude flow_builder_test` on PostgreSQL 17
-3. Monitor PostgreSQL releases for fix ([POSTGRESQL_BUG_REPORT.md](POSTGRESQL_BUG_REPORT.md))
 
 ## Documentation References
 
-- **[INVESTIGATION_SUMMARY.md](INVESTIGATION_SUMMARY.md)** - Complete test investigation results
-- **[POSTGRESQL_BUG_REPORT.md](POSTGRESQL_BUG_REPORT.md)** - PostgreSQL 17 issue documentation
-- **[WORK_COMPLETED_STATUS.md](WORK_COMPLETED_STATUS.md)** - Recent work and fixes
 - **[GETTING_STARTED.md](GETTING_STARTED.md)** - Setup instructions
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - Technical design
+- **[DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)** - Production deployment

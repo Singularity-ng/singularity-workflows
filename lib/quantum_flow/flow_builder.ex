@@ -87,8 +87,8 @@ defmodule QuantumFlow.FlowBuilder do
         timeout: 120
       )
   """
-  @spec create_flow(String.t(), keyword()) :: {:ok, map()} | {:error, term()}
-  def create_flow(workflow_slug, opts \\ []) do
+  @spec create_flow(String.t(), module(), keyword()) :: {:ok, map()} | {:error, term()}
+  def create_flow(workflow_slug, _repo, opts \\ []) do
     # Validate inputs
     with :ok <- validate_workflow_slug(workflow_slug),
          :ok <- validate_max_attempts(opts),
@@ -141,9 +141,9 @@ defmodule QuantumFlow.FlowBuilder do
       # Multiple dependencies
       {:ok, _} = FlowBuilder.add_step("my_workflow", "merge", ["process_a", "process_b"])
   """
-  @spec add_step(String.t(), String.t(), [String.t()], keyword()) ::
+  @spec add_step(String.t(), String.t(), [String.t()], module(), keyword()) ::
           {:ok, map()} | {:error, term()}
-  def add_step(workflow_slug, step_slug, depends_on, opts \\ []) do
+  def add_step(workflow_slug, step_slug, depends_on, _repo, opts \\ []) do
     # Validate inputs
     with :ok <- validate_workflow_slug(workflow_slug),
          :ok <- validate_step_slug(step_slug),

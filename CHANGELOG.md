@@ -56,9 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GETTING_STARTED.md` - Installation and first workflow tutorial
 - `ARCHITECTURE.md` - Technical deep dive into internal design
 - `CONTRIBUTING.md` - Development guidelines and workflow
-- `docs/PGFLOW_REFERENCE.md` - Complete API reference
+- `docs/QUANTUM_FLOW_REFERENCE.md` - Complete API reference
 - `docs/DYNAMIC_WORKFLOWS_GUIDE.md` - Advanced workflow patterns
-- `docs/PGFLOW_DEV_FEATURE_COMPARISON.md` - Detailed comparison with original QuantumFlow
 - `docs/SECURITY_AUDIT.md` - Security analysis and best practices
 
 ### Development Tools
