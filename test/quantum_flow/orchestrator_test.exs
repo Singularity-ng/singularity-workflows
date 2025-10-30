@@ -3,9 +3,11 @@ defmodule QuantumFlow.OrchestratorTest do
 
   alias QuantumFlow.Orchestrator
 
-  import Mox
-
-  setup :verify_on_exit!
+  setup do
+    QuantumFlow.Test.MoxHelper.setup_mox()
+    Mox.set_mox_global()
+    :ok
+  end
 
   describe "decompose_goal/3" do
     test "decomposes goal successfully" do

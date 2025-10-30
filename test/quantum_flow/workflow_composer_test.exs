@@ -3,9 +3,11 @@ defmodule QuantumFlow.WorkflowComposerTest do
 
   alias QuantumFlow.WorkflowComposer
 
-  import Mox
-
-  setup :verify_on_exit!
+  setup do
+    QuantumFlow.Test.MoxHelper.setup_mox()
+    Mox.set_mox_global()
+    :ok
+  end
 
   describe "compose_from_goal/5" do
     test "composes and executes workflow successfully" do

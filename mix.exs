@@ -5,7 +5,7 @@ defmodule QuantumFlow.MixProject do
     [
       app: :quantum_flow,
       version: "1.0.2",
-      elixir: "~> 1.19",
+      elixir: ">= 1.19.0-rc.0",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       docs: docs(),

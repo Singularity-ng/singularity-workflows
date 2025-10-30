@@ -1,14 +1,12 @@
 defmodule QuantumFlow.OrchestratorNotificationsTest do
   use ExUnit.Case, async: true
-  import Mox
 
   alias QuantumFlow.OrchestratorNotifications
 
-  setup :set_mox_global
-  setup :verify_on_exit!
-
   setup do
+    QuantumFlow.Test.MoxHelper.setup_mox()
     Application.put_env(:quantum_flow, :notifications_impl, QuantumFlow.Notifications.Mock)
+    Mox.set_mox_global()
     :ok
   end
 

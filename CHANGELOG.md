@@ -62,9 +62,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Configurable via environment variables:
   - `DATABASE_URL` - PostgreSQL connection
-  - `PGFLOW_QUEUE_NAME` - pgmq queue name (default: "quantum_flow_queue")
-  - `PGFLOW_VT` - Visibility timeout in seconds (default: 300)
-  - `PGFLOW_MAX_WORKERS` - Max concurrent task executions (default: 10)
+  - `QUANTUM_FLOW_QUEUE_NAME` - pgmq queue name (default: "quantum_flow_queue")
+  - `QUANTUM_FLOW_VT` - Visibility timeout in seconds (default: 300)
+  - `QUANTUM_FLOW_MAX_WORKERS` - Max concurrent task executions (default: 10)
 
 ### Documentation
 

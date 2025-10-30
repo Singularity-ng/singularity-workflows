@@ -1,12 +1,14 @@
-if System.get_env("PGFLOW_SKIP_DB") != "1" do
+if System.get_env("QUANTUM_FLOW_SKIP_DB") != "1" do
   defmodule QuantumFlow.Orchestrator.ExecutorTest do
     use ExUnit.Case, async: true
 
     alias QuantumFlow.Orchestrator.Executor
 
-    import Mox
-
-    setup :verify_on_exit!
+    setup do
+      QuantumFlow.Test.MoxHelper.setup_mox()
+      Mox.set_mox_global()
+      :ok
+    end
 
     describe "execute_workflow/4" do
       test "executes workflow successfully with monitoring" do

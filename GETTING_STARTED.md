@@ -401,13 +401,13 @@ QuantumFlow respects these environment variables:
 DATABASE_URL=postgres://user:pass@localhost:5432/my_app
 
 # PGMQ queue name (default: quantum_flow_queue)
-PGFLOW_QUEUE_NAME=my_queue
+QUANTUM_FLOW_QUEUE_NAME=my_queue
 
 # Visibility timeout for in-flight tasks (default: 300s = 5 min)
-PGFLOW_VT=300
+QUANTUM_FLOW_VT=300
 
 # Max concurrent task executions (default: 10)
-PGFLOW_MAX_WORKERS=10
+QUANTUM_FLOW_MAX_WORKERS=10
 ```
 
 ## Troubleshooting
