@@ -276,6 +276,122 @@ defmodule MyApp.Workflows.ProcessItems do
 end
 ```
 
+## Goal-Driven Workflows with HTDAG
+
+Want workflows that understand **goals** instead of explicit tasks? Use HTDAG (Hierarchical Task DAG) for automatic workflow decomposition.
+
+### Define a Goal Decomposer
+
+```elixir
+defmodule MyApp.SimpleDecomposer do
+  def decompose(goal) do
+    # Break goal into steps (could use rules, LLM, or both)
+    tasks = [
+      %{id: "analyze", description: "Analyze: #{goal}", depends_on: []},
+      %{id: "plan", description: "Plan solution", depends_on: ["analyze"]},
+      %{id: "execute", description: "Execute plan", depends_on: ["plan"]},
+      %{id: "verify", description: "Verify result", depends_on: ["execute"]}
+    ]
+    {:ok, tasks}
+  end
+end
+```
+
+### Define Step Functions
+
+```elixir
+step_functions = %{
+  "analyze" => fn input ->
+    analysis = "Analysis of #{input.goal} complete"
+    {:ok, %{analysis: analysis}}
+  end,
+  "plan" => fn input ->
+    plan = "Plan based on: #{input.analysis}"
+    {:ok, %{plan: plan}}
+  end,
+  "execute" => fn input ->
+    result = "Executed: #{input.plan}"
+    {:ok, %{result: result}}
+  end,
+  "verify" => fn input ->
+    {:ok, %{verified: true, final_result: input.result}}
+  end
+}
+```
+
+### Execute Goal-Driven Workflow
+
+```elixir
+{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+  "Build a user authentication system",
+  &MyApp.SimpleDecomposer.decompose/1,
+  step_functions,
+  MyApp.Repo,
+  optimization_level: :basic  # Start safe, can increase later
+)
+
+IO.inspect(result)
+# => %{verified: true, final_result: "Executed: Plan..."}
+```
+
+### Optimization Levels
+
+```elixir
+# :basic - Safe, conservative optimizations
+{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+  goal,
+  &decomposer/1,
+  steps,
+  repo,
+  optimization_level: :basic
+)
+
+# :advanced - Intelligent optimizations based on historical data
+{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+  goal,
+  &decomposer/1,
+  steps,
+  repo,
+  optimization_level: :advanced,
+  monitoring: true
+)
+
+# :aggressive - Maximum optimization (requires 100+ executions)
+{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+  goal,
+  &decomposer/1,
+  steps,
+  repo,
+  optimization_level: :aggressive
+)
+```
+
+### Multi-Workflow Composition
+
+Execute multiple goals in parallel:
+
+```elixir
+goals = [
+  "Build authentication service",
+  "Build payment service",
+  "Build notification service"
+]
+
+{:ok, results} = QuantumFlow.WorkflowComposer.compose_multiple_workflows(
+  goals,
+  &MyApp.ServiceDecomposer.decompose/1,
+  %{
+    "auth" => auth_step_functions,
+    "payment" => payment_step_functions,
+    "notification" => notification_step_functions
+  },
+  MyApp.Repo,
+  parallel: true  # Execute all three in parallel
+)
+```
+
+For the complete guide, see [HTDAG_ORCHESTRATOR_GUIDE.md](docs/HTDAG_ORCHESTRATOR_GUIDE.md).
+
 ## Configuration
 
 QuantumFlow respects these environment variables:

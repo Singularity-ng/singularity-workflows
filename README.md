@@ -19,6 +19,8 @@ QuantumFlow provides reliable, scalable workflow execution using PostgreSQL + pg
 - ✅ **Static & Dynamic Workflows** - Code-based and runtime-generated workflows
 - ✅ **Map Steps** - Variable task counts for bulk processing
 - ✅ **Dependency Merging** - Steps receive outputs from all dependencies
+- ✅ **HTDAG Orchestration** - Goal-driven workflow decomposition (hierarchical task DAGs)
+- ✅ **Workflow Optimization** - Learn from execution patterns to optimize future workflows
 - ✅ **100% Feature Parity** - Matches QuantumFlow (TypeScript) architecture
 
 ## 📋 Table of Contents
@@ -27,6 +29,7 @@ QuantumFlow provides reliable, scalable workflow execution using PostgreSQL + pg
 - [Architecture](#architecture)
 - [Real-time Notifications](#real-time-notifications)
 - [Workflow Types](#workflow-types)
+- [HTDAG Orchestration](#htdag-orchestration)
 - [API Reference](#api-reference)
 - [Examples](#examples)
 - [Testing](#testing)
@@ -306,6 +309,61 @@ end
 items = Enum.map(1..5, &%{item_id: &1})
 {:ok, results} = QuantumFlow.Executor.execute(BulkProcessingWorkflow, %{items: items}, MyApp.Repo)
 ```
+
+## 🎯 HTDAG Orchestration
+
+QuantumFlow includes Hierarchical Task DAG (HTDAG) support for **goal-driven workflow decomposition**. Convert high-level goals into executable workflows automatically.
+
+### Quick Example
+
+```elixir
+# Define a goal decomposer
+defmodule MyApp.GoalDecomposer do
+  def decompose("Build authentication system") do
+    {:ok, [
+      %{id: "design", description: "Design auth flow", depends_on: []},
+      %{id: "implement", description: "Implement", depends_on: ["design"]},
+      %{id: "test", description: "Test", depends_on: ["implement"]}
+    ]}
+  end
+end
+
+# Define step functions
+step_functions = %{
+  "design" => &MyApp.Tasks.design_auth/1,
+  "implement" => &MyApp.Tasks.implement_auth/1,
+  "test" => &MyApp.Tasks.test_auth/1
+}
+
+# Execute goal-driven workflow
+{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+  "Build authentication system",
+  &MyApp.GoalDecomposer.decompose/1,
+  step_functions,
+  MyApp.Repo,
+  optimization_level: :advanced,
+  monitoring: true
+)
+```
+
+### Key Features
+
+- **Automatic Decomposition**: Convert goals to task graphs
+- **Optimization**: Learn from execution patterns to optimize future workflows
+- **Three Optimization Levels**: `:basic` (safe) → `:advanced` (smart) → `:aggressive` (ML-based)
+- **Real-time Monitoring**: Event-driven notifications during execution
+- **Multi-Workflow Composition**: Execute multiple goals in parallel
+
+### Components
+
+| Module | Purpose |
+|--------|---------|
+| `QuantumFlow.Orchestrator` | Goal decomposition engine |
+| `QuantumFlow.WorkflowComposer` | High-level composition API |
+| `QuantumFlow.OrchestratorOptimizer` | Optimization engine with learning |
+| `QuantumFlow.OrchestratorNotifications` | Real-time event broadcasting |
+
+For detailed guide, see [HTDAG_ORCHESTRATOR_GUIDE.md](docs/HTDAG_ORCHESTRATOR_GUIDE.md).
 
 ## 📚 API Reference
 
