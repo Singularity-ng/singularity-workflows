@@ -340,10 +340,10 @@ mix dialyzer
 
 ## Next Steps
 
-- Read [ARCHITECTURE.md](ARCHITECTURE.md) for internal design details
-- Check [DYNAMIC_WORKFLOWS_GUIDE.md](DYNAMIC_WORKFLOWS_GUIDE.md) for advanced patterns
-- See [PGFLOW_REFERENCE.md](PGFLOW_REFERENCE.md) for complete API documentation
-- Review [SECURITY_AUDIT.md](SECURITY_AUDIT.md) for security considerations
+- Read [ARCHITECTURE.md](docs/ARCHITECTURE.md) for internal design details
+- Check [DYNAMIC_WORKFLOWS_GUIDE.md](docs/DYNAMIC_WORKFLOWS_GUIDE.md) for advanced patterns
+- See [QUANTUM_FLOW_REFERENCE.md](docs/QUANTUM_FLOW_REFERENCE.md) for complete API documentation
+- Review [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) for security considerations
 
 ## Contributing
 
@@ -351,4 +351,4 @@ Found a bug? Have a feature request? See [CONTRIBUTING.md](CONTRIBUTING.md) for 
 
 ## License
 
-MIT - See [LICENSE](LICENSE) for details.
+MIT - See [LICENSE.md](LICENSE.md) for details.

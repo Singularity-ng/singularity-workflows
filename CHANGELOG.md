@@ -54,11 +54,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 
 - `GETTING_STARTED.md` - Installation and first workflow tutorial
-- `ARCHITECTURE.md` - Technical deep dive into internal design
+- `docs/ARCHITECTURE.md` - Technical deep dive into internal design
 - `CONTRIBUTING.md` - Development guidelines and workflow
-- `QUANTUM_FLOW_REFERENCE.md` - Complete API reference
-- `DYNAMIC_WORKFLOWS_GUIDE.md` - Advanced workflow patterns
-- `SECURITY_AUDIT.md` - Security analysis and best practices
+- `docs/QUANTUM_FLOW_REFERENCE.md` - Complete API reference
+- `docs/DYNAMIC_WORKFLOWS_GUIDE.md` - Advanced workflow patterns
+- `docs/SECURITY_AUDIT.md` - Security analysis and best practices
 
 ### Development Tools
 

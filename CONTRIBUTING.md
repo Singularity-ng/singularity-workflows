@@ -205,7 +205,7 @@ quantum_flow/
 │   └── support/
 │       └── sql_case.ex      # Test helpers
 ├── CHANGELOG.md             # Version history
-├── ARCHITECTURE.md          # Technical deep dive
+├── docs/ARCHITECTURE.md     # Technical deep dive
 ├── GETTING_STARTED.md       # User guide
 ├── CONTRIBUTING.md          # This file
 └── mix.exs                  # Project definition
@@ -345,7 +345,7 @@ Only maintainers can publish releases:
 ## Questions?
 
 - **General questions**: Check [GETTING_STARTED.md](GETTING_STARTED.md)
-- **Architecture questions**: See [ARCHITECTURE.md](ARCHITECTURE.md)
+- **Architecture questions**: See [ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - **Issue or PR**: Open a GitHub issue
 
 Thank you for contributing to QuantumFlow!
