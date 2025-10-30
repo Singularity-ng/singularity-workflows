@@ -395,7 +395,9 @@ defmodule QuantumFlow.OrchestratorOptimizer do
 
   defp apply_basic_optimizations(workflow, performance_data, opts) do
     # Basic optimizations: adjust timeouts, add retry logic, simple reordering
-    timeout_multiplier = Keyword.get(opts, :timeout_multiplier, 1.2)
+    config = QuantumFlow.Orchestrator.Config.get(:optimization)
+    timeout_multiplier = Keyword.get(opts, :timeout_multiplier, config.timeout_multiplier_basic)
+    retry_thresholds = Map.get(config, :retry_thresholds, default_retry_thresholds())
 
     optimized_steps =
       workflow.steps
@@ -406,14 +408,9 @@ defmodule QuantumFlow.OrchestratorOptimizer do
         avg_time = Map.get(performance_data.avg_execution_times, step_id, 30_000)
         optimal_timeout = round(avg_time * timeout_multiplier)
 
-        # Add retry logic for frequently failing steps
+        # Add retry logic for frequently failing steps using config thresholds
         success_rate = Map.get(performance_data.success_rates, step_id, 100.0)
-        retry_count = cond do
-          success_rate < 50.0 -> 5  # Very unreliable, more retries
-          success_rate < 80.0 -> 3  # Somewhat unreliable
-          success_rate < 95.0 -> 2  # Mostly reliable
-          true -> 1                  # Very reliable
-        end
+        retry_count = determine_retry_count(success_rate, retry_thresholds)
 
         step
         |> Map.put(:timeout, optimal_timeout)
@@ -427,7 +424,8 @@ defmodule QuantumFlow.OrchestratorOptimizer do
 
   defp apply_advanced_optimizations(workflow, performance_data, opts) do
     # Advanced optimizations: parallelization, resource allocation, intelligent grouping
-    max_parallel = Keyword.get(opts, :max_parallel, 10)
+    config = QuantumFlow.Orchestrator.Config.get(:optimization)
+    max_parallel = Keyword.get(opts, :max_parallel, config.max_parallel)
 
     optimized_steps =
       workflow.steps
@@ -533,28 +531,34 @@ defmodule QuantumFlow.OrchestratorOptimizer do
   end
 
   defp group_similar_steps(steps, performance_data) do
-    # Group steps with similar execution characteristics
+    # Group steps with similar execution characteristics using config brackets
+    config = QuantumFlow.Orchestrator.Config.get(:optimization)
+    brackets = Map.get(config, :execution_time_brackets, default_execution_brackets())
+
     steps
     |> Enum.group_by(fn step ->
       step_id = Map.get(step, :id) || Map.get(step, :name)
       avg_time = Map.get(performance_data.avg_execution_times, step_id, 0)
 
-      # Group by execution time brackets
+      # Group by execution time brackets from config
       cond do
-        avg_time < 1000 -> :fast
-        avg_time < 10_000 -> :medium
+        avg_time < brackets.fast -> :fast
+        avg_time < brackets.medium -> :medium
         true -> :slow
       end
     end)
   end
 
   defp merge_compatible_steps(grouped_steps) do
-    # Merge steps that can be batched together
+    # Merge steps that can be batched together using config batch size
+    config = QuantumFlow.Orchestrator.Config.get(:optimization)
+    batch_size = Map.get(config, :batch_size, 3)
+
     Enum.flat_map(grouped_steps, fn {_speed, steps} ->
-      if length(steps) > 3 do
+      if length(steps) > batch_size do
         # Batch small steps together
         steps
-        |> Enum.chunk_every(3)
+        |> Enum.chunk_every(batch_size)
         |> Enum.map(fn chunk ->
           %{
             id: "batch_#{:erlang.unique_integer([:positive])}",
@@ -578,33 +582,43 @@ defmodule QuantumFlow.OrchestratorOptimizer do
   end
 
   defp restructure_for_maximum_parallelism(steps) do
-    # Restructure to maximize parallel execution
+    # Restructure to maximize parallel execution using config parallel tracks
+    config = QuantumFlow.Orchestrator.Config.get(:optimization)
+    parallel_tracks = Map.get(config, :parallel_tracks, 5)
+
     steps
     |> Enum.sort_by(&Map.get(&1, :id))
     |> Enum.with_index()
     |> Enum.map(fn {step, index} ->
-      Map.put(step, :execution_order, rem(index, 5))  # 5 parallel tracks
+      Map.put(step, :execution_order, rem(index, parallel_tracks))
     end)
   end
 
   defp add_predictive_resource_allocation(step, performance_data) do
-    # Add predictive resource hints
+    # Add predictive resource hints using config thresholds
+    config = QuantumFlow.Orchestrator.Config.get(:optimization)
+    resources = Map.get(config, :resource_defaults, default_resource_defaults())
+    cpu_threshold = Map.get(resources, :cpu_threshold_unreliable, 80.0)
+
     step_id = Map.get(step, :id) || Map.get(step, :name)
     success_rate = Map.get(performance_data.success_rates, step_id, 100.0)
 
     Map.put(step, :predicted_resources, %{
-      memory_mb: if(success_rate < 80, do: 2048, else: 1024),
-      cpu_priority: if(success_rate < 80, do: :high, else: :normal),
+      memory_mb: if(success_rate < cpu_threshold, do: resources.memory_mb_high, else: resources.memory_mb_low),
+      cpu_priority: if(success_rate < cpu_threshold, do: :high, else: :normal),
       predicted_duration: Map.get(performance_data.avg_execution_times, step_id, 5000)
     })
   end
 
   defp add_adaptive_timeout_multiplier(step, performance_data) do
-    # Add adaptive timeout based on historical variance
+    # Add adaptive timeout based on historical variance using config threshold
+    config = QuantumFlow.Orchestrator.Config.get(:optimization)
+    failure_threshold = Map.get(config, :failure_pattern_threshold, 2)
+
     step_id = Map.get(step, :id) || Map.get(step, :name)
     failures = Enum.filter(performance_data.failure_patterns, &(&1.task_id == step_id))
 
-    timeout_multiplier = if length(failures) > 2, do: 3.0, else: 1.5
+    timeout_multiplier = if length(failures) > failure_threshold, do: 3.0, else: 1.5
     Map.put(step, :adaptive_timeout_multiplier, timeout_multiplier)
   end
 
@@ -621,16 +635,24 @@ defmodule QuantumFlow.OrchestratorOptimizer do
   end
 
   defp optimize_step_basic(step) do
-    # Automatic basic optimization - apply sensible defaults
+    # Automatic basic optimization - apply sensible defaults from config
+    config = QuantumFlow.Orchestrator.Config.get(:execution)
+    default_timeout = Map.get(config, :task_timeout, 30_000)
+    default_retry = Map.get(config, :retry_attempts, 3)
+    default_delay = Map.get(config, :retry_delay, 1_000)
+
     step
-    |> Map.put_new(:timeout, 60_000)  # Default 60s timeout
-    |> Map.put_new(:max_attempts, 3)   # Default 3 retries
-    |> Map.put_new(:retry_delay, 1_000) # Default 1s retry delay
+    |> Map.put_new(:timeout, default_timeout)
+    |> Map.put_new(:max_attempts, default_retry)
+    |> Map.put_new(:retry_delay, default_delay)
     |> Map.put_new(:optimized_at, DateTime.utc_now())
   end
 
   defp optimize_step_advanced(step, performance_data) do
-    # Automatic advanced optimization - use performance data hints
+    # Automatic advanced optimization - use performance data hints with config multiplier
+    config = QuantumFlow.Orchestrator.Config.get(:optimization)
+    timeout_multiplier = Map.get(config, :timeout_multiplier_advanced, 1.5)
+
     step_id = Map.get(step, :id) || Map.get(step, :name)
     avg_time = Map.get(performance_data.avg_execution_times, step_id)
 
@@ -639,7 +661,7 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     |> then(fn s ->
       # Auto-adjust timeout if we have historical data
       if avg_time do
-        Map.put(s, :timeout, round(avg_time * 1.5))
+        Map.put(s, :timeout, round(avg_time * timeout_multiplier))
       else
         s
       end
@@ -696,7 +718,10 @@ defmodule QuantumFlow.OrchestratorOptimizer do
   end
 
   defp analyze_workflow_structure(workflow) do
-    # Automatic structure analysis - simple dependency counting
+    # Automatic structure analysis - simple dependency counting using config threshold
+    config = QuantumFlow.Orchestrator.Config.get(:optimization)
+    bottleneck_threshold = Map.get(config, :bottleneck_dependency_threshold, 2)
+
     steps = Map.get(workflow, :steps, [])
 
     # Find steps with no dependencies (can start immediately)
@@ -711,7 +736,7 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     bottlenecks = steps
       |> Enum.filter(fn step ->
         deps = Map.get(step, :depends_on, [])
-        length(deps) > 2  # More than 2 dependencies = potential bottleneck
+        length(deps) > bottleneck_threshold
       end)
       |> Enum.map(&Map.get(&1, :id))
 
@@ -907,5 +932,53 @@ defmodule QuantumFlow.OrchestratorOptimizer do
     else
       Float.round(successful / total, 4)
     end
+  end
+
+  # Helper functions for default configurations
+
+  defp determine_retry_count(success_rate, retry_thresholds) do
+    # Use config thresholds to determine retry count
+    Enum.reduce_while(
+      [
+        :very_unreliable,
+        :somewhat_unreliable,
+        :mostly_reliable,
+        :very_reliable
+      ],
+      1,
+      fn threshold_key, _acc ->
+        {min_rate, max_rate, retry_count} = Map.get(retry_thresholds, threshold_key, {0.0, 100.0, 1})
+        if success_rate >= min_rate and success_rate < max_rate do
+          {:halt, retry_count}
+        else
+          {:cont, 1}
+        end
+      end
+    )
+  end
+
+  defp default_retry_thresholds do
+    %{
+      very_unreliable: {0.0, 50.0, 5},
+      somewhat_unreliable: {50.0, 80.0, 3},
+      mostly_reliable: {80.0, 95.0, 2},
+      very_reliable: {95.0, 100.0, 1}
+    }
+  end
+
+  defp default_execution_brackets do
+    %{
+      fast: 1_000,
+      medium: 10_000,
+      slow: 999_999_999
+    }
+  end
+
+  defp default_resource_defaults do
+    %{
+      memory_mb_low: 1024,
+      memory_mb_high: 2048,
+      cpu_threshold_unreliable: 80.0
+    }
   end
 end

@@ -312,7 +312,37 @@ defmodule QuantumFlow.Orchestrator.Config do
         max_parallel: 10,
         timeout_threshold: 60_000,
         learning_enabled: true,
-        pattern_confidence_threshold: 0.7
+        pattern_confidence_threshold: 0.7,
+        # Timeout multipliers for different optimization levels
+        timeout_multiplier_basic: 1.2,
+        timeout_multiplier_advanced: 1.5,
+        timeout_multiplier_aggressive: 3.0,
+        # Retry thresholds for success rates
+        retry_thresholds: %{
+          very_unreliable: {0.0, 50.0, 5},    # < 50% success rate: 5 retries
+          somewhat_unreliable: {50.0, 80.0, 3},  # 50-80% success rate: 3 retries
+          mostly_reliable: {80.0, 95.0, 2},      # 80-95% success rate: 2 retries
+          very_reliable: {95.0, 100.0, 1}        # > 95% success rate: 1 retry
+        },
+        # Execution time brackets for step grouping
+        execution_time_brackets: %{
+          fast: 1_000,       # < 1s
+          medium: 10_000,    # 1s - 10s
+          slow: 999_999_999  # > 10s
+        },
+        # Batch settings for aggressive optimization
+        batch_size: 3,
+        parallel_tracks: 5,
+        # Resource prediction
+        resource_defaults: %{
+          memory_mb_low: 1024,
+          memory_mb_high: 2048,
+          cpu_threshold_unreliable: 80.0
+        },
+        # Failure prediction
+        failure_pattern_threshold: 2,
+        # Dependency analysis
+        bottleneck_dependency_threshold: 2
       },
 
       # Notification settings
