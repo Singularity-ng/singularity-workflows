@@ -67,8 +67,8 @@ jobs:
           timeout 30 bash -c 'until pg_isready -h localhost -p 5432 -U postgres; do echo "Waiting for postgres..."; sleep 1; done'
           sleep 1
 
-          # Create test database
-          PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE singularity_workflow_test;" 2>/dev/null || echo "Database may already exist"
+          # Create test database idempotently
+          PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE IF NOT EXISTS singularity_workflow_test;"
 
       - name: Run migrations
         run: |
