@@ -69,6 +69,9 @@ jobs:
 
           # Create test database idempotently
           psql -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'singularity_workflow_test'" | grep -q 1 || psql -U postgres -c "CREATE DATABASE singularity_workflow_test;"
+        env:
+          PGPASSWORD: postgres
+
       - name: Run migrations
         run: |
           export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/singularity_workflow_test"
