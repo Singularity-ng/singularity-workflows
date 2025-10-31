@@ -1,13 +1,15 @@
-# QuantumFlow (Hex package: quantum_flow)
+# Singularity.Workflow (Hex package: singularity_workflow)
 
-[![Hex.pm](https://img.shields.io/hexpm/v/quantum_flow.svg)](https://hex.pm/packages/quantum_flow)
-[![Hex.pm](https://img.shields.io/hexpm/dt/quantum_flow.svg)](https://hex.pm/packages/quantum_flow)
-[![Build Status](https://img.shields.io/travis/your-org/quantum_flow.svg)](https://travis-ci.org/your-org/quantum_flow)
-[![Coverage Status](https://img.shields.io/coveralls/your-org/quantum_flow.svg)](https://coveralls.io/github/your-org/quantum_flow)
+[![Hex.pm](https://img.shields.io/hexpm/v/singularity_workflow.svg)](https://hex.pm/packages/singularity_workflow)
+[![Hex.pm](https://img.shields.io/hexpm/dt/singularity_workflow.svg)](https://hex.pm/packages/singularity_workflow)
+[![Build Status](https://img.shields.io/travis/Singularity-ng/singularity-workflows.svg)](https://travis-ci.org/Singularity-ng/singularity-workflows)
+[![Coverage Status](https://img.shields.io/coveralls/Singularity-ng/singularity-workflows.svg)](https://coveralls.io/github/Singularity-ng/singularity-workflows)
 
-**Elixir implementation of QuantumFlow's database-driven DAG execution with 100% feature parity.**
+**Elixir implementation of workflow orchestration with database-driven DAG execution and 100% feature parity.**
 
-QuantumFlow provides reliable, scalable workflow execution using PostgreSQL + pgmq extension with real-time notifications via PostgreSQL NOTIFY.
+Singularity.Workflow provides reliable, scalable workflow execution using PostgreSQL + pgmq extension with real-time notifications via PostgreSQL NOTIFY.
+
+> **Source:** This package is the Elixir implementation of workflow orchestration concepts, part of the Singularity-ng organization's workflow management suite. It provides database-driven DAG execution with PostgreSQL and pgmq integration.
 
 ## 🚀 Features
 
@@ -21,7 +23,7 @@ QuantumFlow provides reliable, scalable workflow execution using PostgreSQL + pg
 - ✅ **Dependency Merging** - Steps receive outputs from all dependencies
 - ✅ **HTDAG Orchestration** - Goal-driven workflow decomposition (hierarchical task DAGs)
 - ✅ **Workflow Optimization** - Learn from execution patterns to optimize future workflows
-- ✅ **100% Feature Parity** - Matches QuantumFlow (TypeScript) architecture
+- ✅ **100% Feature Parity** - Matches workflow orchestration architecture patterns
 
 ## 📋 Table of Contents
 
@@ -45,7 +47,7 @@ Add to your `mix.exs`:
 ```elixir
 def deps do
   [
-    {:quantum_flow, "~> 0.1.0"}
+    {:singularity_workflow, "~> 1.0.0"}
   ]
 end
 ```
@@ -94,14 +96,14 @@ defmodule MyWorkflow do
 end
 
 # Execute workflow
-{:ok, result} = QuantumFlow.Executor.execute(MyWorkflow, %{data: 5}, MyApp.Repo)
+{:ok, result} = Singularity.Workflow.Executor.execute(MyWorkflow, %{data: 5}, MyApp.Repo)
 ```
 
 ## 🏗️ Architecture
 
 ```mermaid
 graph TB
-    A[Workflow Definition] --> B[QuantumFlow.Executor]
+    A[Workflow Definition] --> B[Singularity.Workflow.Executor]
     B --> C[PostgreSQL + pgmq]
     C --> D[Task Execution]
     D --> E[PostgreSQL NOTIFY]
@@ -123,7 +125,7 @@ graph TB
     
     subgraph "Notification Layer"
         E
-        M[QuantumFlow.Notifications]
+        M[Singularity.Workflow.Notifications]
         N[Event Listeners]
     end
 ```
@@ -132,21 +134,21 @@ graph TB
 
 | Component | Purpose | Key Features |
 |-----------|---------|--------------|
-| **QuantumFlow.Executor** | Workflow execution engine | Static/dynamic workflows, parallel execution |
-| **QuantumFlow.FlowBuilder** | Dynamic workflow creation | Runtime workflow generation, AI/LLM integration |
-| **QuantumFlow.Notifications** | Real-time event delivery | PostgreSQL NOTIFY, structured logging |
+| **Singularity.Workflow.Executor** | Workflow execution engine | Static/dynamic workflows, parallel execution |
+| **Singularity.Workflow.FlowBuilder** | Dynamic workflow creation | Runtime workflow generation, AI/LLM integration |
+| **Singularity.Workflow.Notifications** | Real-time event delivery | PostgreSQL NOTIFY, structured logging |
 | **PostgreSQL + pgmq** | Data persistence & coordination | ACID transactions, message queuing |
 | **Task Scheduler** | Dependency resolution | DAG traversal, parallel execution |
 
 ## 🔔 Real-time Notifications
 
-QuantumFlow includes comprehensive real-time notification support via PostgreSQL NOTIFY:
+Singularity.Workflow includes comprehensive real-time notification support via PostgreSQL NOTIFY:
 
 ### Send Notifications
 
 ```elixir
 # Send workflow event with NOTIFY
-{:ok, message_id} = QuantumFlow.Notifications.send_with_notify(
+{:ok, message_id} = Singularity.Workflow.Notifications.send_with_notify(
   "workflow_events", 
   %{
     type: "task_completed",
@@ -163,7 +165,7 @@ QuantumFlow includes comprehensive real-time notification support via PostgreSQL
 
 ```elixir
 # Start listening for workflow events
-{:ok, listener_pid} = QuantumFlow.Notifications.listen("workflow_events", MyApp.Repo)
+{:ok, listener_pid} = Singularity.Workflow.Notifications.listen("workflow_events", MyApp.Repo)
 
 # Handle notifications
 receive do
@@ -175,7 +177,7 @@ after
 end
 
 # Stop listening
-:ok = QuantumFlow.Notifications.unlisten(listener_pid, MyApp.Repo)
+:ok = Singularity.Workflow.Notifications.unlisten(listener_pid, MyApp.Repo)
 ```
 
 ### Notification Types
@@ -251,7 +253,7 @@ defmodule DataProcessingWorkflow do
 end
 
 # Execute
-{:ok, result} = QuantumFlow.Executor.execute(DataProcessingWorkflow, %{}, MyApp.Repo)
+{:ok, result} = Singularity.Workflow.Executor.execute(DataProcessingWorkflow, %{}, MyApp.Repo)
 ```
 
 ### 2. Dynamic Workflows (AI/LLM Generated)
@@ -260,12 +262,12 @@ Create workflows at runtime:
 
 ```elixir
 # Create workflow
-{:ok, workflow_id} = QuantumFlow.FlowBuilder.create_flow("ai_generated_workflow", MyApp.Repo)
+{:ok, workflow_id} = Singularity.Workflow.FlowBuilder.create_flow("ai_generated_workflow", MyApp.Repo)
 
 # Add steps
-{:ok, _} = QuantumFlow.FlowBuilder.add_step(workflow_id, "analyze", [], MyApp.Repo)
-{:ok, _} = QuantumFlow.FlowBuilder.add_step(workflow_id, "generate", ["analyze"], MyApp.Repo)
-{:ok, _} = QuantumFlow.FlowBuilder.add_step(workflow_id, "validate", ["generate"], MyApp.Repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step(workflow_id, "analyze", [], MyApp.Repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step(workflow_id, "generate", ["analyze"], MyApp.Repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step(workflow_id, "validate", ["generate"], MyApp.Repo)
 
 # Define step functions
 step_functions = %{
@@ -275,7 +277,7 @@ step_functions = %{
 }
 
 # Execute
-{:ok, result} = QuantumFlow.Executor.execute_dynamic(
+{:ok, result} = Singularity.Workflow.Executor.execute_dynamic(
   workflow_id, 
   %{prompt: "Generate a report"}, 
   step_functions, 
@@ -307,12 +309,12 @@ end
 
 # Execute with multiple items
 items = Enum.map(1..5, &%{item_id: &1})
-{:ok, results} = QuantumFlow.Executor.execute(BulkProcessingWorkflow, %{items: items}, MyApp.Repo)
+{:ok, results} = Singularity.Workflow.Executor.execute(BulkProcessingWorkflow, %{items: items}, MyApp.Repo)
 ```
 
 ## 🎯 HTDAG Orchestration
 
-QuantumFlow includes Hierarchical Task DAG (HTDAG) support for **goal-driven workflow decomposition**. Convert high-level goals into executable workflows automatically.
+Singularity.Workflow includes Hierarchical Task DAG (HTDAG) support for **goal-driven workflow decomposition**. Convert high-level goals into executable workflows automatically.
 
 ### Quick Example
 
@@ -336,7 +338,7 @@ step_functions = %{
 }
 
 # Execute goal-driven workflow
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_goal(
   "Build authentication system",
   &MyApp.GoalDecomposer.decompose/1,
   step_functions,
@@ -358,23 +360,23 @@ step_functions = %{
 
 | Module | Purpose |
 |--------|---------|
-| `QuantumFlow.Orchestrator` | Goal decomposition engine |
-| `QuantumFlow.WorkflowComposer` | High-level composition API |
-| `QuantumFlow.OrchestratorOptimizer` | Optimization engine with learning |
-| `QuantumFlow.OrchestratorNotifications` | Real-time event broadcasting |
+| `Singularity.Workflow.Orchestrator` | Goal decomposition engine |
+| `Singularity.Workflow.WorkflowComposer` | High-level composition API |
+| `Singularity.Workflow.OrchestratorOptimizer` | Optimization engine with learning |
+| `Singularity.Workflow.OrchestratorNotifications` | Real-time event broadcasting |
 
 For detailed guide, see [HTDAG_ORCHESTRATOR_GUIDE.md](docs/HTDAG_ORCHESTRATOR_GUIDE.md).
 
 ## 📚 API Reference
 
-### QuantumFlow.Executor
+### Singularity.Workflow.Executor
 
 ```elixir
 # Execute static workflow
-QuantumFlow.Executor.execute(workflow_module, input, repo, opts \\ [])
+Singularity.Workflow.Executor.execute(workflow_module, input, repo, opts \\ [])
 
 # Execute dynamic workflow
-QuantumFlow.Executor.execute_dynamic(workflow_id, input, step_functions, repo, opts \\ [])
+Singularity.Workflow.Executor.execute_dynamic(workflow_id, input, step_functions, repo, opts \\ [])
 
 # Options
 opts = [
@@ -385,39 +387,39 @@ opts = [
 ]
 ```
 
-### QuantumFlow.FlowBuilder
+### Singularity.Workflow.FlowBuilder
 
 ```elixir
 # Create workflow
-QuantumFlow.FlowBuilder.create_flow(name, repo)
+Singularity.Workflow.FlowBuilder.create_flow(name, repo)
 
 # Add step
-QuantumFlow.FlowBuilder.add_step(workflow_id, step_name, depends_on, repo)
+Singularity.Workflow.FlowBuilder.add_step(workflow_id, step_name, depends_on, repo)
 
 # Add map step
-QuantumFlow.FlowBuilder.add_map_step(workflow_id, step_name, depends_on, initial_tasks, repo)
+Singularity.Workflow.FlowBuilder.add_map_step(workflow_id, step_name, depends_on, initial_tasks, repo)
 
 # Get workflow
-QuantumFlow.FlowBuilder.get_workflow(workflow_id, repo)
+Singularity.Workflow.FlowBuilder.get_workflow(workflow_id, repo)
 
 # List workflows
-QuantumFlow.FlowBuilder.list_workflows(repo)
+Singularity.Workflow.FlowBuilder.list_workflows(repo)
 ```
 
-### QuantumFlow.Notifications
+### Singularity.Workflow.Notifications
 
 ```elixir
 # Send with NOTIFY
-QuantumFlow.Notifications.send_with_notify(queue_name, message, repo)
+Singularity.Workflow.Notifications.send_with_notify(queue_name, message, repo)
 
 # Listen for events
-QuantumFlow.Notifications.listen(queue_name, repo)
+Singularity.Workflow.Notifications.listen(queue_name, repo)
 
 # Stop listening
-QuantumFlow.Notifications.unlisten(pid, repo)
+Singularity.Workflow.Notifications.unlisten(pid, repo)
 
 # Send NOTIFY only (no persistence)
-QuantumFlow.Notifications.notify_only(channel, payload, repo)
+Singularity.Workflow.Notifications.notify_only(channel, payload, repo)
 ```
 
 ## 🧪 Testing
@@ -432,14 +434,14 @@ mix test
 mix test --cover
 
 # Run specific test file
-mix test test/QuantumFlow/executor_test.exs
+mix test test/singularity_workflow/executor_test.exs
 ```
 
 ### Test Structure
 
 ```
 test/
-├── QuantumFlow/
+├── singularity_workflow/
 │   ├── executor_test.exs           # Workflow execution tests
 │   ├── flow_builder_test.exs       # Dynamic workflow tests
 │   ├── notifications_test.exs      # NOTIFY functionality tests
@@ -453,9 +455,9 @@ test/
 ### Example Test
 
 ```elixir
-defmodule QuantumFlow.ExecutorTest do
+defmodule Singularity.Workflow.ExecutorTest do
   use ExUnit.Case, async: true
-  alias QuantumFlow.Executor
+  alias Singularity.Workflow.Executor
 
   test "executes simple workflow" do
     defmodule TestWorkflow do
@@ -495,7 +497,7 @@ Check the `examples/` directory for comprehensive examples:
 
 ```elixir
 # config/prod.exs
-config :QuantumFlow,
+config :singularity_workflow,
   repo: MyApp.Repo,
   pgmq_url: System.get_env("DATABASE_URL"),
   notification_channels: ["workflow_events", "task_events"],
@@ -523,25 +525,25 @@ CMD ["mix", "phx.server"]
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: quantum_flow-app
+  name: singularity-workflow-app
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: quantum_flow-app
+      app: singularity-workflow-app
   template:
     metadata:
       labels:
-        app: quantum_flow-app
+        app: singularity-workflow-app
     spec:
       containers:
-      - name: QuantumFlow
-        image: QuantumFlow:latest
+      - name: singularity-workflow
+        image: singularity-workflow:latest
         env:
         - name: DATABASE_URL
           valueFrom:
             secretKeyRef:
-              name: quantum_flow-secrets
+              name: singularity-workflow-secrets
               key: database-url
 ```
 
@@ -551,8 +553,8 @@ spec:
 
 ```bash
 # Clone repository
-git clone https://github.com/mikkhugo/singularity-incubation.git
-cd singularity-incubation/packages/singularity-workflows
+git clone https://github.com/Singularity-ng/singularity-workflows.git
+cd singularity-workflows
 
 # Install dependencies
 mix deps.get
@@ -594,18 +596,18 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 
 ## 🙏 Acknowledgments
 
-- **QuantumFlow** - Original TypeScript implementation
 - **PostgreSQL** - Robust database foundation
 - **pgmq** - Message queuing extension
 - **Elixir Community** - Amazing ecosystem
+- **Singularity-ng** - Workflow orchestration initiative
 
 ## 📞 Support
 
-- **Documentation**: [https://hexdocs.pm/quantum_flow](https://hexdocs.pm/quantum_flow)
-- **Issues**: [GitHub Issues](https://github.com/mikkhugo/singularity-incubation/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/mikkhugo/singularity-incubation/discussions)
+- **Documentation**: [https://hexdocs.pm/singularity_workflow](https://hexdocs.pm/singularity_workflow)
+- **Issues**: [GitHub Issues](https://github.com/Singularity-ng/singularity-workflows/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Singularity-ng/singularity-workflows/discussions)
 - **Email**: support@singularity.dev
 
 ---
 
-**Made with ❤️ by the QuantumFlow Team**
+**Made with ❤️ by the Singularity-ng Team**

@@ -1,4 +1,4 @@
-# Testing Guide for quantum_flow
+# Testing Guide for singularity_workflow
 
 This guide explains how to run tests, understand test coverage, and work around the PostgreSQL 17 issue.
 
@@ -35,7 +35,7 @@ mix test --trace
 
 ### PostgreSQL 16: ✅ Fully Supported
 ```bash
-export DATABASE_URL="postgresql://user:pass@localhost/quantum_flow"
+export DATABASE_URL="postgresql://user:pass@localhost/singularity_workflow"
 mix test  # All tests pass
 ```
 
@@ -46,7 +46,7 @@ mix test  # All tests pass
 
 ### PostgreSQL 17: ⚠️ Partial Support
 ```bash
-export DATABASE_URL="postgresql://user:pass@localhost/quantum_flow"
+export DATABASE_URL="postgresql://user:pass@localhost/singularity_workflow"
 mix test --exclude flow_builder_test  # Recommended
 # Or:
 mix test  # 336/413 passing (82%)
@@ -59,14 +59,14 @@ mix test  # 336/413 passing (82%)
 - Core workflow logic fully functional
 
 **Known Issues**:
-- `QuantumFlow.create_flow()` - Parser ambiguity in RETURNS TABLE
-- `QuantumFlow.add_step()` - Same parser ambiguity issue
+- `Singularity.Workflow.create_flow()` - Parser ambiguity in RETURNS TABLE
+- `Singularity.Workflow.add_step()` - Same parser ambiguity issue
 - Workaround not available (parser-level issue in PostgreSQL 17)
 - This is a PostgreSQL regression in v17 affecting table functions
 
 ### PostgreSQL 18: ✅ Fully Supported
 ```bash
-export DATABASE_URL="postgresql://user:pass@localhost/quantum_flow"
+export DATABASE_URL="postgresql://user:pass@localhost/singularity_workflow"
 mix test  # All tests pass
 ```
 
@@ -88,8 +88,8 @@ sudo apt-get install postgresql-server
 
 # Or use Docker
 docker run -d \
-  --name quantum_flow_db \
-  -e POSTGRES_DB=quantum_flow \
+  --name singularity_workflow_db \
+  -e POSTGRES_DB=singularity_workflow \
   -e POSTGRES_USER=postgres \
   -e POSTGRES_PASSWORD=postgres \
   -p 5432:5432 \
@@ -100,11 +100,11 @@ docker run -d \
 
 ```bash
 # If using local PostgreSQL
-createdb quantum_flow
-export DATABASE_URL="postgresql://postgres@localhost/quantum_flow"
+createdb singularity_workflow
+export DATABASE_URL="postgresql://postgres@localhost/singularity_workflow"
 
 # If using Docker
-export DATABASE_URL="postgresql://postgres:postgres@localhost/quantum_flow"
+export DATABASE_URL="postgresql://postgres:postgres@localhost/singularity_workflow"
 ```
 
 ### 3. Run Migrations
@@ -181,7 +181,7 @@ mix test --statistics
 ### Clock Integration Tests (`clock_test.exs`)
 - **Tests**: 158/158 passing ✅
 - **Purpose**: Verify deterministic time control in tests
-- **Key**: Uses `QuantumFlow.TestClock` instead of wall-clock time
+- **Key**: Uses `Singularity.Workflow.TestClock` instead of wall-clock time
 - **Why**: Prevents flaky timing-dependent tests
 
 ### Complete Task Tests (`complete_task_test.exs`)
@@ -230,10 +230,10 @@ mix test test/QuantumFlow/complete_task_test.exs --trace
 
 ### Common Test Issues
 
-**Issue**: "database quantum_flow does not exist"
+**Issue**: "database singularity_workflow does not exist"
 ```bash
-createdb quantum_flow
-export DATABASE_URL="postgresql://user@localhost/quantum_flow"
+createdb singularity_workflow
+export DATABASE_URL="postgresql://user@localhost/singularity_workflow"
 mix ecto.migrate
 ```
 
@@ -244,7 +244,7 @@ brew services start postgresql  # macOS
 sudo service postgresql start   # Linux
 
 # Or use Docker
-docker start quantum_flow_db
+docker start singularity_workflow_db
 ```
 
 **Issue**: "Tests timing out"
@@ -315,18 +315,18 @@ test:
 
 ```bash
 # PostgreSQL 16
-docker run -e POSTGRES_DB=quantum_flow postgres:16
-export DATABASE_URL="postgresql://postgres@localhost/quantum_flow"
+docker run -e POSTGRES_DB=singularity_workflow postgres:16
+export DATABASE_URL="postgresql://postgres@localhost/singularity_workflow"
 mix test
 
 # PostgreSQL 17
-docker run -e POSTGRES_DB=quantum_flow postgres:17
-export DATABASE_URL="postgresql://postgres@localhost/quantum_flow"
+docker run -e POSTGRES_DB=singularity_workflow postgres:17
+export DATABASE_URL="postgresql://postgres@localhost/singularity_workflow"
 mix test --exclude flow_builder_test
 
 # PostgreSQL 18
-docker run -e POSTGRES_DB=quantum_flow postgres:18
-export DATABASE_URL="postgresql://postgres@localhost/quantum_flow"
+docker run -e POSTGRES_DB=singularity_workflow postgres:18
+export DATABASE_URL="postgresql://postgres@localhost/singularity_workflow"
 mix test
 ```
 

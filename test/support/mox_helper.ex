@@ -1,4 +1,4 @@
-defmodule QuantumFlow.Test.MoxHelper do
+defmodule Singularity.Workflow.Test.MoxHelper do
   @moduledoc """
   Helper module for setting up Mox mocks in tests.
   """
@@ -10,21 +10,21 @@ defmodule QuantumFlow.Test.MoxHelper do
     # Define all required mocks using Mox.defmock
     # Mox is loaded as a dependency and doesn't need to be started as an application
     try do
-      Mox.defmock(QuantumFlow.Notifications.Mock, for: QuantumFlow.Notifications.Behaviour)
+      Mox.defmock(Singularity.Workflow.Notifications.Mock, for: Singularity.Workflow.Notifications.Behaviour)
     rescue
       _ -> :ok
     end
 
     try do
-      Mox.defmock(QuantumFlow.Orchestrator.Repository.Mock,
-        for: QuantumFlow.Orchestrator.Repository.Behaviour
+      Mox.defmock(Singularity.Workflow.Orchestrator.Repository.Mock,
+        for: Singularity.Workflow.Orchestrator.Repository.Behaviour
       )
     rescue
       _ -> :ok
     end
 
     try do
-      Mox.defmock(QuantumFlow.Executor.Mock, for: QuantumFlow.Executor.Behaviour)
+      Mox.defmock(Singularity.Workflow.Executor.Mock, for: Singularity.Workflow.Executor.Behaviour)
     rescue
       _ -> :ok
     end
@@ -38,7 +38,7 @@ defmodule QuantumFlow.Test.MoxHelper do
   Example:
     defmodule MyTest do
       use ExUnit.Case
-      import QuantumFlow.Test.MoxHelper
+      import Singularity.Workflow.Test.MoxHelper
 
       setup :setup_mox_test
     end

@@ -20,7 +20,7 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-quantum_flow-*.tar
+singularity_workflow-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/

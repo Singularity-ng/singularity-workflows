@@ -1,4 +1,4 @@
-# Release Process for quantum_flow
+# Release Process for singularity_workflow
 
 ## CI/CD Protection
 
@@ -53,7 +53,7 @@ Update version in `mix.exs`:
 ```elixir
 def project do
   [
-    app: :quantum_flow,
+    app: :singularity_workflow,
     version: "0.1.0",  # Must match tag below
     ...
   ]
@@ -67,7 +67,7 @@ Add release notes to `CHANGELOG.md` with this header:
 ## [0.1.0] - 2025-10-25
 
 ### Added
-- Initial release of quantum_flow
+- Initial release of singularity_workflow
 ```
 
 ### 3. Commit Changes
@@ -104,7 +104,7 @@ git push origin v0.1.0
 4. Approve in GitHub → auto-publishes to Hex.pm
 
 **View Progress:**
-- Go to [GitHub Actions](https://github.com/mikkihugo/quantum_flow/actions)
+- Go to [GitHub Actions](https://github.com/mikkihugo/singularity_workflow/actions)
 - Click on your version tag workflow
 - Click "Approve" when ready to publish
 
@@ -166,7 +166,7 @@ chmod +x scripts/setup-github-protection.sh
 ```
 
 Then manually configure environment reviewers:
-1. Go to [Settings → Environments](https://github.com/mikkihugo/quantum_flow/settings/environments)
+1. Go to [Settings → Environments](https://github.com/mikkihugo/singularity_workflow/settings/environments)
 2. Click on 'production' environment
 3. Enable "Required reviewers"
 4. Add reviewers (yourself, team members, or teams)
@@ -183,8 +183,8 @@ Now every release will require:
 
 After successful release:
 
-1. Verify package on [Hex.pm](https://hex.pm/packages/quantum_flow)
-2. Check documentation on [HexDocs](https://hexdocs.pm/quantum_flow)
+1. Verify package on [Hex.pm](https://hex.pm/packages/singularity_workflow)
+2. Check documentation on [HexDocs](https://hexdocs.pm/singularity_workflow)
 3. Update main branch for next version:
    ```elixir
    version: "0.2.0-dev",  # Next version with -dev suffix

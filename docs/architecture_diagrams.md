@@ -9,8 +9,8 @@ This document contains comprehensive Mermaid diagrams showing the PGMQ + NOTIFY 
 ```mermaid
 graph TB
     subgraph "Application Layer"
-        A[Workflow Definition] --> B[QuantumFlow.Executor]
-        C[AI/LLM System] --> D[QuantumFlow.FlowBuilder]
+        A[Workflow Definition] --> B[Singularity.Workflow.Executor]
+        C[AI/LLM System] --> D[Singularity.Workflow.FlowBuilder]
     end
     
     subgraph "Execution Engine"
@@ -29,7 +29,7 @@ graph TB
     
     subgraph "Notification Layer"
         H --> L[PostgreSQL NOTIFY]
-        L --> M[QuantumFlow.Notifications]
+        L --> M[Singularity.Workflow.Notifications]
         M --> N[Event Listeners]
         N --> O[Real-time Updates]
     end
@@ -70,7 +70,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    A[Define Workflow Module] --> B[Call QuantumFlow.Executor.execute]
+    A[Define Workflow Module] --> B[Call Singularity.Workflow.Executor.execute]
     B --> C[Parse workflow steps]
     C --> D[Create dependency graph]
     D --> E[Store in PostgreSQL]
@@ -93,13 +93,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A[AI/LLM System] --> B[Call QuantumFlow.FlowBuilder.create_flow]
+    A[AI/LLM System] --> B[Call Singularity.Workflow.FlowBuilder.create_flow]
     B --> C[Create workflow record]
     C --> D[Add steps via add_step]
     D --> E[Define dependencies]
     E --> F[Store in PostgreSQL]
     F --> G[Generate step functions]
-    G --> H[Call QuantumFlow.Executor.execute_dynamic]
+    G --> H[Call Singularity.Workflow.Executor.execute_dynamic]
     H --> I[Execute like static workflow]
 ```
 
@@ -189,7 +189,7 @@ flowchart TB
     
     subgraph "Notification System"
         M --> Q[PostgreSQL NOTIFY]
-        Q --> R[QuantumFlow.Notifications]
+        Q --> R[Singularity.Workflow.Notifications]
         R --> S[Event Listeners]
     end
     

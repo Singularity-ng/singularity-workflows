@@ -1,9 +1,9 @@
-defmodule QuantumFlow.MixProject do
+defmodule Singularity.Workflow.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :quantum_flow,
+      app: :singularity_workflow,
       version: "1.0.2",
       elixir: ">= 1.19.0-rc.0",
       start_permanent: Mix.env() == :prod,
@@ -50,20 +50,20 @@ defmodule QuantumFlow.MixProject do
 
   defp docs do
     [
-      main: "QuantumFlow",
-      source_url: "https://github.com/mikkihugo/quantum_flow",
+      main: "Singularity.Workflow",
+      source_url: "https://github.com/Singularity-ng/singularity-workflows",
       extras: ["README.md"]
     ]
   end
 
   defp package do
     [
-      name: "quantum_flow",
+      name: "singularity_workflow",
       description: "PostgreSQL-based workflow orchestration library for Elixir",
       licenses: ["Apache-2.0"],
       links: %{
-        "GitHub" => "https://github.com/mikkihugo/quantum_flow",
-        "Documentation" => "https://hexdocs.pm/quantum_flow"
+        "GitHub" => "https://github.com/Singularity-ng/singularity-workflows",
+        "Documentation" => "https://hexdocs.pm/singularity_workflow"
       },
       maintainers: ["Mikko H"],
       files: ~w(lib .formatter.exs mix.exs README.md LICENSE)

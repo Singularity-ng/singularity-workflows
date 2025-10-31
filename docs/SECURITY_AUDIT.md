@@ -1,4 +1,4 @@
-# Security Audit Report - quantum_flow
+# Security Audit Report - singularity_workflow
 
 **Date:** 2025-10-25
 **Tool:** Sobelow v0.14.1 (Elixir Security Auditing Tool)
@@ -59,7 +59,7 @@ Sobelow scanned for the following vulnerability categories:
 **Example (Safe):**
 ```elixir
 repo.query("""
-  SELECT * FROM QuantumFlow.read_with_poll(
+  SELECT * FROM Singularity.Workflow.read_with_poll(
     queue_name => $1::text, vt => $2::integer, qty => $3::integer)
 """, [workflow_slug, 30, batch_size])
 ```
@@ -142,15 +142,15 @@ Task.async_stream(tasks, fn task -> ... end,
 
 ## Comparison to QuantumFlow (TypeScript)
 
-| Security Aspect | QuantumFlow | quantum_flow | Notes |
+| Security Aspect | QuantumFlow | singularity_workflow | Notes |
 |----------------|--------|-----------|-------|
 | **SQL Injection** | ✅ Safe (pg parameterization) | ✅ Safe (Ecto parameterization) | Both use driver-level protection |
 | **Type Safety** | ✅ TypeScript | ✅ Dialyzer + @spec | Compile-time checks |
 | **Input Validation** | ✅ Zod schemas | ✅ Pattern matching + guards | Different approaches, same protection |
 | **Error Handling** | ✅ try/catch | ✅ {:ok, _} / {:error, _} | BEAM supervision more robust |
-| **Process Isolation** | ❌ Single-threaded JS | ✅ BEAM process isolation | quantum_flow has better fault isolation |
+| **Process Isolation** | ❌ Single-threaded JS | ✅ BEAM process isolation | singularity_workflow has better fault isolation |
 
-**Verdict:** quantum_flow has EQUAL or BETTER security than QuantumFlow!
+**Verdict:** singularity_workflow has EQUAL or BETTER security than QuantumFlow!
 
 ---
 
@@ -221,7 +221,7 @@ end
 
 ## Conclusion
 
-**quantum_flow passes the strictest Sobelow security audit with ZERO findings.**
+**singularity_workflow passes the strictest Sobelow security audit with ZERO findings.**
 
 The codebase demonstrates:
 - ✅ Secure SQL practices (parameterized queries)

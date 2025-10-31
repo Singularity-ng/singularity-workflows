@@ -1,4 +1,4 @@
-defmodule QuantumFlow.SqlCase do
+defmodule Singularity.Workflow.SqlCase do
   @moduledoc """
   Helper for SQL-based tests. Connects to Postgres using POSTGRES_URL or DATABASE_URL.
 
@@ -17,14 +17,14 @@ defmodule QuantumFlow.SqlCase do
   def connect_or_skip do
     _db_url =
       System.get_env("DATABASE_URL") || System.get_env("POSTGRES_URL") ||
-        "postgresql://#{System.get_env("USER") || "mhugo"}@localhost:5432/quantum_flow"
+        "postgresql://#{System.get_env("USER") || "mhugo"}@localhost:5432/singularity_workflow"
 
     case Postgrex.start_link(
            hostname: "localhost",
            port: 5432,
            username: System.get_env("USER") || "mhugo",
            password: "",
-           database: "quantum_flow"
+           database: "singularity_workflow"
          ) do
       {:ok, conn} ->
         case Postgrex.query(conn, "SELECT to_regclass('public.workflow_runs')", []) do

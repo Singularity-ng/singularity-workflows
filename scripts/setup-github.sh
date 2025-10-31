@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Setting up GitHub repository for QuantumFlow v0.1.0"
+echo "🚀 Setting up GitHub repository for Singularity.Workflow v0.1.0"
 echo ""
 
 # Check if gh is installed
@@ -12,7 +12,7 @@ if ! command -v gh &> /dev/null; then
     exit 1
 fi
 
-REPO="mikkihugo/quantum_flow"
+REPO="mikkihugo/singularity_workflow"
 
 # Authenticate with GitHub if needed
 if ! gh auth status &> /dev/null; then
@@ -26,8 +26,8 @@ echo ""
 # Update repository description
 echo "📝 Updating repository description..."
 gh repo edit "$REPO" \
-    --description "Elixir implementation of QuantumFlow - database-driven DAG execution engine with 100% feature parity. Parallel execution, map steps, dependency merging, multi-instance scaling via PostgreSQL + pgmq." \
-    --homepage "https://hexdocs.pm/quantum_flow"
+    --description "Elixir implementation of Singularity.Workflow - database-driven DAG execution engine with 100% feature parity. Parallel execution, map steps, dependency merging, multi-instance scaling via PostgreSQL + pgmq." \
+    --homepage "https://hexdocs.pm/singularity_workflow"
 
 # Add topics
 echo "🏷️  Adding repository topics..."
@@ -36,7 +36,7 @@ gh repo edit "$REPO" --add-topic "postgresql"
 gh repo edit "$REPO" --add-topic "workflow"
 gh repo edit "$REPO" --add-topic "dag"
 gh repo edit "$REPO" --add-topic "task-execution"
-gh repo edit "$REPO" --add-topic "QuantumFlow"
+gh repo edit "$REPO" --add-topic "Singularity.Workflow"
 gh repo edit "$REPO" --add-topic "distributed-systems"
 
 # Enable Issues (should be on by default)

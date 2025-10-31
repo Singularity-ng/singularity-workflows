@@ -7,7 +7,7 @@ config :logger, level: :info
 # of environment variables, is done in config/runtime.exs.
 
 # Orchestrator production configuration
-config :quantum_flow, :orchestrator,
+config :singularity_workflow, :orchestrator,
   # Production-optimized settings
   max_depth: 5,
   timeout: 300_000,

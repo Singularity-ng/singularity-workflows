@@ -7,7 +7,7 @@
 
 ## Overview
 
-quantum_flow now supports **dynamic workflow creation** - perfect for AI/LLM agents that generate workflows at runtime!
+singularity_workflow now supports **dynamic workflow creation** - perfect for AI/LLM agents that generate workflows at runtime!
 
 ### Two Workflow Approaches
 
@@ -24,20 +24,20 @@ quantum_flow now supports **dynamic workflow creation** - perfect for AI/LLM age
 
 ```elixir
 # 1. AI generates workflow structure
-{:ok, _} = QuantumFlow.FlowBuilder.create_flow("ai_data_pipeline", repo,
+{:ok, _} = Singularity.Workflow.FlowBuilder.create_flow("ai_data_pipeline", repo,
   max_attempts: 5,
   timeout: 60
 )
 
 # 2. AI adds steps with dependencies
-{:ok, _} = QuantumFlow.FlowBuilder.add_step("ai_data_pipeline", "fetch_data", [], repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step("ai_data_pipeline", "fetch_data", [], repo)
 
-{:ok, _} = QuantumFlow.FlowBuilder.add_step("ai_data_pipeline", "process_batch", ["fetch_data"], repo,
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step("ai_data_pipeline", "process_batch", ["fetch_data"], repo,
   step_type: "map",
   initial_tasks: 100  # Process 100 items in parallel
 )
 
-{:ok, _} = QuantumFlow.FlowBuilder.add_step("ai_data_pipeline", "save_results", ["process_batch"], repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step("ai_data_pipeline", "save_results", ["process_batch"], repo)
 
 # 3. Provide step implementations
 step_functions = %{
@@ -58,7 +58,7 @@ step_functions = %{
 }
 
 # 4. Execute!
-{:ok, result} = QuantumFlow.Executor.execute_dynamic(
+{:ok, result} = Singularity.Workflow.Executor.execute_dynamic(
   "ai_data_pipeline",
   %{"initial" => "data"},
   step_functions,
@@ -75,7 +75,7 @@ step_functions = %{
 Creates a workflow definition.
 
 ```elixir
-{:ok, workflow} = QuantumFlow.FlowBuilder.create_flow(
+{:ok, workflow} = Singularity.Workflow.FlowBuilder.create_flow(
   "my_workflow",  # Unique identifier
   repo,
   max_attempts: 3,  # Default retry count
@@ -94,7 +94,7 @@ Creates a workflow definition.
 Adds a step to a workflow.
 
 ```elixir
-{:ok, step} = QuantumFlow.FlowBuilder.add_step(
+{:ok, step} = Singularity.Workflow.FlowBuilder.add_step(
   "my_workflow",     # Workflow slug
   "step_name",       # Step identifier
   ["dep1", "dep2"],  # Dependencies (can be empty [])
@@ -122,7 +122,7 @@ Adds a step to a workflow.
 Executes a dynamic workflow.
 
 ```elixir
-{:ok, result} = QuantumFlow.Executor.execute_dynamic(
+{:ok, result} = Singularity.Workflow.Executor.execute_dynamic(
   "workflow_slug",       # String workflow identifier
   %{"input" => "data"},  # Initial input
   step_functions,        # Map of step_slug atoms => functions
@@ -168,11 +168,11 @@ defmodule AIWorkflowGenerator do
     """)
 
     # 2. Create workflow
-    {:ok, _} = QuantumFlow.FlowBuilder.create_flow(workflow_spec.workflow_slug, repo)
+    {:ok, _} = Singularity.Workflow.FlowBuilder.create_flow(workflow_spec.workflow_slug, repo)
 
     # 3. Add steps
     for step <- workflow_spec.steps do
-      QuantumFlow.FlowBuilder.add_step(
+      Singularity.Workflow.FlowBuilder.add_step(
         workflow_spec.workflow_slug,
         step.slug,
         step.depends_on,
@@ -185,7 +185,7 @@ defmodule AIWorkflowGenerator do
     step_functions = generate_step_functions(workflow_spec, prompt)
 
     # 5. Execute
-    QuantumFlow.Executor.execute_dynamic(
+    Singularity.Workflow.Executor.execute_dynamic(
       workflow_spec.workflow_slug,
       %{"prompt" => prompt},
       step_functions,
@@ -202,14 +202,14 @@ end
 ```elixir
 defmodule MultiAgentWorkflow do
   def create_agent_workflow(agents, repo) do
-    {:ok, _} = QuantumFlow.FlowBuilder.create_flow("multi_agent_task", repo)
+    {:ok, _} = Singularity.Workflow.FlowBuilder.create_flow("multi_agent_task", repo)
 
     # Create steps for each agent
     prev_step = nil
     for agent <- agents do
       deps = if prev_step, do: [prev_step], else: []
 
-      {:ok, _} = QuantumFlow.FlowBuilder.add_step(
+      {:ok, _} = Singularity.Workflow.FlowBuilder.add_step(
         "multi_agent_task",
         agent.slug,
         deps,
@@ -225,7 +225,7 @@ defmodule MultiAgentWorkflow do
       |> Enum.map(fn agent -> {String.to_atom(agent.slug), agent.function} end)
       |> Map.new()
 
-    QuantumFlow.Executor.execute_dynamic("multi_agent_task", %{}, step_functions, repo)
+    Singularity.Workflow.Executor.execute_dynamic("multi_agent_task", %{}, step_functions, repo)
   end
 end
 ```
@@ -239,11 +239,11 @@ defmodule ABTestWorkflows do
   def create_variant(variant_name, config, repo) do
     workflow_slug = "ab_test_#{variant_name}"
 
-    {:ok, _} = QuantumFlow.FlowBuilder.create_flow(workflow_slug, repo)
+    {:ok, _} = Singularity.Workflow.FlowBuilder.create_flow(workflow_slug, repo)
 
     # Build workflow based on variant config
     for {step_name, step_config} <- config.steps do
-      QuantumFlow.FlowBuilder.add_step(
+      Singularity.Workflow.FlowBuilder.add_step(
         workflow_slug,
         step_name,
         step_config.depends_on,
@@ -262,10 +262,10 @@ defmodule ABTestWorkflows do
     # Run both in parallel
     tasks = [
       Task.async(fn ->
-        QuantumFlow.Executor.execute_dynamic(variant_a, input, @step_fns, repo)
+        Singularity.Workflow.Executor.execute_dynamic(variant_a, input, @step_fns, repo)
       end),
       Task.async(fn ->
-        QuantumFlow.Executor.execute_dynamic(variant_b, input, @step_fns, repo)
+        Singularity.Workflow.Executor.execute_dynamic(variant_b, input, @step_fns, repo)
       end)
     ]
 
@@ -318,7 +318,7 @@ workflow_step_dependencies_def (
 ### List All Workflows
 
 ```elixir
-{:ok, workflows} = QuantumFlow.FlowBuilder.list_flows(repo)
+{:ok, workflows} = Singularity.Workflow.FlowBuilder.list_flows(repo)
 Enum.each(workflows, fn w ->
   IO.puts("#{w["workflow_slug"]} - #{w["max_attempts"]} attempts")
 end)
@@ -327,7 +327,7 @@ end)
 ### Get Workflow with Steps
 
 ```elixir
-{:ok, workflow} = QuantumFlow.FlowBuilder.get_flow("my_workflow", repo)
+{:ok, workflow} = Singularity.Workflow.FlowBuilder.get_flow("my_workflow", repo)
 # => %{
 #   "workflow_slug" => "my_workflow",
 #   "steps" => [
@@ -340,7 +340,7 @@ end)
 ### Delete Workflow
 
 ```elixir
-:ok = QuantumFlow.FlowBuilder.delete_flow("old_workflow", repo)
+:ok = Singularity.Workflow.FlowBuilder.delete_flow("old_workflow", repo)
 ```
 
 ---
@@ -406,17 +406,17 @@ defmodule MyWorkflow do
   def step1(input), do: {:ok, input}
 end
 
-QuantumFlow.Executor.execute(MyWorkflow, input, repo)
+Singularity.Workflow.Executor.execute(MyWorkflow, input, repo)
 
 # After (dynamic)
-{:ok, _} = QuantumFlow.FlowBuilder.create_flow("my_workflow", repo)
-{:ok, _} = QuantumFlow.FlowBuilder.add_step("my_workflow", "step1", [], repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.create_flow("my_workflow", repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step("my_workflow", "step1", [], repo)
 
 step_functions = %{
   step1: fn input -> {:ok, input} end
 }
 
-QuantumFlow.Executor.execute_dynamic("my_workflow", input, step_functions, repo)
+Singularity.Workflow.Executor.execute_dynamic("my_workflow", input, step_functions, repo)
 ```
 
 **Both execute identically!**
@@ -434,13 +434,13 @@ Process rows in parallel batches of 50.
 """
 
 # Claude generates workflow
-{:ok, _} = QuantumFlow.FlowBuilder.create_flow("claude_etl", repo)
-{:ok, _} = QuantumFlow.FlowBuilder.add_step("claude_etl", "extract_csv", [], repo)
-{:ok, _} = QuantumFlow.FlowBuilder.add_step("claude_etl", "validate_rows", ["extract_csv"], repo,
+{:ok, _} = Singularity.Workflow.FlowBuilder.create_flow("claude_etl", repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step("claude_etl", "extract_csv", [], repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step("claude_etl", "validate_rows", ["extract_csv"], repo,
   step_type: "map",
   initial_tasks: 50
 )
-{:ok, _} = QuantumFlow.FlowBuilder.add_step("claude_etl", "load_db", ["validate_rows"], repo)
+{:ok, _} = Singularity.Workflow.FlowBuilder.add_step("claude_etl", "load_db", ["validate_rows"], repo)
 
 # Implementations
 step_functions = %{
@@ -461,7 +461,7 @@ step_functions = %{
 }
 
 # Execute
-{:ok, result} = QuantumFlow.Executor.execute_dynamic("claude_etl", %{}, step_functions, repo)
+{:ok, result} = Singularity.Workflow.Executor.execute_dynamic("claude_etl", %{}, step_functions, repo)
 ```
 
 ---

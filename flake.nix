@@ -1,5 +1,5 @@
 {
-  description = "quantum_flow - Elixir implementation of QuantumFlow";
+  description = "singularity_workflow - Elixir implementation of Singularity.Workflow";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -34,7 +34,7 @@
           shellHook = ''
             # Clear PATH and rebuild with nix packages FIRST (before system paths)
             export PATH="${beamPackages.erlang}/bin:${elixir}/bin:${postgresqlWithExtensions}/bin:${pkgs.nodejs}/bin:${pkgs.yarn}/bin:${pkgs.gh}/bin:$PATH"
-            export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/quantum_flow"
+            export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/singularity_workflow"
             echo "ShellHook PATH: $PATH"
             echo "Elixir location: $(which elixir 2>/dev/null || echo 'not found')"
             echo "Mix location: $(which mix 2>/dev/null || echo 'not found')"
