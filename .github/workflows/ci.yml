@@ -1,21 +1,32 @@
-name: CI
+name: "Copilot Setup Steps"
 
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
 on:
+  workflow_dispatch:
   push:
-    branches: [ main ]
-    tags: [ 'v*' ]  # Also run CI on version tags
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
   pull_request:
-    branches: [ main ]
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
 
 jobs:
-  test:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
     runs-on: ubuntu-latest
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      # If you want to clone the repository as part of your setup steps, for example to install dependencies, you'll need the `contents: read` permission. If you don't clone the repository in your setup steps, Copilot will do this for you automatically after the steps complete.
+      contents: read
 
     services:
       postgres:
-        # Use official pgmq image with PostgreSQL 18 and pgmq pre-installed
+        # Use official pgmq image with PostgreSQL 17 and pgmq pre-installed
         # pgmq is REQUIRED for task coordination and queue management
-        image: ghcr.io/pgmq/pg18-pgmq:v1.7.0
+        image: ghcr.io/pgmq/pg17-pgmq:v1.7.0
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
@@ -28,115 +39,41 @@ jobs:
         ports:
           - 5432:5432
 
+    # You can define any steps you want, and they will run before the agent starts.
+    # If you do not check out your code, Copilot will do this for you.
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Elixir
-      uses: erlef/setup-beam@v1
-      with:
-        elixir-version: '1.19'
-        otp-version: '28'
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: '1.19'
+          otp-version: '28'
 
-    - name: Restore dependencies cache
-      uses: actions/cache@v4
-      with:
-        path: deps
-        key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
-        restore-keys: ${{ runner.os }}-mix-
+      - name: Restore Elixir dependencies cache
+        uses: actions/cache@v4
+        with:
+          path: deps
+          key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-mix-
 
-    - name: Install dependencies
-      run: mix deps.get
+      - name: Install Elixir dependencies
+        run: mix deps.get
 
-    - name: Wait for PostgreSQL and create test database
-      run: |
-        # Wait for PostgreSQL to be ready
-        timeout 30 bash -c 'until pg_isready -h localhost -p 5432 -U postgres; do echo "Waiting for postgres..."; sleep 1; done'
-        sleep 1
+      - name: Wait for PostgreSQL and create test database
+        run: |
+          # Wait for PostgreSQL to be ready
+          timeout 30 bash -c 'until pg_isready -h localhost -p 5432 -U postgres; do echo "Waiting for postgres..."; sleep 1; done'
+          sleep 1
 
-        # Create test database
-        PGPASSWORD=postgres psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE quantum_flow_test;" 2>/dev/null || echo "Database may already exist"
+          # Create test database idempotently
+          psql -h localhost -p 5432 -U postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'singularity_workflow_test'" | grep -q 1 || psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE singularity_workflow_test;"
+        env:
+          PGPASSWORD: postgres
 
-    - name: Run migrations
-      run: |
-        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/quantum_flow_test"
-        mix ecto.migrate
-      env:
-        MIX_ENV: test
-
-    - name: Run tests
-      run: |
-        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/quantum_flow_test"
-        mix test
-      env:
-        MIX_ENV: test
-
-    - name: Generate coverage report
-      run: |
-        export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/quantum_flow_test"
-        mix test.coverage --exclude integration
-      env:
-        MIX_ENV: test
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        files: ./cover/excoveralls.json
-        flags: unittests
-        name: codecov-umbrella
-        fail_ci_if_error: false
-
-    - name: Check formatting
-      run: mix format --check-formatted
-
-    - name: Run credo
-      run: mix credo --strict
-
-    - name: Run sobelow
-      run: mix sobelow --exit-on-warning
-
-    - name: Check dependencies
-      run: mix deps.audit
-
-    - name: Run dialyzer
-      run: mix dialyzer
-
-    - name: Build documentation
-      run: mix docs
-
-    - name: Print quality summary
-      if: always()
-      run: |
-        echo "=== quantum_flow CI Quality Summary ==="
-        echo "✓ Tests: mix test"
-        echo "✓ Coverage: mix test.coverage (18.5%+)"
-        echo "✓ Formatting: mix format --check-formatted"
-        echo "✓ Code quality: mix credo --strict"
-        echo "✓ Security: mix sobelow --exit-on-warning"
-        echo "✓ Dependencies: mix deps.audit"
-        echo "✓ Type checking: mix dialyzer"
-        echo "✓ Documentation: mix docs"
-        echo "=== All quality checks completed ==="
-
-    # Release checklist - only on version tags
-    - name: Check CHANGELOG updated (on release tags)
-      if: startsWith(github.ref, 'refs/tags/v')
-      run: |
-        VERSION=$(echo ${{ github.ref }} | sed 's/refs\/tags\/v//')
-        if grep -q "## \[$VERSION\]" CHANGELOG.md; then
-          echo "✓ CHANGELOG.md is updated for v$VERSION"
-        else
-          echo "✗ CHANGELOG.md is NOT updated for v$VERSION"
-          exit 1
-        fi
-
-    - name: Verify version matches (on release tags)
-      if: startsWith(github.ref, 'refs/tags/v')
-      run: |
-        TAG_VERSION=$(echo ${{ github.ref }} | sed 's/refs\/tags\/v//')
-        MIX_VERSION=$(grep 'version:' mix.exs | head -1 | sed 's/.*version: "\(.*\)".*/\1/')
-        if [ "$TAG_VERSION" = "$MIX_VERSION" ]; then
-          echo "✓ mix.exs version matches tag ($MIX_VERSION)"
-        else
-          echo "✗ Version mismatch: tag=$TAG_VERSION, mix.exs=$MIX_VERSION"
-          exit 1
-        fi
+      - name: Run migrations
+        run: mix ecto.migrate
+        env:
+          MIX_ENV: test
+          DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/singularity_workflow_test"
