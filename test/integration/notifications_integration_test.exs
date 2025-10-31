@@ -1,8 +1,8 @@
-defmodule QuantumFlow.NotificationsIntegrationTest do
+defmodule Singularity.Workflow.NotificationsIntegrationTest do
   use ExUnit.Case, async: false
   import ExUnit.CaptureLog
 
-  alias QuantumFlow.Notifications
+  alias Singularity.Workflow.Notifications
 
   # Test database setup
   setup do

@@ -46,10 +46,10 @@ Optimize (Learn from Execution)
 
 | Component | Purpose | When to Use |
 |-----------|---------|------------|
-| **QuantumFlow.Orchestrator** | Goal decomposition engine | Core functionality |
-| **QuantumFlow.WorkflowComposer** | High-level composition API | Most user workflows |
-| **QuantumFlow.OrchestratorOptimizer** | Optimization engine | Production workflows |
-| **QuantumFlow.OrchestratorNotifications** | Event broadcasting | Monitoring & observability |
+| **Singularity.Workflow.Orchestrator** | Goal decomposition engine | Core functionality |
+| **Singularity.Workflow.WorkflowComposer** | High-level composition API | Most user workflows |
+| **Singularity.Workflow.OrchestratorOptimizer** | Optimization engine | Production workflows |
+| **Singularity.Workflow.OrchestratorNotifications** | Event broadcasting | Monitoring & observability |
 
 ---
 
@@ -152,7 +152,7 @@ step_functions = %{
 ### 3. Execute the Goal
 
 ```elixir
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_goal(
   "Complete the workflow",
   &MyApp.SimpleDecomposer.decompose/1,
   step_functions,
@@ -164,14 +164,14 @@ step_functions = %{
 
 ## Goal Decomposition
 
-### Using QuantumFlow.Orchestrator
+### Using Singularity.Workflow.Orchestrator
 
 The `Orchestrator` module provides low-level decomposition control:
 
 #### decompose_goal/3
 
 ```elixir
-{:ok, task_graph} = QuantumFlow.Orchestrator.decompose_goal(
+{:ok, task_graph} = Singularity.Workflow.Orchestrator.decompose_goal(
   "Build authentication system",
   &MyApp.GoalDecomposer.decompose/1,
   MyApp.Repo
@@ -190,7 +190,7 @@ Returns:
 #### decompose_goal/4 (with options)
 
 ```elixir
-{:ok, task_graph} = QuantumFlow.Orchestrator.decompose_goal(
+{:ok, task_graph} = Singularity.Workflow.Orchestrator.decompose_goal(
   "Build authentication system",
   &MyApp.GoalDecomposer.decompose/1,
   MyApp.Repo,
@@ -276,7 +276,7 @@ The `WorkflowComposer` provides high-level APIs for creating and executing workf
 One-step goal to execution:
 
 ```elixir
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_goal(
   "Build microservices payment system",
   &MyApp.GoalDecomposer.decompose/1,
   step_functions,
@@ -300,13 +300,13 @@ Options:
 Execute a pre-existing task graph:
 
 ```elixir
-{:ok, task_graph} = QuantumFlow.Orchestrator.decompose_goal(
+{:ok, task_graph} = Singularity.Workflow.Orchestrator.decompose_goal(
   goal,
   &decomposer/1,
   repo
 )
 
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_task_graph(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_task_graph(
   task_graph,
   step_functions,
   MyApp.Repo,
@@ -325,7 +325,7 @@ goals = [
   "Build notification service"
 ]
 
-{:ok, results} = QuantumFlow.WorkflowComposer.compose_multiple_workflows(
+{:ok, results} = Singularity.Workflow.WorkflowComposer.compose_multiple_workflows(
   goals,
   &MyApp.GoalDecomposer.decompose/1,
   %{
@@ -349,7 +349,7 @@ The `OrchestratorOptimizer` learns from execution patterns to improve future wor
 #### :basic - Safe & Conservative
 
 ```elixir
-{:ok, optimized} = QuantumFlow.OrchestratorOptimizer.optimize_workflow(
+{:ok, optimized} = Singularity.Workflow.OrchestratorOptimizer.optimize_workflow(
   workflow,
   MyApp.Repo,
   optimization_level: :basic
@@ -365,7 +365,7 @@ Applies:
 #### :advanced - Intelligent & Adaptive
 
 ```elixir
-{:ok, optimized} = QuantumFlow.OrchestratorOptimizer.optimize_workflow(
+{:ok, optimized} = Singularity.Workflow.OrchestratorOptimizer.optimize_workflow(
   workflow,
   MyApp.Repo,
   optimization_level: :advanced
@@ -382,7 +382,7 @@ Applies:
 #### :aggressive - Maximum Optimization
 
 ```elixir
-{:ok, optimized} = QuantumFlow.OrchestratorOptimizer.optimize_workflow(
+{:ok, optimized} = Singularity.Workflow.OrchestratorOptimizer.optimize_workflow(
   workflow,
   MyApp.Repo,
   optimization_level: :aggressive,
@@ -400,7 +400,7 @@ Applies:
 ### Optimization Options
 
 ```elixir
-QuantumFlow.OrchestratorOptimizer.optimize_workflow(
+Singularity.Workflow.OrchestratorOptimizer.optimize_workflow(
   workflow,
   MyApp.Repo,
   optimization_level: :advanced,
@@ -415,7 +415,7 @@ QuantumFlow.OrchestratorOptimizer.optimize_workflow(
 ### Getting Optimization Recommendations
 
 ```elixir
-{:ok, recommendations} = QuantumFlow.OrchestratorOptimizer.get_recommendations(
+{:ok, recommendations} = Singularity.Workflow.OrchestratorOptimizer.get_recommendations(
   workflow,
   MyApp.Repo
 )
@@ -463,7 +463,7 @@ The `OrchestratorNotifications` module broadcasts real-time events during execut
 ### Subscribing to Events
 
 ```elixir
-{:ok, listener} = QuantumFlow.OrchestratorNotifications.listen(
+{:ok, listener} = Singularity.Workflow.OrchestratorNotifications.listen(
   "orchestrator_events",
   MyApp.Repo
 )
@@ -478,13 +478,13 @@ after
 end
 
 # Stop listening
-:ok = QuantumFlow.OrchestratorNotifications.unlisten(listener, MyApp.Repo)
+:ok = Singularity.Workflow.OrchestratorNotifications.unlisten(listener, MyApp.Repo)
 ```
 
 ### Getting Recent Events
 
 ```elixir
-{:ok, events} = QuantumFlow.OrchestratorNotifications.get_recent_events(
+{:ok, events} = Singularity.Workflow.OrchestratorNotifications.get_recent_events(
   "orchestrator_events",
   MyApp.Repo,
   limit: 100
@@ -496,7 +496,7 @@ end
 ### Sending Custom Events
 
 ```elixir
-{:ok, message_id} = QuantumFlow.OrchestratorNotifications.send_with_notify(
+{:ok, message_id} = Singularity.Workflow.OrchestratorNotifications.send_with_notify(
   "orchestrator_events",
   %{
     type: "custom_event",
@@ -536,7 +536,7 @@ step_functions = %{
   "create_documentation" => &create_architecture_docs/1
 }
 
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_goal(
   "Design a scalable microservices architecture for an e-commerce platform",
   &MyApp.MicroservicesDecomposer.decompose/1,
   step_functions,
@@ -564,7 +564,7 @@ defmodule MyApp.DataPipelineDecomposer do
   end
 end
 
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_goal(
   "Optimize our data processing pipeline for 10x throughput",
   &MyApp.DataPipelineDecomposer.decompose/1,
   step_functions,
@@ -602,7 +602,7 @@ step_functions = %{
   }
 }
 
-{:ok, results} = QuantumFlow.WorkflowComposer.compose_multiple_workflows(
+{:ok, results} = Singularity.Workflow.WorkflowComposer.compose_multiple_workflows(
   goals,
   &MyApp.ServiceDecomposer.decompose/1,
   step_functions,
@@ -619,7 +619,7 @@ step_functions = %{
 Configure HTDAG behavior in `config/config.exs`:
 
 ```elixir
-config :quantum_flow,
+config :singularity_workflow,
   orchestrator: %{
     # Goal decomposition settings
     max_depth: 10,
@@ -816,5 +816,5 @@ end
 
 - [README.md](../README.md) - Project overview
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - System architecture
-- [QUANTUM_FLOW_REFERENCE.md](./QUANTUM_FLOW_REFERENCE.md) - QuantumFlow comparison
+- [SINGULARITY_WORKFLOW_REFERENCE.md](./SINGULARITY_WORKFLOW_REFERENCE.md) - QuantumFlow comparison
 - [DYNAMIC_WORKFLOWS_GUIDE.md](./DYNAMIC_WORKFLOWS_GUIDE.md) - FlowBuilder examples

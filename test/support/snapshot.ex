@@ -1,4 +1,4 @@
-defmodule QuantumFlow.Test.Snapshot do
+defmodule Singularity.Workflow.Test.Snapshot do
   @moduledoc """
   Snapshot testing helper for comparing complex outputs.
 

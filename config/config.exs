@@ -11,28 +11,28 @@
 import Config
 
 # General application configuration
-config :quantum_flow,
-  ecto_repos: [QuantumFlow.Repo]
+config :singularity_workflow,
+  ecto_repos: [Singularity.Workflow.Repo]
 
 # Configures Elixir's Logger
 config :logger,
   level: :info
 
 # Use Jason for JSON parsing
-config :quantum_flow, :json_library, Jason
+config :singularity_workflow, :json_library, Jason
 
 # PGMQ configuration
-config :quantum_flow, :pgmq,
+config :singularity_workflow, :pgmq,
   host: "localhost",
   port: 5432,
-  database: "quantum_flow_dev",
+  database: "singularity_workflow_dev",
   username: "postgres",
-  password: System.get_env("QUANTUM_FLOW_DB_PASSWORD", "postgres"),
+  password: System.get_env("SINGULARITY_WORKFLOW_DB_PASSWORD", "postgres"),
   pool_size: 10,
   timeout: 30_000
 
 # Orchestrator configuration
-config :quantum_flow, :orchestrator,
+config :singularity_workflow, :orchestrator,
   # Global settings
   max_depth: 5,
   timeout: 300_000,

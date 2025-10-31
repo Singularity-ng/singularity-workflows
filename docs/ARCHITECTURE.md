@@ -41,7 +41,7 @@ The DAG layer handles workflow definition parsing, validation, and graph analysi
 
 ### Key Modules
 
-**QuantumFlow.DAG.WorkflowDefinition** (`lib/QuantumFlow/dag/workflow_definition.ex`)
+**Singularity.Workflow.DAG.WorkflowDefinition** (`lib/QuantumFlow/dag/workflow_definition.ex`)
 - Parses JSON workflow definitions
 - Validates step structure and dependencies
 - Detects cycles to prevent infinite loops
@@ -62,7 +62,7 @@ definition = %{
 {:ok, workflow} = WorkflowDefinition.parse(definition)
 ```
 
-**QuantumFlow.DAG.DynamicWorkflowLoader** (`lib/QuantumFlow/dag/dynamic_workflow_loader.ex`)
+**Singularity.Workflow.DAG.DynamicWorkflowLoader** (`lib/QuantumFlow/dag/dynamic_workflow_loader.ex`)
 - Loads workflow definitions from modules at runtime
 - Implements dynamic behavior callbacks
 - Bridges workflow code and engine execution
@@ -104,7 +104,7 @@ The execution layer orchestrates task processing, state management, and completi
 
 ### Key Modules
 
-**QuantumFlow.Executor** (`lib/QuantumFlow/executor.ex`)
+**Singularity.Workflow.Executor** (`lib/QuantumFlow/executor.ex`)
 - Main entry point for starting and monitoring workflows
 - Delegates to DAG for definition parsing
 - Initializes workflow state in database
@@ -117,13 +117,13 @@ The execution layer orchestrates task processing, state management, and completi
 {:ok, run} = Executor.status(run_id)
 ```
 
-**QuantumFlow.DAG.RunInitializer** (`lib/QuantumFlow/dag/run_initializer.ex`)
+**Singularity.Workflow.DAG.RunInitializer** (`lib/QuantumFlow/dag/run_initializer.ex`)
 - Creates workflow_runs record
 - Initializes step_states for all workflow steps
 - Sets up step_dependencies edges
 - For map steps, creates one task per item
 
-**QuantumFlow.DAG.TaskExecutor** (`lib/QuantumFlow/dag/task_executor.ex`)
+**Singularity.Workflow.DAG.TaskExecutor** (`lib/QuantumFlow/dag/task_executor.ex`)
 - Polls pgmq queue for pending tasks
 - Executes tasks via workflow callback functions
 - Handles retries and error handling
@@ -315,7 +315,7 @@ graph TB
   - `to_step_name` (string): Dependency target
 
 **pgmq Tables** (created by extension)
-- `pgmq.q_quantum_flow_queue`: Message queue for task coordination
+- `pgmq.q_singularity_workflow_queue`: Message queue for task coordination
 - Messages contain:
   ```json
   {
@@ -470,7 +470,7 @@ QuantumFlow includes an optional **Hierarchical Task DAG (HTDAG)** layer for goa
    ↓
 3. Orchestrator creates task graph with dependencies
    ↓
-4. FlowBuilder converts task graph to quantum_flow workflow
+4. FlowBuilder converts task graph to singularity_workflow workflow
    ↓
 5. OrchestratorOptimizer applies learned optimizations
    ↓
@@ -586,7 +586,7 @@ This design allows:
 All HTDAG behavior is configurable in `config.exs`:
 
 ```elixir
-config :quantum_flow,
+config :singularity_workflow,
   orchestrator: %{
     # Decomposition settings
     max_depth: 10,
@@ -700,7 +700,7 @@ graph TB
 
 ## Workflow Behavior Callbacks
 
-Workflows implement `QuantumFlow.Executor.Workflow` behavior with callbacks:
+Workflows implement `Singularity.Workflow.Executor.Workflow` behavior with callbacks:
 
 ```elixir
 @callback definition :: map()
@@ -917,20 +917,20 @@ end
 
 ### Check Workflow Status
 ```elixir
-{:ok, run} = QuantumFlow.Executor.status(run_id)
+{:ok, run} = Singularity.Workflow.Executor.status(run_id)
 IO.inspect(run, pretty: true)
 ```
 
 ### View Pending Tasks
 ```elixir
-alias QuantumFlow.StepState
-QuantumFlow.Repo.all(from s in StepState, where: s.run_id == ^run_id)
+alias Singularity.Workflow.StepState
+Singularity.Workflow.Repo.all(from s in StepState, where: s.run_id == ^run_id)
 ```
 
 ### Check Step Dependencies
 ```elixir
-alias QuantumFlow.StepDependency
-deps = QuantumFlow.Repo.all(
+alias Singularity.Workflow.StepDependency
+deps = Singularity.Workflow.Repo.all(
   from d in StepDependency,
   where: d.run_id == ^run_id
 )
@@ -942,10 +942,10 @@ Enum.each(deps, &IO.inspect/1)
 -- Check queue stats
 SELECT COUNT(*) as total,
        SUM(CASE WHEN read_at IS NULL THEN 1 ELSE 0 END) as unread
-FROM pgmq.q_quantum_flow_queue;
+FROM pgmq.q_singularity_workflow_queue;
 
 -- View oldest unread message
-SELECT * FROM pgmq.q_quantum_flow_queue
+SELECT * FROM pgmq.q_singularity_workflow_queue
 WHERE read_at IS NULL
 ORDER BY msg_id ASC LIMIT 1;
 ```
@@ -958,12 +958,12 @@ config :logger, level: :debug
 # Filter specific modules
 config :logger,
   backends: [
-    {LoggerFileBackend, [:quantum_flow_log]},
+    {LoggerFileBackend, [:singularity_workflow_log]},
     {LoggerTerminalBackend, [:console]}
   ]
 
-config :logger, :quantum_flow_log,
-  path: "log/QuantumFlow.log",
+config :logger, :singularity_workflow_log,
+  path: "log/Singularity.Workflow.log",
   format: "$date $time [$level] $metadata$message\n"
 ```
 

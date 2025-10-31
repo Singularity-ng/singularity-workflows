@@ -4,8 +4,8 @@ $schema: '../../.moon/cache/schemas/project.json'
 type: 'library'
 language: 'elixir'
 project:
-  name: '@singularity/quantum_flow'
-  description: 'Elixir implementation of QuantumFlow - PostgreSQL-native workflow orchestration'
+  name: '@singularity/singularity_workflow'
+  description: 'Elixir implementation of Singularity.Workflow - PostgreSQL-native workflow orchestration'
   channel: '#external'
   owner: 'singularity'
   maintainers: ['mikkihugo']
@@ -41,7 +41,7 @@ tasks:
       runInCI: true
 
   test-unit:
-    command: 'nix develop ../../#dev --command bash -lc "MIX_ENV=test QUANTUM_FLOW_SKIP_DB=1 mix test"'
+    command: 'nix develop ../../#dev --command bash -lc "MIX_ENV=test SINGULARITY_WORKFLOW_SKIP_DB=1 mix test"'
     deps:
       - 'compile'
     inputs:

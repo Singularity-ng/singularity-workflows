@@ -13,8 +13,8 @@ Thank you for your interest in QuantumFlow! This document provides guidelines fo
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/mikkihugo/quantum_flow.git
-cd quantum_flow
+git clone https://github.com/mikkihugo/singularity_workflow.git
+cd singularity_workflow
 ```
 
 2. Install dependencies:
@@ -25,10 +25,10 @@ mix deps.get
 3. Set up the database:
 ```bash
 # Create test database
-createdb quantum_flow_test
+createdb singularity_workflow_test
 
 # Configure connection
-export DATABASE_URL="postgres://localhost/quantum_flow_test"
+export DATABASE_URL="postgres://localhost/singularity_workflow_test"
 
 # Run migrations
 mix ecto.migrate
@@ -89,7 +89,7 @@ All code contributions must include:
 
 1. **Module Documentation** (@moduledoc)
    ```elixir
-   defmodule QuantumFlow.MyModule do
+   defmodule Singularity.Workflow.MyModule do
      @moduledoc """
      Brief description of what this module does.
 
@@ -185,7 +185,7 @@ When working with workflows:
 ### File Organization
 
 ```
-quantum_flow/
+singularity_workflow/
 ├── lib/QuantumFlow/
 │   ├── executor.ex          # Main entry point
 │   ├── flow_builder.ex      # Dynamic workflow API
@@ -225,9 +225,9 @@ quantum_flow/
 
 ### Example Test Structure
 ```elixir
-defmodule QuantumFlow.MyModuleTest do
+defmodule Singularity.Workflow.MyModuleTest do
   use ExUnit.Case
-  alias QuantumFlow.MyModule
+  alias Singularity.Workflow.MyModule
 
   describe "my_function/1" do
     test "handles valid input" do

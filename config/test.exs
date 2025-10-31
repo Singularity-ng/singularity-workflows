@@ -4,20 +4,20 @@ import Config
 config :logger, level: :warning
 
 # Use TestClock for testing
-config :quantum_flow, :clock, QuantumFlow.TestClock
+config :singularity_workflow, :clock, Singularity.Workflow.TestClock
 
 # Configure your database
-config :quantum_flow, QuantumFlow.Repo,
+config :singularity_workflow, Singularity.Workflow.Repo,
   username: System.get_env("PGUSER") || System.get_env("USER"),
   password: System.get_env("PGPASSWORD") || "",
   hostname: System.get_env("PGHOST") || "localhost",
-  database: "quantum_flow_test#{System.get_env("MIX_TEST_PARTITION")}",
+  database: "singularity_workflow_test#{System.get_env("MIX_TEST_PARTITION")}",
   adapter: Ecto.Adapters.Postgres,
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 
 # Orchestrator test configuration
-config :quantum_flow, :orchestrator,
+config :singularity_workflow, :orchestrator,
   # Disable features that might interfere with tests
   features: %{
     monitoring: false,

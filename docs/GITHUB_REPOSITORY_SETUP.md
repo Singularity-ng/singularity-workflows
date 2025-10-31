@@ -13,7 +13,7 @@ Elixir implementation of QuantumFlow's database-driven DAG execution engine
 
 ### Setup Steps
 
-1. Go to https://github.com/mikkihugo/quantum_flow
+1. Go to https://github.com/mikkihugo/singularity_workflow
 2. Click **Settings** (gear icon)
 3. In the "General" section at the top, find the **Description** field
 4. Update to:
@@ -23,7 +23,7 @@ Elixir implementation of QuantumFlow's database-driven DAG execution engine
    ```
 5. Add a **Website** URL (optional):
    ```
-   https://hexdocs.pm/quantum_flow
+   https://hexdocs.pm/singularity_workflow
    ```
 6. Click **Save**
 
@@ -33,7 +33,7 @@ Issues allow users to report bugs and request features.
 
 ### Setup Steps
 
-1. Go to https://github.com/mikkihugo/quantum_flow/settings
+1. Go to https://github.com/mikkihugo/singularity_workflow/settings
 2. Scroll down to **Features** section
 3. Check the **Issues** checkbox (should be enabled by default)
 4. Click **Save**
@@ -154,15 +154,15 @@ jobs:
       - name: Create test database
         run: |
           export PGPASSWORD=postgres
-          psql -h localhost -U postgres -c "CREATE DATABASE quantum_flow_test;"
-          psql -h localhost -U postgres quantum_flow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
+          psql -h localhost -U postgres -c "CREATE DATABASE singularity_workflow_test;"
+          psql -h localhost -U postgres singularity_workflow_test -c "CREATE EXTENSION IF NOT EXISTS pgmq;"
         env:
           PGPASSWORD: postgres
 
       - name: Run tests
         run: mix test
         env:
-          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/quantum_flow_test"
+          DATABASE_URL: "postgres://postgres:postgres@localhost:5432/singularity_workflow_test"
 
       - name: Run code quality checks
         run: |

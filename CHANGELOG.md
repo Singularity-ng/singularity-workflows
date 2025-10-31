@@ -38,15 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Core Modules
 
-- `QuantumFlow.Executor` - Main entry point for workflow execution
-- `QuantumFlow.FlowBuilder` - Dynamic workflow construction API
-- `QuantumFlow.DAG.WorkflowDefinition` - DAG parsing and cycle detection
-- `QuantumFlow.DAG.RunInitializer` - Workflow initialization and state setup
-- `QuantumFlow.DAG.TaskExecutor` - Task execution and polling loop
-- `QuantumFlow.StepState` - Step state tracking (Ecto schema)
-- `QuantumFlow.StepTask` - Individual task tracking for map steps (Ecto schema)
-- `QuantumFlow.WorkflowRun` - Workflow execution tracking (Ecto schema)
-- `QuantumFlow.StepDependency` - DAG edge tracking (Ecto schema)
+- `Singularity.Workflow.Executor` - Main entry point for workflow execution
+- `Singularity.Workflow.FlowBuilder` - Dynamic workflow construction API
+- `Singularity.Workflow.DAG.WorkflowDefinition` - DAG parsing and cycle detection
+- `Singularity.Workflow.DAG.RunInitializer` - Workflow initialization and state setup
+- `Singularity.Workflow.DAG.TaskExecutor` - Task execution and polling loop
+- `Singularity.Workflow.StepState` - Step state tracking (Ecto schema)
+- `Singularity.Workflow.StepTask` - Individual task tracking for map steps (Ecto schema)
+- `Singularity.Workflow.WorkflowRun` - Workflow execution tracking (Ecto schema)
+- `Singularity.Workflow.StepDependency` - DAG edge tracking (Ecto schema)
 
 ### Database Features
 
@@ -62,16 +62,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Configurable via environment variables:
   - `DATABASE_URL` - PostgreSQL connection
-  - `QUANTUM_FLOW_QUEUE_NAME` - pgmq queue name (default: "quantum_flow_queue")
-  - `QUANTUM_FLOW_VT` - Visibility timeout in seconds (default: 300)
-  - `QUANTUM_FLOW_MAX_WORKERS` - Max concurrent task executions (default: 10)
+  - `SINGULARITY_WORKFLOW_QUEUE_NAME` - pgmq queue name (default: "singularity_workflow_queue")
+  - `SINGULARITY_WORKFLOW_VT` - Visibility timeout in seconds (default: 300)
+  - `SINGULARITY_WORKFLOW_MAX_WORKERS` - Max concurrent task executions (default: 10)
 
 ### Documentation
 
 - `GETTING_STARTED.md` - Installation and first workflow tutorial
 - `docs/ARCHITECTURE.md` - Technical deep dive into internal design
 - `CONTRIBUTING.md` - Development guidelines and workflow
-- `docs/QUANTUM_FLOW_REFERENCE.md` - Complete API reference
+- `docs/SINGULARITY_WORKFLOW_REFERENCE.md` - Complete API reference
 - `docs/DYNAMIC_WORKFLOWS_GUIDE.md` - Advanced workflow patterns
 - `docs/SECURITY_AUDIT.md` - Security analysis and best practices
 
@@ -117,5 +117,5 @@ Development version prior to public release.
 
 ---
 
-[Unreleased]: https://github.com/mikkihugo/quantum_flow
-[0.1.0]: https://github.com/mikkihugo/quantum_flow/releases/tag/v0.1.0
+[Unreleased]: https://github.com/mikkihugo/singularity_workflow
+[0.1.0]: https://github.com/mikkihugo/singularity_workflow/releases/tag/v0.1.0

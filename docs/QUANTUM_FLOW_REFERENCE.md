@@ -4,7 +4,7 @@ Complete overview of the official QuantumFlow TypeScript implementation.
 
 **Location:** `/tmp/QuantumFlow/`  
 **What it is:** Official TypeScript workflow orchestration using PostgreSQL + pgmq  
-**Our achievement:** quantum_flow = 100% feature parity with this
+**Our achievement:** singularity_workflow = 100% feature parity with this
 
 ---
 
@@ -19,7 +19,7 @@ Complete overview of the official QuantumFlow TypeScript implementation.
 │   ├── dsl/              # TypeScript DSL for workflow definitions
 │   ├── edge-worker/      # Supabase Edge Function worker
 │   ├── example-flows/    # Example workflow implementations
-│   └── website/          # Documentation website (https://QuantumFlow.dev)
+│   └── website/          # Documentation website (https://Singularity.Workflow.dev)
 ├── examples/             # Additional examples
 ├── scripts/              # Build and deployment scripts
 └── README.md
@@ -29,7 +29,7 @@ Complete overview of the official QuantumFlow TypeScript implementation.
 
 ## 1. Core SQL Schemas (`pkgs/core/schemas/`)
 
-**The heart of QuantumFlow** - All the SQL we matched in quantum_flow:
+**The heart of QuantumFlow** - All the SQL we matched in singularity_workflow:
 
 | File | Size | What It Does | Our Migration |
 |------|------|--------------|---------------|
@@ -76,7 +76,7 @@ export const ExampleFlow = new Flow<{ value: number }>({
   }));
 ```
 
-**quantum_flow Equivalent:**
+**singularity_workflow Equivalent:**
 
 ```elixir
 defmodule ExampleWorkflow do
@@ -101,7 +101,7 @@ defmodule ExampleWorkflow do
   end
 end
 
-QuantumFlow.Executor.execute(ExampleWorkflow, %{"value" => 23}, repo)
+Singularity.Workflow.Executor.execute(ExampleWorkflow, %{"value" => 23}, repo)
 ```
 
 ### Map Flow (`map-flow.ts`)
@@ -123,7 +123,7 @@ export const TextProcessingFlow = new Flow<string[]>({
   }));
 ```
 
-**quantum_flow Equivalent:**
+**singularity_workflow Equivalent:**
 
 ```elixir
 defmodule TextProcessingWorkflow do
@@ -185,7 +185,7 @@ export class EdgeWorker {
 
 ### Key Features
 
-| Feature | QuantumFlow Edge Worker | quantum_flow TaskExecutor |
+| Feature | QuantumFlow Edge Worker | singularity_workflow TaskExecutor |
 |---------|-------------------|----------------------|
 | **Runtime** | Deno (Supabase Edge Function) | BEAM/Erlang |
 | **Polling** | `read_with_poll()` (5s default) | `read_with_poll()` (5s configurable) |
@@ -208,10 +208,10 @@ EdgeWorker.start(MyFlow, {
 });
 ```
 
-**quantum_flow (Elixir):**
+**singularity_workflow (Elixir):**
 
 ```elixir
-{:ok, result} = QuantumFlow.Executor.execute(
+{:ok, result} = Singularity.Workflow.Executor.execute(
   MyWorkflow,
   %{"input" => "data"},
   repo,
@@ -224,7 +224,7 @@ EdgeWorker.start(MyFlow, {
 
 ## 4. Website (`pkgs/website/`)
 
-**What it is:** Astro-based documentation site at https://QuantumFlow.dev
+**What it is:** Astro-based documentation site at https://Singularity.Workflow.dev
 
 ### Documentation Structure
 
@@ -249,7 +249,7 @@ EdgeWorker.start(MyFlow, {
 - **Comparisons:** vs Oban, vs BullMQ, vs Sidekiq
 - **API Reference:** Complete TypeScript API docs
 
-**We can use these for quantum_flow documentation!**
+**We can use these for singularity_workflow documentation!**
 
 ---
 
@@ -276,7 +276,7 @@ const MyFlow = new Flow<{ userId: string }>({
   }));
 ```
 
-**quantum_flow Equivalent:** Elixir modules with @spec annotations
+**singularity_workflow Equivalent:** Elixir modules with @spec annotations
 
 ---
 
@@ -296,7 +296,7 @@ const runId = await client.run('my_flow', { input: 'data' });
 const status = await client.getStatus(runId);
 ```
 
-**quantum_flow Equivalent:** Direct Ecto queries + Executor API
+**singularity_workflow Equivalent:** Direct Ecto queries + Executor API
 
 ---
 
@@ -310,7 +310,7 @@ npx QuantumFlow migrate    # Run migrations
 npx QuantumFlow compile    # Compile DSL to SQL
 ```
 
-**quantum_flow Equivalent:** Mix tasks
+**singularity_workflow Equivalent:** Mix tasks
 
 ```bash
 mix ecto.migrate      # Run all 28 migrations
@@ -319,9 +319,9 @@ mix test              # Run tests
 
 ---
 
-## Key Differences: QuantumFlow vs quantum_flow
+## Key Differences: QuantumFlow vs singularity_workflow
 
-| Aspect | QuantumFlow | quantum_flow |
+| Aspect | QuantumFlow | singularity_workflow |
 |--------|--------|-----------|
 | **Language** | TypeScript | Elixir |
 | **Runtime** | Deno/Node.js | BEAM/Erlang |
@@ -343,17 +343,17 @@ mix test              # Run tests
 1. ✅ **SQL Core** - Matched all 22 SQL schema files
 2. ✅ **Example Flows** - Understood patterns (simple, map, wide)
 3. ✅ **Edge Worker** - Implemented equivalent TaskExecutor
-4. ✅ **Website** - Can use docs for quantum_flow inspiration
+4. ✅ **Website** - Can use docs for singularity_workflow inspiration
 5. ✅ **DSL** - Created Elixir module equivalent
 6. ✅ **Client** - Created Executor + Ecto query API
 7. ✅ **CLI** - Created Mix tasks
 
-**Result:** quantum_flow = 100% feature parity with QuantumFlow! 🎯
+**Result:** singularity_workflow = 100% feature parity with QuantumFlow! 🎯
 
 ---
 
 **References:**
 
 - QuantumFlow GitHub: https://github.com/QuantumFlow/QuantumFlow
-- QuantumFlow Website: https://QuantumFlow.dev
-- quantum_flow: Our standalone Elixir implementation
+- QuantumFlow Website: https://Singularity.Workflow.dev
+- singularity_workflow: Our standalone Elixir implementation

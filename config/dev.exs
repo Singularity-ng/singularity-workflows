@@ -1,11 +1,11 @@
 import Config
 
 # Configure your database
-config :quantum_flow, QuantumFlow.Repo,
+config :singularity_workflow, Singularity.Workflow.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "quantum_flow_dev",
+  database: "singularity_workflow_dev",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
@@ -16,7 +16,7 @@ config :quantum_flow, QuantumFlow.Repo,
 # The watchers configuration can be used to run external
 # watchers to your application. For example, we use it
 # with esbuild to bundle .js and .css sources.
-config :quantum_flow, QuantumFlowWeb.Endpoint,
+config :singularity_workflow, Singularity.Workflow.Web.Endpoint,
   # Binding to loopback ipv4 address prevents access from other machines.
   # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
   https: [
@@ -56,24 +56,24 @@ config :quantum_flow, QuantumFlowWeb.Endpoint,
 # different ports.
 
 # Watch static and templates for browser reloading.
-config :quantum_flow, QuantumFlowWeb.Endpoint,
+config :singularity_workflow, Singularity.Workflow.Web.Endpoint,
   live_reload: [
     patterns: [
       ~r"priv/static/.*(js|css|png|jpeg|jpg|gif|svg)$",
       ~r"priv/gettext/.*(po)$",
-      ~r"lib/quantum_flow_web/(live|views)/.*(ex)$",
-      ~r"lib/quantum_flow_web/templates/.*(eex)$"
+      ~r"lib/singularity_workflow_web/(live|views)/.*(ex)$",
+      ~r"lib/singularity_workflow_web/templates/.*(eex)$"
     ]
   ]
 
 # Enable dev routes for dashboard and mailbox
-config :quantum_flow, dev_routes: true
+config :singularity_workflow, dev_routes: true
 
 # Do not include metadata nor timestamps in development logs
 config :logger, :console, format: "[$level] $message\n"
 
 # Orchestrator development configuration
-config :quantum_flow, :orchestrator,
+config :singularity_workflow, :orchestrator,
   # Enable debug logging for development
   debug: true,
 

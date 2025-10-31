@@ -1,6 +1,6 @@
 # Input Validation for Dynamic Workflows
 
-quantum_flow ensures **all inputs are validated** before creating dynamic workflows, preventing invalid data from reaching the database.
+singularity_workflow ensures **all inputs are validated** before creating dynamic workflows, preventing invalid data from reaching the database.
 
 ## Validation Strategy
 
@@ -141,7 +141,7 @@ validate_timeout(timeout: -10)      # => {:error, :timeout_must_be_positive}
 ### Safe Dynamic Workflow Creation
 
 ```elixir
-alias QuantumFlow.FlowBuilder
+alias Singularity.Workflow.FlowBuilder
 
 # All validation happens automatically
 case FlowBuilder.create_flow("ai_workflow", repo, timeout: 120) do
@@ -185,7 +185,7 @@ Even if client validation is bypassed, PostgreSQL enforces:
 
 ### 1. Slug Validation (`is_valid_slug` function)
 ```sql
-CREATE FUNCTION QuantumFlow.is_valid_slug(slug TEXT)
+CREATE FUNCTION Singularity.Workflow.is_valid_slug(slug TEXT)
 RETURNS BOOLEAN AS $$
 BEGIN
   RETURN slug ~ '^[a-zA-Z_][a-zA-Z0-9_]*$';
@@ -197,11 +197,11 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 ```sql
 -- Workflows table
 ALTER TABLE workflows
-ADD CONSTRAINT workflow_slug_is_valid CHECK (QuantumFlow.is_valid_slug(workflow_slug));
+ADD CONSTRAINT workflow_slug_is_valid CHECK (Singularity.Workflow.is_valid_slug(workflow_slug));
 
 -- Steps table
 ALTER TABLE workflow_steps
-ADD CONSTRAINT step_slug_is_valid CHECK (QuantumFlow.is_valid_slug(step_slug));
+ADD CONSTRAINT step_slug_is_valid CHECK (Singularity.Workflow.is_valid_slug(step_slug));
 
 -- Timeout must be positive
 ALTER TABLE workflows
@@ -287,4 +287,4 @@ end
 
 ---
 
-**Summary:** quantum_flow validates **all** dynamic workflow inputs at both the client (Elixir) and database (PostgreSQL) layers, ensuring data integrity and preventing SQL injection.
+**Summary:** singularity_workflow validates **all** dynamic workflow inputs at both the client (Elixir) and database (PostgreSQL) layers, ensuring data integrity and preventing SQL injection.

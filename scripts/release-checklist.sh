@@ -1,10 +1,10 @@
 #!/bin/bash
-# Release Checklist Script for quantum_flow
+# Release Checklist Script for singularity_workflow
 # Run this before creating a version tag to ensure everything is ready
 
 set -e
 
-echo "🚀 quantum_flow Release Checklist"
+echo "🚀 singularity_workflow Release Checklist"
 echo "=============================="
 echo ""
 

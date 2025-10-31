@@ -1,15 +1,15 @@
 # Getting Started with QuantumFlow
 
-QuantumFlow is an Elixir implementation of [QuantumFlow](https://github.com/quantum_flow-dev/QuantumFlow), a database-driven DAG execution engine. This guide walks you through installation, basic setup, and running your first workflow.
+QuantumFlow is an Elixir implementation of [QuantumFlow](https://github.com/singularity_workflow-dev/QuantumFlow), a database-driven DAG execution engine. This guide walks you through installation, basic setup, and running your first workflow.
 
 ## Installation
 
-Add `quantum_flow` to your `mix.exs` dependencies:
+Add `singularity_workflow` to your `mix.exs` dependencies:
 
 ```elixir
 def deps do
   [
-    {:quantum_flow, "~> 0.1.0"}
+    {:singularity_workflow, "~> 0.1.0"}
   ]
 end
 ```
@@ -32,11 +32,11 @@ createdb my_app
 
 ### 2. Add QuantumFlow Repository
 
-Configure Ecto in your app to include the QuantumFlow.Repo:
+Configure Ecto in your app to include the Singularity.Workflow.Repo:
 
 ```elixir
 # config/config.exs
-config :my_app, QuantumFlow.Repo,
+config :my_app, Singularity.Workflow.Repo,
   database: "my_app",
   username: "postgres",
   password: "postgres",
@@ -58,7 +58,7 @@ psql my_app -c "CREATE EXTENSION IF NOT EXISTS pgmq"
 
 ```bash
 # Generate migrations for QuantumFlow tables
-mix ecto.gen.migration init_quantum_flow
+mix ecto.gen.migration init_singularity_workflow
 
 # Run all migrations
 mix ecto.migrate
@@ -75,11 +75,11 @@ The migration will create:
 
 ### 1. Define a Workflow
 
-Create a workflow module that implements `QuantumFlow.Executor.Workflow`:
+Create a workflow module that implements `Singularity.Workflow.Executor.Workflow`:
 
 ```elixir
 defmodule MyApp.Workflows.HelloWorld do
-  @behaviour QuantumFlow.Executor.Workflow
+  @behaviour Singularity.Workflow.Executor.Workflow
 
   @impl true
   def definition do
@@ -126,7 +126,7 @@ alias MyApp.Workflows.HelloWorld
 # Check status
 {:ok, run} = HelloWorld.status(run_id)
 IO.inspect(run)
-# => %QuantumFlow.WorkflowRun{
+# => %Singularity.Workflow.WorkflowRun{
 #   id: "...",
 #   workflow_slug: "MyApp.Workflows.HelloWorld",
 #   status: "started",
@@ -140,7 +140,7 @@ IO.inspect(run)
 The workflow engine coordinates task execution via the pgmq queue. To process tasks:
 
 ```elixir
-alias QuantumFlow.Executor
+alias Singularity.Workflow.Executor
 
 # Poll the queue and execute pending tasks
 {:ok, executed_count} = Executor.execute_pending_tasks()
@@ -159,7 +159,7 @@ QuantumFlow supports complex DAG workflows with parallel execution and dependenc
 
 ```elixir
 defmodule MyApp.Workflows.DataPipeline do
-  @behaviour QuantumFlow.Executor.Workflow
+  @behaviour Singularity.Workflow.Executor.Workflow
 
   @impl true
   def definition do
@@ -234,7 +234,7 @@ Execute the same task across multiple items:
 
 ```elixir
 defmodule MyApp.Workflows.ProcessItems do
-  @behaviour QuantumFlow.Executor.Workflow
+  @behaviour Singularity.Workflow.Executor.Workflow
 
   @impl true
   def definition do
@@ -322,7 +322,7 @@ step_functions = %{
 ### Execute Goal-Driven Workflow
 
 ```elixir
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_goal(
   "Build a user authentication system",
   &MyApp.SimpleDecomposer.decompose/1,
   step_functions,
@@ -338,7 +338,7 @@ IO.inspect(result)
 
 ```elixir
 # :basic - Safe, conservative optimizations
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_goal(
   goal,
   &decomposer/1,
   steps,
@@ -347,7 +347,7 @@ IO.inspect(result)
 )
 
 # :advanced - Intelligent optimizations based on historical data
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_goal(
   goal,
   &decomposer/1,
   steps,
@@ -357,7 +357,7 @@ IO.inspect(result)
 )
 
 # :aggressive - Maximum optimization (requires 100+ executions)
-{:ok, result} = QuantumFlow.WorkflowComposer.compose_from_goal(
+{:ok, result} = Singularity.Workflow.WorkflowComposer.compose_from_goal(
   goal,
   &decomposer/1,
   steps,
@@ -377,7 +377,7 @@ goals = [
   "Build notification service"
 ]
 
-{:ok, results} = QuantumFlow.WorkflowComposer.compose_multiple_workflows(
+{:ok, results} = Singularity.Workflow.WorkflowComposer.compose_multiple_workflows(
   goals,
   &MyApp.ServiceDecomposer.decompose/1,
   %{
@@ -400,14 +400,14 @@ QuantumFlow respects these environment variables:
 # PostgreSQL connection
 DATABASE_URL=postgres://user:pass@localhost:5432/my_app
 
-# PGMQ queue name (default: quantum_flow_queue)
-QUANTUM_FLOW_QUEUE_NAME=my_queue
+# PGMQ queue name (default: singularity_workflow_queue)
+SINGULARITY_WORKFLOW_QUEUE_NAME=my_queue
 
 # Visibility timeout for in-flight tasks (default: 300s = 5 min)
-QUANTUM_FLOW_VT=300
+SINGULARITY_WORKFLOW_VT=300
 
 # Max concurrent task executions (default: 10)
-QUANTUM_FLOW_MAX_WORKERS=10
+SINGULARITY_WORKFLOW_MAX_WORKERS=10
 ```
 
 ## Troubleshooting
@@ -436,7 +436,7 @@ mix ecto.migrate  # Run all migrations
 Check queue health:
 
 ```elixir
-alias QuantumFlow.Executor
+alias Singularity.Workflow.Executor
 
 # See how many tasks are pending
 {:ok, count} = Executor.pending_task_count()
@@ -458,7 +458,7 @@ mix dialyzer
 
 - Read [ARCHITECTURE.md](docs/ARCHITECTURE.md) for internal design details
 - Check [DYNAMIC_WORKFLOWS_GUIDE.md](docs/DYNAMIC_WORKFLOWS_GUIDE.md) for advanced patterns
-- See [QUANTUM_FLOW_REFERENCE.md](docs/QUANTUM_FLOW_REFERENCE.md) for complete API documentation
+- See [SINGULARITY_WORKFLOW_REFERENCE.md](docs/SINGULARITY_WORKFLOW_REFERENCE.md) for complete API documentation
 - Review [SECURITY_AUDIT.md](docs/SECURITY_AUDIT.md) for security considerations
 
 ## Contributing
