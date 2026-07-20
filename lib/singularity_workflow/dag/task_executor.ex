@@ -147,6 +147,7 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
   require Logger
 
   alias Singularity.Workflow.DAG.WorkflowDefinition
+  alias Singularity.Workflow.DAG.LeaseHeartbeat
   alias Singularity.Workflow.Execution.Strategy
   alias Singularity.Workflow.FlowTracer
   alias Singularity.Workflow.WorkflowRun
@@ -161,6 +162,9 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
   # Maximum time for complete_task() PostgreSQL function call
   @poll_timeout_grace_seconds 5
   # Safety margin added to max_poll_seconds to prevent query timeout
+  # Mid-attempt claim VT renew (ACE refresh_task_lease / C21 LEASE_VT parity)
+  @lease_vt_seconds 1200
+  @lease_heartbeat_interval_ms div(@lease_vt_seconds, 4) * 1000
 
   @batch_failure_threshold 0.5
   @exponential_backoff_base_ms 200
@@ -775,7 +779,7 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
     case claim_tasks(workflow_slug, msg_ids, worker_id, repo) do
       {:ok, tasks_result} ->
         handle_task_claim_result(
-          tasks_result,
+          {:ok, tasks_result},
           workflow_slug,
           definition,
           repo,
@@ -955,7 +959,9 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
     results =
       Task.async_stream(
         tasks,
-        fn task -> execute_task_from_map(task, definition, repo, task_timeout_ms) end,
+        fn task ->
+          execute_task_from_map(task, definition, repo, task_timeout_ms, workflow_slug)
+        end,
         max_concurrency: batch_size,
         timeout: @task_execution_timeout_ms
       )
@@ -1010,13 +1016,14 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
   #
   # Exception handling: Any exception (throw, error, exit) is caught and converted to
   # {:error, {:exception, {kind, error}}} tuple for logging and recovery.
-  @spec execute_task_from_map(map(), WorkflowDefinition.t(), module(), integer()) ::
+  @spec execute_task_from_map(map(), WorkflowDefinition.t(), module(), integer(), String.t()) ::
           {:ok, :task_executed} | {:error, term()}
-  defp execute_task_from_map(task_map, definition, repo, task_timeout_ms) do
-    run_id = task_map["run_id"]
-    step_slug = task_map["step_slug"]
-    task_index = task_map["task_index"]
-    input = task_map["input"]
+  defp execute_task_from_map(task_map, definition, repo, task_timeout_ms, workflow_slug) do
+    run_id = task_map["run_id"] || task_map[:run_id]
+    step_slug = task_map["step_slug"] || task_map[:step_slug]
+    task_index = task_map["task_index"] || task_map[:task_index]
+    input = task_map["input"] || task_map[:input]
+    message_id = task_map["message_id"] || task_map[:message_id]
 
     # Convert step_slug string to atom for function lookup
     # Note: String.to_existing_atom/1 will raise if the atom doesn't exist,
@@ -1034,7 +1041,9 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
       task_index,
       input,
       task_timeout_ms,
-      repo
+      repo,
+      workflow_slug,
+      message_id
     )
   end
 
@@ -1192,7 +1201,9 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
           integer(),
           map(),
           integer(),
-          module()
+          module(),
+          String.t(),
+          integer() | nil
         ) :: {:error, tuple()}
   defp execute_task_if_found(
          nil,
@@ -1203,7 +1214,9 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
          _task_index,
          _input,
          _task_timeout_ms,
-         _repo
+         _repo,
+         _workflow_slug,
+         _message_id
        ) do
     Logger.error("TaskExecutor: Step function not found",
       step_slug: step_slug,
@@ -1222,7 +1235,9 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
           integer(),
           map(),
           integer(),
-          module()
+          module(),
+          String.t(),
+          integer() | nil
         ) :: {:ok, :task_executed} | {:error, term()}
   defp execute_task_if_found(
          step_fn,
@@ -1233,7 +1248,9 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
          task_index,
          input,
          task_timeout_ms,
-         repo
+         repo,
+         workflow_slug,
+         message_id
        ) do
     execution_config = WorkflowDefinition.get_step_execution_config(definition, step_slug_atom)
 
@@ -1263,7 +1280,16 @@ defmodule Singularity.Workflow.DAG.TaskExecutor do
       }
     )
 
-    result = Strategy.execute(step_fn, input, execution_config, task_timeout_ms)
+    result =
+      LeaseHeartbeat.during(
+        repo,
+        workflow_slug,
+        message_id,
+        fn -> Strategy.execute(step_fn, input, execution_config, task_timeout_ms) end,
+        interval_ms: @lease_heartbeat_interval_ms,
+        vt_seconds: @lease_vt_seconds
+      )
+
     task_duration = System.monotonic_time() - task_start_time
 
     case result do
