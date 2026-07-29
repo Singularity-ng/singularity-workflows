@@ -625,8 +625,6 @@ defmodule Singularity.Workflow.Executor do
 
     # Validate run_id
     if is_binary(run_id) or is_struct(run_id, Ecto.UUID) do
-      import Ecto.Query
-
       try do
         _result =
           repo.transaction(fn ->
@@ -635,39 +633,54 @@ defmodule Singularity.Workflow.Executor do
                 repo.rollback({:error, :not_found})
 
               run ->
-                unless force do
-                  if run.status in ["completed", "failed"] do
-                    repo.rollback({:error, {:already_finished, run.status}})
+                # Cancel SoR rows and archive live pgmq messages in one SQL
+                # transaction (singularity_workflow.cancel_run). Without archive,
+                # cancelled runs leave messages that poll forever after VT.
+                # Elixir still owns Oban cancel; SQL owns HTDAG + pgmq drain.
+                # Postgrex uuid params need 16-byte binaries (string UUIDs raise).
+                run_uuid =
+                  case Ecto.UUID.dump(run_id) do
+                    {:ok, bin} -> bin
+                    :error -> run_id
                   end
+
+                case repo.query(
+                       "SELECT singularity_workflow.cancel_run($1::uuid, $2::text, $3::boolean)",
+                       [run_uuid, reason, force]
+                     ) do
+                  {:ok, %{rows: [[_archived]]}} ->
+                    :ok
+
+                  {:error, %Postgrex.Error{postgres: %{code: :raise_exception, message: msg}}} ->
+                    cond do
+                      is_binary(msg) and String.contains?(msg, "already finished") ->
+                        repo.rollback({:error, {:already_finished, run.status}})
+
+                      is_binary(msg) and String.contains?(msg, "not found") ->
+                        repo.rollback({:error, :not_found})
+
+                      true ->
+                        repo.rollback({:error, {:cancel_run_failed, msg}})
+                    end
+
+                  {:error, err} ->
+                    repo.rollback({:error, {:cancel_run_failed, err}})
                 end
-
-                # Mark workflow as failed
-                run
-                |> Singularity.Workflow.WorkflowRun.mark_failed(reason)
-                |> repo.update!()
-
-                # Cancel pending tasks
-                from(t in Singularity.Workflow.StepTask,
-                  where: t.run_id == ^run_id,
-                  where: t.status in ["queued", "started"]
-                )
-                |> repo.update_all(set: [status: "cancelled", updated_at: DateTime.utc_now()])
-
-                # Cancel Oban jobs if using distributed execution (internal detail)
-                if Code.ensure_loaded?(Oban) do
-                  cancel_oban_jobs_for_run(run_id, repo)
-                end
-
-                Logger.info("Workflow cancelled",
-                  run_id: run_id,
-                  reason: reason
-                )
-
-                :ok
             end
           end)
           |> case do
-            {:ok, :ok} = ok_result ->
+            {:ok, :ok} ->
+              # Oban cancel is best-effort and must not share the HTDAG
+              # transaction — a missing oban_jobs table would abort the TX.
+              if Code.ensure_loaded?(Oban) do
+                cancel_oban_jobs_for_run(run_id, repo)
+              end
+
+              Logger.info("Workflow cancelled",
+                run_id: run_id,
+                reason: reason
+              )
+
               :telemetry.execute(
                 [:singularity_workflow, :executor, :cancel, :stop],
                 %{},
@@ -679,7 +692,7 @@ defmodule Singularity.Workflow.Executor do
                 }
               )
 
-              ok_result
+              :ok
 
             {:ok, {:error, reason} = error_result} ->
               :telemetry.execute(
