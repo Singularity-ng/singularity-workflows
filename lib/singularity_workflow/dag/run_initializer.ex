@@ -182,7 +182,9 @@ defmodule Singularity.Workflow.DAG.RunInitializer do
           workflow_slug: definition.slug,
           status: "created",
           remaining_deps: remaining_deps,
-          initial_tasks: metadata.initial_tasks,
+          # start_ready_steps requires initial_tasks IS NOT NULL AND > 0.
+          # FlowBuilder singles often leave nil ("runtime"); treat as 1 task.
+          initial_tasks: metadata.initial_tasks || 1,
           inserted_at: clock.now(),
           updated_at: clock.now()
         }
