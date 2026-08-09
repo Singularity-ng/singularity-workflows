@@ -310,20 +310,20 @@ defmodule Singularity.Workflow.ExecutorTest do
       {:ok, _} =
         Singularity.Workflow.FlowBuilder.add_step("test_dynamic_simple", "step2", ["step1"], Repo)
 
-      # Define step functions
+      # Define step functions (string keys — jsonb round-trip)
       step_functions = %{
-        step1: fn input -> {:ok, Map.put(input, :s1, true)} end,
-        step2: fn input -> {:ok, Map.put(input, :s2, true)} end
+        step1: fn input -> {:ok, Map.put(input, "s1", true)} end,
+        step2: fn input -> {:ok, Map.put(input, "s2", true)} end
       }
 
       # Execute dynamic workflow
-      input = %{initial: true}
+      input = %{"initial" => true}
       {:ok, result} = Executor.execute_dynamic("test_dynamic_simple", input, step_functions, Repo)
 
-      # Verify outputs
-      assert result.initial == true
-      assert result.s1 == true
-      assert result.s2 == true
+      # Leaf step2 output: flat-merged dep keys + s2
+      assert result["initial"] == true
+      assert result["s1"] == true
+      assert result["s2"] == true
 
       # Verify database state
       runs = Repo.all(WorkflowRun)
@@ -347,28 +347,26 @@ defmodule Singularity.Workflow.ExecutorTest do
         )
 
       # Define step functions with specific behavior
+      # jsonb round-trip uses string keys; start_tasks flat-merges object dep outputs
       step_functions = %{
         transform: fn input ->
-          # Transform the input
-          {:ok, Map.put(input, :transformed, true)}
+          {:ok, Map.put(input, "transformed", true)}
         end,
         validate: fn input ->
-          # Check transformation happened
-          if Map.get(input, :transformed) do
-            {:ok, Map.put(input, :valid, true)}
+          if Map.get(input, "transformed") == true do
+            {:ok, Map.put(input, "valid", true)}
           else
             {:error, "Not transformed"}
           end
         end
       }
 
-      input = %{data: "test"}
+      input = %{"data" => "test"}
       {:ok, result} = Executor.execute_dynamic("test_dynamic_mapping", input, step_functions, Repo)
 
-      # Verify both steps executed and transformed data correctly
-      assert result.data == "test"
-      assert result.transformed == true
-      assert result.valid == true
+      assert result["data"] == "test"
+      assert result["transformed"] == true
+      assert result["valid"] == true
     end
 
     test "handles missing step functions" do
