@@ -4,8 +4,8 @@ import Config
 config :singularity_workflow, Singularity.Workflow.Repo,
   username: "postgres",
   password: "postgres",
-  hostname: "localhost",
-  database: "singularity_workflow_dev",
+  hostname: "127.0.0.1", port: 55434,
+  database: "c21htdag",
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
